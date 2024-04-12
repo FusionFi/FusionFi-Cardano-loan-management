@@ -1,5 +1,9 @@
 # ccf-loans
 
+For scope of contracts and documentation please refer to `notes` 
+
+---
+
 Write validators in the `validators` folder, and supporting functions in the `lib` folder using `.ak` as a file extension.
 
 For example, as `validators/always_true.ak`
