@@ -5,6 +5,9 @@ import {
   Data,
   Lucid,
   SpendingValidator,
+  MintingPolicy,
+  applyParamsToScript,
+  applyDoubleCborEncoding,
   TxHash,
   fromHex,
   fromText,
@@ -278,11 +281,11 @@ async function burnLoan() {
 
   const tx = await Lucid
     .newTx()
-    .collectFrom([utxo], lCloseRedeemer)
+    .collectFrom([utxo], closeLoanAction)
     .readFrom(oracleUtxo)
     .mintAssets({
       [loanToken]: -1,
-    }, burnAction)
+    }, burnLoanAction)
     .attachMintingPolicy(lMint)
     .addSignerKey(userPkh)
     .complete()
@@ -357,7 +360,7 @@ async function repayLoan() {
 
   const tx = await Lucid
     .newTx()
-    .collectFrom([utxo], lRepayRedeemer)
+    .collectFrom([utxo], balanceLoanAction)
     .readFrom(oracleUtxo)
     .payToContract(
       lAddr, 

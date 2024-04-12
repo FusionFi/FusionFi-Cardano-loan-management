@@ -25,7 +25,7 @@ type LoanAction {
 
 type LoanDatum {
   collateral: ByteArray, // asset As String e.g. "ADA"
-  collateralValue: Int, 
+  collateralValue: Int, // expected Collateral Value min
   loanCurrency: ByteArray, // e.g. "USD"
   loanValue: Int,
   timeStamp: PosixTime,
@@ -189,9 +189,15 @@ validator(o: Owner) {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
+    expect [(oName, oAmt)] =
+      transaction.mint 
+        |> from_minted_value(transaction.mint)
+        |> tokens(policyId)
+        |> to_list()
+
     when r is {
-      Mint -> True
-      Burn -> True
+      Mint -> list.has(transaction.extra_signatories, o) && oAmt ==1
+      Burn -> list.has(transaction.extra_signatories, o) && oAmt == -1
     }
   }
 }
