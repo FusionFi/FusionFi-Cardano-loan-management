@@ -34,7 +34,7 @@ type LoanDatum {
 // Loan Mint //
 
 validator {
-  fn mintLoan(r: MintAction, c: ScriptContext) -> Bool {
+  fn loanMint(r: MintAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
@@ -122,7 +122,7 @@ validator(p: PolicyId, o: PolicyId) {
 // Price Oracle //
 
 validator(o: Owner, p: PolicyId) {
-  fn priceOracle(d: OracleDatum, r: OracleAction, c: ScriptContext) -> Bool {
+  fn oracleVault(d: OracleDatum, r: OracleAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = purpose
 
@@ -159,7 +159,7 @@ validator(o: Owner) {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
-    when r.a is {
+    when r is {
       Mint -> True
       Burn -> True
     }
