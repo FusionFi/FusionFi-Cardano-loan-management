@@ -31,6 +31,10 @@ const lucid = await Lucid.new(
 
 // ---------------------------------------- //
 
+// Contract & Wallet Setup //
+
+// ---------------------------------------- //
+
 lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./owner.sk"));
 // lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./beneficiary.sk"));
  
@@ -96,6 +100,10 @@ const beneficiaryAddress = await Deno.readTextFile("./beneficiary.addr");
 
 // ---------------------------------------- //
 
+// Transaction Data //
+
+// ---------------------------------------- //
+
 const price1 = 0.5
 const price2 = 0.55
 const price3 = 0.6
@@ -111,11 +119,17 @@ const balanceLoanAction = Data.to(new Constr(0, []))
 const liquidateLoanAction = Data.to(new Constr(1, []))
 const closeLoanAction = Data.to(new Constr(2, []))
 
+const oracleDatum = Data.to(new Constr(0, [BigInt(price1)]))
+const loanDatum = Data.to(new Constr(0, [BigInt(price1)]))
+
 const oAddr = lucid.utils.validatorToAddress(oVal)
 const lAddr = lucid.utils.validatorToAddress(lVal)
 
-const oracleDatum = Data.to(new Constr(0, [BigInt(price1)]))
-const loanDatum = Data.to(new Constr(0, [BigInt(price1)]))
+// ---------------------------------------- //
+
+// Transactions //
+
+// ---------------------------------------- //
 
 // The oracle works like a one-shot minting policy where it takes
 // The spending utxo to create the token name

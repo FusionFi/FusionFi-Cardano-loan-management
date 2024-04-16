@@ -1,68 +1,37 @@
-# CCF Collateral & Data Separation
+# ccfVariable
 
-CCF Collateral and Data Separation Contract - mockup
-
----
-
-:up [[CCFContractNotes]]
+:up [[ccfContractNotes]]
 #smartcontracts
-
----
-
-For Collateral and Data Separation we will have a second loanToken minted
-
-One will hold the loan information, the other will identify the collateral
 
 ---
 
 ## Contracts
 
-Oracle Minting Policy `OMint`
-Oracle Validator `OVal`
-Loan Minting Policy `lMint`
-Loan Vault Validator `LVal`
-Collateral Vault Validator `CVal`
+[[ccfInit]]
 
-// To demonstrate this concept The deom will only hold the Loan & Collateral Validators with an assumed PolicyId and Oracle //
-
-LoanMintingPolicy:
-  - mints loan token pair
-  - sends to `LVal` with `LDatum`
-  - sends to `CVal` with `Collateral`
-  - mints with >= 50% `LTV`
-  - burns token pairs
-
-LoanValidator:
-  - holds `LDatum` at token utxo
-  - updates `LDatum` with `Collateral` change
-  - requires both tokens to update `LDatum`
-
-CollateralValidator:
-  - holds `Collateral` at token utxo
-  - 
++ `Oracle` has variable fee applied to USD feed `ODatum`
++ `LVal` charges variable fee from previous transaction
 
 ---
 
-We can then sign transactions every time collateral is updated, and enforce fees based 
-on that. 
+Variable fee structure will have a field on the oracle which contains the fee structure
 
-We can also use timestamps to identify when the last payment happened - or the next 
-deadline - and automatically incur fees if it is not adhered to.
+this way we can ste it without adding more bloat to the Validator, instead keeping it 
+with the datafeed
 
 ---
 
 ## Examples
 
-These contracts work the same way init does however we can set the timestamp to margin call on loans
-
 Init:
 ```
 ODatum = {
   usdAda: 0.5,
+  apr: 15
   timestamp: 0001
 }
 
-LData = {
+LDatum = {
   collateral: ADA,
   collateralValue: 1000,
   loanCurrency: USD,
@@ -72,12 +41,15 @@ LData = {
 
 LValue = 2000 ADA 
   (loan value / exchange) / 0.5
+
+FeeValue = 2 ADA
 ```
 
 Price Falls:
 ```
 ODatum = {
   usdAda: 0.4, -> value drops
+  apr: 15
   timestamp: 0002
 }
 
@@ -102,6 +74,9 @@ LDatum = {
   loanValue: 500,
   timestamp: 0003
 }
+
+FeeOut = 
+  -> 2 ADA + (apr / 365) loanValue * 2 * exchange
 ```
 
 Update Late:
@@ -118,6 +93,7 @@ LDatum = {
 }
 
 FeeOut = 25 ADA
+  -> 25 ADA + 2 ADA + (apr / 365) loanValue * 8 * exchange
   -> sent to owner Param
 ```
 
@@ -152,6 +128,7 @@ LDatum = {
   timestamp: 0003
 }
 
-FeeOut = 530 ADA
-  -> Burns Both Tokens
+FeeOut = 525.5 ADA
+
+Liquidator = 4.5 ADA
 ```

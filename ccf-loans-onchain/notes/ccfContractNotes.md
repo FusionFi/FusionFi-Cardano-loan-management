@@ -189,3 +189,19 @@ Loan Pair Minting Policy
 Loan State Validator
 Loan Collateral Validator
 
+### Fees & Rates
+[[ccfFeesRates]]
+
+Applying Rates and Fees to contracts
+
+### Variable Rates
+[[ccfVariable]]
+
+Applying variable fees through an oracle
+
+### Rewards
+[[ccfRewards]]
+
+Can we pay a token reward for a use of the contracts? or for holding a position for 
+a certain amount of time?
+
