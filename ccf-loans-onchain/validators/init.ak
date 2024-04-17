@@ -12,28 +12,12 @@ use aiken/transaction/value.{
   without_lovelace,
 }
 
-// Currently working on colSeparated.ak - splitting data and collateral
-
-// Add must update OracleDatum to every Validator
-
 //            //
 // Data Types //
 //            //
 
 type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>
-
-type LoanDatum = {
-  amount: Integer
-  interest: Integer
-  term: Integer
-  status: LoanStatus
-}
-
-type ColDatum = {
-  amount: Integer
-  status: ColStatus
-}
 
 type MintAction {
   AMint { loanCurrency: ByteArray, loanValue: Int, timestamp: PosixTime }
@@ -73,31 +57,9 @@ type LoanDatum {
   timestamp: PosixTime,
 }
 
-//         //
-// Helpers //
-//         //
-
-fn get_own_singleton_output(tx: Transaction, oref: OutputReference) -> Output {
-  expect Some(input) =
-    tx.inputs
-      |> find_input(oref)
-
-  expect ScriptCredential(script_hash) = input.output.address.payment_credential
-  let script_outputs =
-    tx.outputs
-      |> find_script_outputs(script_hash)
-
-  expect list.length(script_outputs) == 1
-  expect Some(output) =
-    tx.outputs
-      |> find_script_outputs(script_hash)
-      |> list.head()
-  output
-}
-
-//                //
-// Init Loan Mint //
-//                //
+//           //
+// Loan Mint //
+//           //
 
 validator(o: PolicyId) {
   fn loanMint(r: MintAction, c: ScriptContext) -> Bool {
@@ -144,10 +106,9 @@ validator(o: PolicyId) {
   }
 }
 
-
-//                 //
-// Init Loan Vault //
-//                 //
+//            //
+// Loan Vault //
+//            //
 
 validator(p: PolicyId, o: PolicyId) {
   fn loanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
@@ -259,111 +220,24 @@ validator(o: VerificationKeyHash) {
   }
 }
 
+//         //
+// Helpers //
+//         //
 
-//                  //
-// Update Loan Mint //
-//                  //
+fn get_own_singleton_output(tx: Transaction, oref: OutputReference) -> Output {
+  expect Some(input) =
+    tx.inputs
+      |> find_input(oref)
 
-validator(o: PolicyId) {
-  fn loanMint(r: MintAction, c: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } = c
-    expect Mint(policyId) = purpose
+  expect ScriptCredential(script_hash) = input.output.address.payment_credential
+  let script_outputs =
+    tx.outputs
+      |> find_script_outputs(script_hash)
 
-    let Transaction { mint, outputs, reference_inputs, .. } = transaction
-
-    expect [(tName, tAmt)] =
-      mint
-        |> value.from_minted_value()
-        |> value.tokens(policyId)
-        |> dict.to_list()
-
-    when r is {
-      AMint { loanCurrency, loanValue, timestamp } -> {
-        expect Some(refIn) =
-          head(
-            filter(
-              reference_inputs,
-              fn(ref) { has(policies(ref.output.value), o) },
-            ),
-          )
-        expect InlineDatum(datum) = refIn.output.datum
-        expect rDatum: OracleDatum = datum
-        let exchangeRate = rDatum.usdAda
-
-        any(
-          outputs,
-          fn(output) {
-            expect has(policies(output.value), policyId)
-            expect InlineDatum(datum) = output.datum
-            expect datum: LoanDatum = datum
-
-            datum.loanCurrency == loanCurrency && datum.timestamp == timestamp && datum.collateralValue == datum.loanValue * 2 && lovelace_of(
-              output.value,
-            ) >= datum.collateralValue * exchangeRate * 1000000
-          },
-        )
-      }
-
-      ABurn -> True
-    }
-  }
+  expect list.length(script_outputs) == 1
+  expect Some(output) =
+    tx.outputs
+      |> find_script_outputs(script_hash)
+      |> list.head()
+  output
 }
-
-
-//                  //
-// Updat Loan Vault //
-//                  //
-
-validator(p: PolicyId, o: PolicyId) {
-  fn loanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } = c
-    expect Spend(oref) = purpose
-
-    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
-
-    expect Some(refIn) =
-      find(reference_inputs, fn(input) { has(policies(input.output.value), o) })
-
-    expect InlineDatum(datum) = refIn.output.datum
-    expect rDatum: OracleDatum = datum
-    let exchangeRate = rDatum.usdAda
-
-    when r.a is {
-      1 -> {
-        // balance
-        let ownOut = get_own_singleton_output(transaction, oref)
-        let adaOut = lovelace_of(ownOut.value) / 1000000
-        let newCollateralValue = adaOut / exchangeRate
-        let minCollateralValue = d.loanValue * exchangeRate * ( 50 / 100 )
-        expect has(policies(ownOut.value), p)
-        expect InlineDatum(datum) = ownOut.datum
-        expect datum: LoanDatum = datum
-
-        datum.collateral == d.collateral && datum.collateralValue == newCollateralValue && datum.loanCurrency == d.loanCurrency && datum.loanValue == d.loanValue && datum.timestamp == r.b && adaOut >= minCollateralValue
-      }
-
-      2 -> {
-        // liquidate
-        let ownOut = get_own_singleton_output(transaction, oref)
-        let adaOut = lovelace_of(ownOut.value) / 1000000
-        let newCollateralValue = adaOut / exchangeRate
-        expect has(policies(ownOut.value), p)
-        expect InlineDatum(datum) = ownOut.datum
-        expect datum: LoanDatum = datum
-        let minCollateralValue = datum.loanValue * exchangeRate * ( 85 / 100 )
-
-        datum.collateral == d.collateral && datum.collateralValue == newCollateralValue && datum.loanCurrency == d.loanCurrency && datum.loanValue == d.loanValue - r.c && datum.timestamp == r.b && adaOut >= minCollateralValue
-      }
-      // close
-      _ -> d.loanValue == 0
-    }
-  }
-}
-
-//                     //
-// Separate Loan Vault //
-//                     //
-
-//                           //
-// Separate Collateral Vault //
-//                           //
