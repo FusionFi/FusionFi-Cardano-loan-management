@@ -17,7 +17,7 @@ import {
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import * as cbor from "https://deno.land/x/cbor@v1.4.1/index.js";
 
-// deno run --allow-net --allow-read --allow-env ideate.ts
+// deno run --allow-net --allow-read --allow-env init.ts
 
 const BLOCKFROST = "API_KEY"
  
