@@ -23,17 +23,20 @@ use aiken/transaction/value.{
 type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>
 
-type LoanDatum = {
-  amount: Integer
-  interest: Integer
-  term: Integer
-  status: LoanStatus
-}
+type ScriptHash =
+  Hash<Blake2b_224, ScriptCredential>
 
-type ColDatum = {
-  amount: Integer
-  status: ColStatus
-}
+// type LoanDatum = {
+//   amount: Integer
+//   interest: Integer
+//   term: Integer
+//   status: LoanStatus
+// }
+
+// type ColDatum = {
+//   amount: Integer
+//   status: ColStatus
+// }
 
 type MintAction {
   AMint { loanCurrency: ByteArray, loanValue: Int, timestamp: PosixTime }
@@ -259,17 +262,24 @@ validator(o: VerificationKeyHash) {
   }
 }
 
+// Force Oracle Update //
+
+// Every Transaction must update the oracle
+// Oracle is no longer a reference input, but a regular input
+// We check for an Oracle output with a matching timestamp
+// Oracle validator handles the actual data change, but we do ensure the new Data is 
+// being used (we might be safer using a previous exchange rate from the input)
 
 //                  //
 // Update Loan Mint //
 //                  //
 
 validator(o: PolicyId) {
-  fn loanMint(r: MintAction, c: ScriptContext) -> Bool {
+  fn updateMint(r: MintAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
-    let Transaction { mint, outputs, reference_inputs, .. } = transaction
+    let Transaction { mint, inputs, outputs, .. } = transaction
 
     expect [(tName, tAmt)] =
       mint
@@ -278,17 +288,18 @@ validator(o: PolicyId) {
         |> dict.to_list()
 
     when r is {
-      AMint { loanCurrency, loanValue, timestamp } -> {
-        expect Some(refIn) =
+      UMint { loanCurrency, loanValue, timestamp } -> {
+        expect Some(oracle) =
           head(
             filter(
-              reference_inputs,
-              fn(ref) { has(policies(ref.output.value), o) },
+              outputs,
+              fn(oracle) { has(policies(output.value), o) },
             ),
           )
-        expect InlineDatum(datum) = refIn.output.datum
+        expect InlineDatum(datum) = oracle.datum
         expect rDatum: OracleDatum = datum
         let exchangeRate = rDatum.usdAda
+        expect rDatum.timestamp == timestamp
 
         any(
           outputs,
@@ -301,32 +312,40 @@ validator(o: PolicyId) {
               output.value,
             ) >= datum.collateralValue * exchangeRate * 1000000
           },
-        )
+        ) && tAmt == 1
+
+
       }
 
-      ABurn -> True
+      UBurn -> {
+        expect Some(output) = 
+          find(outputs, fn(output) { has(policies(output.value), o) })
+        
+        tAmt == -1
+        
+      }
     }
   }
 }
 
-
-//                  //
-// Updat Loan Vault //
-//                  //
+//                   //
+// Update Loan Vault //
+//                   //
 
 validator(p: PolicyId, o: PolicyId) {
-  fn loanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
+  fn updateVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = purpose
 
     let Transaction { inputs, outputs, reference_inputs, .. } = transaction
 
-    expect Some(refIn) =
-      find(reference_inputs, fn(input) { has(policies(input.output.value), o) })
+    expect Some(oracle) =
+      find(outputs, fn(oracle) { has(policies(input.output.value), o) })
 
-    expect InlineDatum(datum) = refIn.output.datum
+    expect InlineDatum(datum) = oracle.datum
     expect rDatum: OracleDatum = datum
     let exchangeRate = rDatum.usdAda
+    expect rDatum.timestamp == r.b
 
     when r.a is {
       1 -> {
@@ -360,10 +379,189 @@ validator(p: PolicyId, o: PolicyId) {
   }
 }
 
+// Separate Collateral & LoanData //
+
+// These contracts split collateral from Loan data with a token pair
+// We will actually need a reference input to differenciate the recieve validators
+// So I have added a Config ref input which has these validator hashes to check against
+// credentials
+
+type SConfigDatum = {
+  loanVal: ScriptHash
+  colVal: ScriptHash
+}
+
+type SConfigAction {
+  Update { loanVal: ScriptHash, colVal: ScriptHash }
+  Close
+}
+
+type SLoanDatum = {
+  amount: Int
+  interest: Int
+  term: Int
+  status: ByteArray
+}
+
+type SColDatum = {
+  amount: Int
+  status: ByteArray
+}
+
+//                    //
+// Separate Loan Mint //
+//                    //
+
+// Mints 2 tokens 
+// sends one to loan vault with datum
+// sends one to collateral vault with datum
+
+validator(op: PolicyId) {
+  fn loanMint(r: MintAction, c: ScriptContext) -> Bool {
+    let ScriptContext { transaction, purpose } = c
+    expect Mint(policyId) = purpose
+
+    let Transaction { mint, outputs, reference_inputs, .. } = transaction
+
+    expect [(tName, tAmt)] =
+      mint
+        |> value.from_minted_value()
+        |> value.tokens(policyId)
+        |> dict.to_list()
+
+    when r is {
+      AMint { loanCurrency, loanValue, timestamp } -> {
+        expect Some(refIn) =
+          head(
+            filter(
+              reference_inputs,
+              fn(ref) { has(policies(ref.output.value), op) },
+            ),
+          )
+        expect InlineDatum(datum) = refIn.output.datum
+        expect rDatum: OracleDatum = datum
+        let exchangeRate = rDatum.usdAda
+
+        expect Some(outputList) =
+          filter(
+            outputs,
+            fn(output) { 
+              has(policies(output.value), policyId)
+            },
+          )
+        
+        expect list.length(outputList) == 2
+
+        let loanOut = find(outputList, fn(output) {
+          expect InlineDatum(datum) = output.datum
+          expect datum: SLoanDatum = datum
+
+          datum.amount == loanValue && datum.interest == 0 && datum.term == 0 && datum.status == "Active"
+        })
+        
+        expect colOut = find(outputList, fn(output) {
+          expect InlineDatum(datum) = output.datum
+          expect datum: SColDatum = datum
+
+          
+        tAmt == 2 
+      }
+
+      ABurn -> True
+    }
+  }
+}
+
 //                     //
 // Separate Loan Vault //
 //                     //
 
+validator(op: PolicyId, lp: PolicyId) {
+  fn lVal(d: SLoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
+    let ScriptContext { transaction, purpose } = c
+    expect Spend(oref) = transaction
+
+    when r is {
+      Update -> True
+      Liquidate -> True
+      Close -> True
+    }
+  }
+}
+
 //                           //
 // Separate Collateral Vault //
 //                           //
+
+validator(op: PolicyId, lp: PolicyId) {
+  fn cVal(d: ColDatum, r: ColAction, c: ScriptContext) -> Bool {
+    let ScriptContext { transaction, purpose } = c
+    expect Spend(oref) = transaction
+
+    when r is {
+      Balance -> True
+      Liquidate -> True
+      Close -> True
+    }
+  }
+}
+
+//                  //
+// Config Validator //
+//                  //
+
+validator(o: VerificationKeyHash, cp: PolicyId) {
+  fn configValidator(d: SConfigDatum, r: SConfigAction, c: ScriptContext) -> Bool {
+    let ScriptContext { transaction, purpose } = c
+    expect Spend(oref) = purpose
+
+    let Transaction { inputs, outputs, extra_signatories, .. } = transaction
+
+    when r is {
+      Update { loanVal, colVal } -> {
+        let ownOut = get_own_singleton_output(transaction, oref)
+        expect InlineDatum(datum) = ownOut.datum
+        expect outDatum: SConfigDatum = datum
+
+        has(policies(ownVal), cp) &&
+        outDatum.loanVal == r.loanVal && 
+        outDatum.colVal == r.colVal &&
+        has(extra_signatories, o)
+      }
+
+      Close -> {
+        has(extra_signatories, o)  
+      }
+    
+    }
+  }
+}
+
+//                       //
+// Config Minting Policy //
+//                       //
+
+validator(o: VerificationKeyHash) {
+  fn configMint(r: SConfigAction, c: ScriptContext) -> Bool {
+    let ScriptContext { transaction, purpose } = c
+    expect Mint(policyId) = purpose
+
+    when r is {
+      Update { loanVal, colVal } -> {
+        expect Some(ownOut) = find(transaction.outputs, fn(output) {
+          has(policies(output.value), policyId)
+        }
+        expect InlineDatum(datum) = ownOut.datum
+        expect outDatum: SConfigDatum = datum
+
+        outDatum.loanVal == r.loanVal && 
+        outDatum.colVal == r.colVal &&
+        has(extra_signatories, o) && tAmt == 1
+      }
+
+      Close -> {
+        has(extra_signatories, o) && tAmt == -1 
+      }
+    }
+  }
+}
