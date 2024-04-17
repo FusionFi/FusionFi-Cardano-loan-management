@@ -8,7 +8,7 @@ type MintAction {
 }
 
 type OracleAction {
-  Update 
+  Update { exchangeRate: Int, timeStamp: PosixTime }
   Close
 }
 

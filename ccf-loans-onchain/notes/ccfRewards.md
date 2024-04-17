@@ -4,6 +4,11 @@ Rewards a token to a use based on the amount of collateral for each timestamp
 
 ---
 
+:up [[CCFContractNotes]]
+#smartcontracts
+
+---
+
 rewards are paid in a native token according to a timestamp in the datum
 
 for this we add a new minting policy and add the rewards timestamp to `LDatum`

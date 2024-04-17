@@ -109,9 +109,16 @@ const price2 = 0.55
 const price3 = 0.6
 const price4 = 0.45
 const price5 = 0.4
+const price6 = 0.265
+
+const collateral = "ADA"
+const collateralValue = 1000
+const loanCurrency = "USDT"
+const loanValue = 500
+const timestamp = new Date().getTime()
 
 const mintOracleAction = Data.to(new Constr(0, []))
-const updateOracleAction = Data.to(new Constr(0, []))
+const updateOracleAction = Data.to(new Constr(0, [BigInt(price1), timestamp]))
 const burnOracleAction = Data.to(new Constr(1, []))
 const mintLoanAction = Data.to(new Constr(0, []))
 const burnLoanAction = Data.to(new Constr(1, []))
@@ -119,8 +126,21 @@ const balanceLoanAction = Data.to(new Constr(0, []))
 const liquidateLoanAction = Data.to(new Constr(1, []))
 const closeLoanAction = Data.to(new Constr(2, []))
 
-const oracleDatum = Data.to(new Constr(0, [BigInt(price1)]))
-const loanDatum = Data.to(new Constr(0, [BigInt(price1)]))
+const oracleDatum = Data.to(new Constr(0, [BigInt(price1), timestamp]))
+const loanDatum = Data.to(
+    new Constr(0, [
+        collateral, 
+        collateralValue, 
+        loanCurrency, 
+        loanValue, 
+        timestamp
+      ]))
+
+const oracleDatum2 = Data.to(new Constr(0, [BigInt(price2), timestamp]))
+const oracleDatum3 = Data.to(new Constr(0, [BigInt(price3), timestamp]))
+const oracleDatum4 = Data.to(new Constr(0, [BigInt(price4), timestamp]))
+const oracleDatum5 = Data.to(new Constr(0, [BigInt(price5), timestamp]))
+const oracleDatum6 = Data.to(new Constr(0, [BigInt(price6), timestamp]))
 
 const oAddr = lucid.utils.validatorToAddress(oVal)
 const lAddr = lucid.utils.validatorToAddress(lVal)
@@ -135,6 +155,8 @@ const lAddr = lucid.utils.validatorToAddress(lVal)
 // The spending utxo to create the token name
 // This ensures that even if someone manages to bypass the signature they could
 // never duplicate the token
+
+
 
 async function makeOracle() {
   const utxos: [UTxO] = await lucid.getUtxos()
@@ -389,3 +411,53 @@ async function repayLoan() {
 
   return txSigned.submit()
 }
+
+// ---------------------------------------- //
+
+// Transaction Execution //
+
+// ---------------------------------------- //
+
+// mintOracle 
+const mintOracleTx = await mintOracle()
+console.log("Mint Oracle Tx: ", mintOracleTx,
+  "Oracle Token Name: ", oracleTN
+)
+
+// updateOracle
+const updateOracleTX = await oAutoUpdate()
+console.log("Update Oracle Tx: ", updateOracleTX,
+  "new Oracle Datum: ", oracleDatum2
+)
+
+// updateOracleManual
+const updateOracleManualTx = await oManualUpdate()
+console.log("Update Oracle Manual Tx: ", updateOracleManualTx,
+  "new Oracle Datum: ", oracleDatum3
+)
+
+// mintLoan
+const mintLoanTx = await mintLoan()
+console.log("Mint Loan Tx: ", mintLoanTx,
+  "Loan Token Name: ", loanTN
+)
+
+// balanceLoan
+const balanceLoanTx = await balanceLoan()
+console.log("Balance Loan Tx: ", balanceLoanTx)
+
+// liquidateLoan
+const liquidateLoanTx = await liquidateLoan()
+console.log("Liquidate Loan Tx: ", liquidateLoanTx)
+
+// repayLoan
+const repayLoanTx = await repayLoan()
+console.log("Repay Loan Tx: ", repayLoanTx)
+
+// burnLoan
+const burnLoanTx = await burnLoan()
+console.log("Burn Loan Tx: ", burnLoanTx)
+
+// closeOracle
+const closeOracleTx = await oracleClose()
+console.log("Close Oracle Tx: ", closeOracleTx)
