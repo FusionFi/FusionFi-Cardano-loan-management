@@ -746,4 +746,12 @@ validator(o: VerificationKeyHash) {
     }
   }
 }
-//
+// Fees And Rates //
+
+// We want to be able to add fees and rates to the loans
+// this will allow us to earn revenue at every transaction
+// We will start with fixed rates and fees
+
+//                  //
+// Oracle Validator //
+//                  //
