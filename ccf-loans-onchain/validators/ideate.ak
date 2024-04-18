@@ -396,11 +396,23 @@ type SConfigAction {
   Close
 }
 
+type SLoanAction {
+  Balance
+  Liquidate
+  Close
+}
+
 type SLoanDatum = {
   amount: Int
   interest: Int
   term: Int
   status: ByteArray
+}
+
+type SColAction {
+  Balance
+  Liquidate
+  Close
 }
 
 type SColDatum = {
@@ -416,8 +428,8 @@ type SColDatum = {
 // sends one to loan vault with datum
 // sends one to collateral vault with datum
 
-validator(op: PolicyId) {
-  fn loanMint(r: MintAction, c: ScriptContext) -> Bool {
+validator(op: PolicyId, cp: PolicyId) {
+  fn sLoanMint(r: MintAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
@@ -431,39 +443,49 @@ validator(op: PolicyId) {
 
     when r is {
       AMint { loanCurrency, loanValue, timestamp } -> {
-        expect Some(refIn) =
+        expect Some(oracleIn) =
           head(
             filter(
               reference_inputs,
               fn(ref) { has(policies(ref.output.value), op) },
             ),
           )
-        expect InlineDatum(datum) = refIn.output.datum
+        expect InlineDatum(datum) = oracleIn.output.datum
         expect rDatum: OracleDatum = datum
         let exchangeRate = rDatum.usdAda
 
-        expect Some(outputList) =
-          filter(
-            outputs,
-            fn(output) { 
-              has(policies(output.value), policyId)
-            },
+        expect Some(configIn) = 
+          head(
+            filter(
+              reference_inputs,
+              fn(ref) { has(policies(ref.output.value), cp) },
+            ),
           )
-        
-        expect list.length(outputList) == 2
+        expect InlineDatum(datum) = configIn.output.datum
+        expect cDatum: SConfigDatum = datum
 
-        let loanOut = find(outputList, fn(output) {
-          expect InlineDatum(datum) = output.datum
-          expect datum: SLoanDatum = datum
-
-          datum.amount == loanValue && datum.interest == 0 && datum.term == 0 && datum.status == "Active"
+        let loanOut = find(outputs, fn(output) {
+          output.address.payment_credential == cDatum.loanVal &&
+          has(policies(output.value), policyId)
         })
         
-        expect colOut = find(outputList, fn(output) {
-          expect InlineDatum(datum) = output.datum
-          expect datum: SColDatum = datum
-
+        let colOut = find(outputs, fn(output) {
+          output.address.payment_credential == cDatum.colVal &&
+          has(policies(output.value), policyId)
+        })
+        expect InlineDatum(datum) = loanOut.datum
+        expect lDatum: SLoanDatum = datum
+        
+        expect InlineDatum(datum) = colOut.datum
+        expect cDatum: SColDatum = datum
           
+        lDatum.amount == loanValue && 
+        lDatum.interest == 15 && 
+        lDatum.term == 0 && 
+        lDatum.status == "Active" &&
+        cDatum.amount == loanValue * 2 &&
+        cDatum.status == "Active" &&
+        lovelace_of(colOut.value) >= lDatum.amount * exchangeRate * 1000000 &&
         tAmt == 2 
       }
 
@@ -477,14 +499,65 @@ validator(op: PolicyId) {
 //                     //
 
 validator(op: PolicyId, lp: PolicyId) {
-  fn lVal(d: SLoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
+  fn lVal(d: SLoanDatum, r: SLoanAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = transaction
 
-    when r is {
-      Update -> True
-      Liquidate -> True
-      Close -> True
+    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
+
+    expect Some(oracleIn) =
+      find(reference_inputs, fn(input) { has(policies(input.output.value), op) })
+    
+    expect InlineDatum(datum) = oracleIn.output.datum
+    expect rDatum: OracleDatum = datum
+    let exchangeRate = rDatum.usdAda
+
+    expect Some(configIn) = 
+      find(reference_inputs, fn(input) { has(policies(input.output.value), lp) })
+    
+    expect InlineDatum(datum) = configIn.output.datum
+    expect cDatum: SConfigDatum = datum
+
+    when r.a is {
+      1 -> {
+        let ownOut = get_own_singleton_output(transaction, oref)
+        let adaOut = lovelace_of(ownOut.value) / 1000000
+        let newCollateralValue = adaOut / exchangeRate
+        let minCollateralValue = d.amount * exchangeRate * ( 50 / 100 )
+        expect has(policies(ownOut.value), op)
+        expect InlineDatum(datum) = ownOut.datum
+        expect datum: SLoanDatum = datum
+
+        datum.amount == d.amount && 
+        datum.interest == d.interest && 
+        datum.term == d.term && 
+        datum.status == d.status &&
+        adaOut >= minCollateralValue
+      }
+
+      2 -> {
+        let ownOut = get_own_singleton_output(transaction, oref)
+        let adaOut = lovelace_of(ownOut.value) / 1000000
+        let newCollateralValue = adaOut / exchangeRate
+        expect has(policies(ownOut.value), op)
+        expect InlineDatum(datum) = ownOut.datum
+        expect datum: SLoanDatum = datum
+        let minCollateralValue = datum.amount * exchangeRate * ( 85 / 100 )
+
+        datum.amount == d.amount && 
+        datum.interest == d.interest && 
+        datum.term == d.term && 
+        datum.status == d.status &&
+        adaOut >= minCollateralValue
+      }
+      // close
+      _ -> d.amount == 0
+    }
+
+    when r.a is {
+      1 -> True
+      2 -> True
+      _ -> True
     }
   }
 }
@@ -494,7 +567,7 @@ validator(op: PolicyId, lp: PolicyId) {
 //                           //
 
 validator(op: PolicyId, lp: PolicyId) {
-  fn cVal(d: ColDatum, r: ColAction, c: ScriptContext) -> Bool {
+  fn cVal(d: SColDatum, r: SColAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = transaction
 
