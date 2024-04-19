@@ -1061,8 +1061,44 @@ type RLoanDatum {
   timestamp: PosixTime,
 }
 
-validator {
+validator(cp: PolicyId, o: VerificationKeyHash) {
+  // config policy
   fn rewardsMint(r: RewardsAction, c: ScriptContext) -> Bool {
-    todo
+    let ScriptContext { transaction, purpose } = c
+    expect Mint(policyId) = purpose
+    let Transaction { mint, outputs, .. } = transaction
+
+    expect Some(refIn) =
+      find(
+        transaction.reference_inputs,
+        fn(input) { has(policies(input.output.value), c) },
+      )
+    expect InlineDatum(datum) = refIn.output.datum
+    expect cDatum: SConfigDatum = datum
+
+    expect [(tName, tAmt)] =
+      mint
+        |> value.from_minted_value()
+        |> value.tokens(policyId)
+        |> dict.to_list()
+
+    when r is {
+      RewardMint -> {
+        let loanIn =
+          find(
+            transaction.inputs,
+            fn(input) { has(policies(input.output.value), c) },
+          )
+
+        expect InlineDatum(datum) = loanIn.output.datum
+        expect lDatum: RLoanDatum = datum
+
+        expect [] = find_script_outputs(outputs, cDatum.loanVal)
+
+        tAmt == lDatum.rewards
+      }
+
+      RewardBurn -> has(transaction.extra_signatories, o) && tAmt <= -1
+    }
   }
 }
