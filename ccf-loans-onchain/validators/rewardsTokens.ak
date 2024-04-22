@@ -28,10 +28,6 @@ use aiken/transaction/value.{
 // I think we shuold use the config validator to store the hash of the minting policy,
 // That way we can reference tha validator signature rather than checking for the output
 
-//                      //
-// Rewards Token Policy //
-//                      //
-
 type RConfigDatum {
   loanVal: ScriptHash,
   colVal: ScriptHash,
@@ -51,6 +47,10 @@ type RewardsAction {
   RewardMint
   RewardBurn
 }
+
+//                      //
+// Rewards Token Policy //
+//                      //
 
 validator(cp: PolicyId, o: VerificationKeyHash) {
   // config policy

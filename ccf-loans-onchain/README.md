@@ -1,5 +1,8 @@
 # ccf-loans
 
+Currently working on `fullFeatureSet.ak` combining all of the contracts into one 
+collection.
+
 For scope of contracts and documentation please refer to `notes` 
 
 ---

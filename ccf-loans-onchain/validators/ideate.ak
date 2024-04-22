@@ -15,7 +15,7 @@ use aiken/transaction/value.{
   tokens, without_lovelace,
 }
 
-// Currently working on colSeparated.ak - splitting data and collateral
+// Currently working on fullFeatureSet.ak 
 
 // Add must update OracleDatum to every Validator
 
