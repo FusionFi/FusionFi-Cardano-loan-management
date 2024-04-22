@@ -780,6 +780,7 @@ validator(o: PolicyId, t: PaymentCredential) {
         |> value.from_minted_value()
         |> value.tokens(policyId)
         |> dict.to_list()
+    let f = 2
 
     when r is {
       AMint { loanCurrency, loanValue, timestamp } -> {
@@ -791,7 +792,7 @@ validator(o: PolicyId, t: PaymentCredential) {
             ),
           )
         expect InlineDatum(datum) = refIn.output.datum
-        expect rDatum: OracleDatum = datum
+        expect rDatum: VarODatum = datum
         let exchangeRate = rDatum.usdAda
 
         any(
@@ -840,9 +841,9 @@ fn calculate_rate(last: PosixTime, new: PosixTime, rate: Int) -> Int {
   apr
 }
 
-//                 //
+//                  //
 // Rates Loan Vault //
-//                 //
+//                  //
 
 validator(p: PolicyId, o: PolicyId, t: PaymentCredential) {
   fn ratesLoanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
@@ -855,8 +856,14 @@ validator(p: PolicyId, o: PolicyId, t: PaymentCredential) {
       find(reference_inputs, fn(input) { has(policies(input.output.value), o) })
 
     expect InlineDatum(datum) = refIn.output.datum
-    expect rDatum: OracleDatum = datum
+    expect rDatum: VarODatum = datum
     let exchangeRate = rDatum.usdAda
+    let rate = rDatum.rate
+
+    expect Some(ownInput) = find_input(transaction.inputs, oref)
+    let loanInput = lovelace_of(ownInput.output.value)
+
+    let f = 2
 
     when r.a is {
       1 -> {
@@ -871,14 +878,10 @@ validator(p: PolicyId, o: PolicyId, t: PaymentCredential) {
 
         expect
           any(
-            tx.outputs,
+            outputs,
             fn(output) {
               let ratePayment =
-                lovelace_of(loanInput) * calculate_rate(
-                  inDatum.timestamp,
-                  redeemer.timestamp,
-                  r,
-                )
+                loanInput * calculate_rate(d.timestamp, r.b, rate)
               let fee = f * 1000000
               output.address.payment_credential == t && lovelace_of(
                 output.value,
@@ -900,16 +903,11 @@ validator(p: PolicyId, o: PolicyId, t: PaymentCredential) {
 
         expect
           any(
-            tx.outputs,
+            outputs,
             fn(output) {
-              let minCollateral =
-                lovelace_of(lDatum.loanValue) * exchangeRate * 1000000
+              let minCollateral = datum.loanValue * exchangeRate * 1000000
               let ratePayment =
-                loanInput * calculate_rate(
-                  inDatum.timestamp,
-                  redeemer.timestamp,
-                  r,
-                )
+                loanInput * calculate_rate(d.timestamp, r.b, rate)
               let fee = f * 1000000
               output.address.payment_credential == t && lovelace_of(
                 output.value,
@@ -922,14 +920,10 @@ validator(p: PolicyId, o: PolicyId, t: PaymentCredential) {
       _ -> {
         expect
           any(
-            tx.outputs,
+            outputs,
             fn(output) {
               let ratePayment =
-                loanInput * calculate_rate(
-                  inDatum.timestamp,
-                  redeemer.timestamp,
-                  r,
-                )
+                loanInput * calculate_rate(d.timestamp, r.b, rate)
               let fee = f * 1000000
               output.address.payment_credential == t && lovelace_of(
                 output.value,
@@ -1084,10 +1078,10 @@ validator(cp: PolicyId, o: VerificationKeyHash) {
     expect Some(refIn) =
       find(
         transaction.reference_inputs,
-        fn(input) { has(policies(input.output.value), c) },
+        fn(input) { has(policies(input.output.value), cp) },
       )
     expect InlineDatum(datum) = refIn.output.datum
-    expect cDatum: SConfigDatum = datum
+    expect cDatum: RConfigDatum = datum
 
     expect [(tName, tAmt)] =
       mint
@@ -1097,10 +1091,10 @@ validator(cp: PolicyId, o: VerificationKeyHash) {
 
     when r is {
       RewardMint -> {
-        let loanIn =
+        expect Some(loanIn) =
           find(
             transaction.inputs,
-            fn(input) { has(policies(input.output.value), c) },
+            fn(input) { has(policies(input.output.value), cp) },
           )
 
         expect InlineDatum(datum) = loanIn.output.datum
@@ -1125,7 +1119,8 @@ validator(p: PolicyId, o: PolicyId, cp: PolicyId) {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = purpose
 
-    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
+    let Transaction { inputs, outputs, reference_inputs, extra_signatories, .. } =
+      transaction
 
     expect Some(refIn) =
       find(reference_inputs, fn(input) { has(policies(input.output.value), o) })
@@ -1169,7 +1164,7 @@ validator(p: PolicyId, o: PolicyId, cp: PolicyId) {
           )
 
         expect InlineDatum(datum) = refConfig.output.datum
-        expect cDatum: SConfigDatum = datum
+        expect cDatum: RConfigDatum = datum
         let rewardsHash = cDatum.rewardsVal
 
         has(extra_signatories, rewardsHash) && d.loanValue == 0

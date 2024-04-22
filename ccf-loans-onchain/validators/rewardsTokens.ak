@@ -1,3 +1,20 @@
+use aiken/dict.{to_list, values}
+use aiken/hash.{Blake2b_224, Hash}
+use aiken/list.{any, filter, find, has, head}
+use aiken/time.{PosixTime}
+use aiken/transaction.{
+  InlineDatum, Input, Mint, Output, OutputReference, ScriptContext, Spend,
+  Transaction, find_input, find_script_outputs,
+}
+use aiken/transaction/credential.{
+  Credential, PaymentCredential, Script, ScriptCredential, VerificationKey,
+  VerificationKeyCredential,
+}
+use aiken/transaction/value.{
+  PolicyId, flatten, from_minted_value, lovelace_of, policies, quantity_of,
+  tokens, without_lovelace,
+}
+
 //                    //
 // Rewards Mechanisms //
 //                    //
@@ -15,7 +32,7 @@
 // Rewards Token Policy //
 //                      //
 
-type SConfigDatum {
+type RConfigDatum {
   loanVal: ScriptHash,
   colVal: ScriptHash,
   rewardsVal: ScriptHash,
@@ -30,9 +47,9 @@ type RLoanDatum {
   timestamp: PosixTime,
 }
 
-type RewwardsAction {
-  RewardMint,
-  RewardBurn,
+type RewardsAction {
+  RewardMint
+  RewardBurn
 }
 
 validator(cp: PolicyId, o: VerificationKeyHash) {
@@ -45,10 +62,10 @@ validator(cp: PolicyId, o: VerificationKeyHash) {
     expect Some(refIn) =
       find(
         transaction.reference_inputs,
-        fn(input) { has(policies(input.output.value), c) },
+        fn(input) { has(policies(input.output.value), cp) },
       )
     expect InlineDatum(datum) = refIn.output.datum
-    expect cDatum: SConfigDatum = datum
+    expect cDatum: RConfigDatum = datum
 
     expect [(tName, tAmt)] =
       mint
@@ -58,10 +75,10 @@ validator(cp: PolicyId, o: VerificationKeyHash) {
 
     when r is {
       RewardMint -> {
-        let loanIn =
+        expect Some(loanIn) =
           find(
             transaction.inputs,
-            fn(input) { has(policies(input.output.value), c) },
+            fn(input) { has(policies(input.output.value), cp) },
           )
 
         expect InlineDatum(datum) = loanIn.output.datum
@@ -77,20 +94,17 @@ validator(cp: PolicyId, o: VerificationKeyHash) {
   }
 }
 
-// Additions To Loan Validator //
-
-// we need a minting rewards case for the loan when it is closed
-
-//                 //
-// Init Loan Vault //
-//                 //
+//                    //
+// Rewards Loan Vault //
+//                    //
 
 validator(p: PolicyId, o: PolicyId, cp: PolicyId) {
-  fn loanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
+  fn rewardsLoanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = purpose
 
-    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
+    let Transaction { inputs, outputs, reference_inputs, extra_signatories, .. } =
+      transaction
 
     expect Some(refIn) =
       find(reference_inputs, fn(input) { has(policies(input.output.value), o) })
@@ -134,7 +148,7 @@ validator(p: PolicyId, o: PolicyId, cp: PolicyId) {
           )
 
         expect InlineDatum(datum) = refConfig.output.datum
-        expect cDatum: SConfigDatum = datum
+        expect cDatum: RConfigDatum = datum
         let rewardsHash = cDatum.rewardsVal
 
         has(extra_signatories, rewardsHash) && d.loanValue == 0

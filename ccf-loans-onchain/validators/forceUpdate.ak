@@ -1,3 +1,20 @@
+use aiken/dict.{to_list, values}
+use aiken/hash.{Blake2b_224, Hash}
+use aiken/list.{any, filter, find, has, head}
+use aiken/time.{PosixTime}
+use aiken/transaction.{
+  InlineDatum, Input, Mint, Output, OutputReference, ScriptContext, Spend,
+  Transaction, find_input, find_script_outputs,
+}
+use aiken/transaction/credential.{
+  Credential, PaymentCredential, Script, ScriptCredential, VerificationKey,
+  VerificationKeyCredential,
+}
+use aiken/transaction/value.{
+  PolicyId, flatten, from_minted_value, lovelace_of, policies, quantity_of,
+  tokens, without_lovelace,
+}
+
 // Force Oracle Update //
 
 // Every Transaction must update the oracle
