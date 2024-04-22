@@ -6,7 +6,10 @@ use aiken/transaction.{
   InlineDatum, Input, Mint, Output, OutputReference, ScriptContext, Spend,
   Transaction, find_input, find_script_outputs,
 }
-use aiken/transaction/credential.{Script, ScriptCredential, VerificationKey}
+use aiken/transaction/credential.{
+  Credential, PaymentCredential, Script, ScriptCredential, VerificationKey,
+  VerificationKeyCredential,
+}
 use aiken/transaction/value.{
   PolicyId, flatten, from_minted_value, lovelace_of, policies, quantity_of,
   tokens, without_lovelace,
@@ -765,8 +768,8 @@ validator(o: VerificationKeyHash) {
 // Rates Loan Mint //
 //                 //
 
-validator(o: PolicyId) {
-  fn loanMint(r: MintAction, c: ScriptContext) -> Bool {
+validator(o: PolicyId, t: PaymentCredential) {
+  fn ratesLoanMint(r: MintAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
@@ -802,13 +805,11 @@ validator(o: PolicyId) {
               output.value,
             ) >= datum.collateralValue * exchangeRate * 1000000
           },
-        )
-
-        // Fee
+        ) && // Fee
         any(
           transaction.outputs,
           fn(output) {
-            output.address.payment_credential == o && lovelace_of(output.value) >= f * 1000000
+            output.address.payment_credential == t && lovelace_of(output.value) >= f * 1000000
           },
         )
       }
@@ -840,11 +841,11 @@ fn calculate_rate(last: PosixTime, new: PosixTime, rate: Int) -> Int {
 }
 
 //                 //
-// Init Loan Vault //
+// Rates Loan Vault //
 //                 //
 
-validator(p: PolicyId, o: PolicyId) {
-  fn loanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
+validator(p: PolicyId, o: PolicyId, t: PaymentCredential) {
+  fn ratesLoanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = purpose
 
@@ -879,7 +880,7 @@ validator(p: PolicyId, o: PolicyId) {
                   r,
                 )
               let fee = f * 1000000
-              output.address.payment_credential == o && lovelace_of(
+              output.address.payment_credential == t && lovelace_of(
                 output.value,
               ) >= ratePayment + fee
             },
@@ -910,7 +911,7 @@ validator(p: PolicyId, o: PolicyId) {
                   r,
                 )
               let fee = f * 1000000
-              output.address.payment_credential == o && lovelace_of(
+              output.address.payment_credential == t && lovelace_of(
                 output.value,
               ) >= minCollateral + ratePayment + fee
             },
@@ -930,7 +931,7 @@ validator(p: PolicyId, o: PolicyId) {
                   r,
                 )
               let fee = f * 1000000
-              output.address.payment_credential == o && lovelace_of(
+              output.address.payment_credential == t && lovelace_of(
                 output.value,
               ) >= ratePayment + fee
             },
@@ -995,6 +996,7 @@ type VarODatum {
   usdAda: Int,
   timestamp: PosixTime,
   rate: Int,
+  fee: Int,
 }
 
 //                 //
@@ -1002,7 +1004,7 @@ type VarODatum {
 //                 //
 
 validator(o: VerificationKeyHash, p: PolicyId) {
-  fn oracleVault(d: VarODatum, r: OracleAction, c: ScriptContext) -> Bool {
+  fn varOracleVault(d: VarODatum, r: OracleAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(ownRef) = purpose
 
@@ -1052,6 +1054,12 @@ validator(o: VerificationKeyHash, p: PolicyId) {
 // Rewards Token Policy //
 //                      //
 
+type RConfigDatum {
+  loanVal: ScriptHash,
+  colVal: ScriptHash,
+  rewardsVal: ScriptHash,
+}
+
 type RLoanDatum {
   collateral: ByteArray,
   collateralValue: Int,
@@ -1059,6 +1067,11 @@ type RLoanDatum {
   loanValue: Int,
   rewards: Int,
   timestamp: PosixTime,
+}
+
+type RewardsAction {
+  RewardMint
+  RewardBurn
 }
 
 validator(cp: PolicyId, o: VerificationKeyHash) {
@@ -1099,6 +1112,68 @@ validator(cp: PolicyId, o: VerificationKeyHash) {
       }
 
       RewardBurn -> has(transaction.extra_signatories, o) && tAmt <= -1
+    }
+  }
+}
+
+//                    //
+// Rewards Loan Vault //
+//                    //
+
+validator(p: PolicyId, o: PolicyId, cp: PolicyId) {
+  fn rewardsLoanVault(d: LoanDatum, r: LoanAction, c: ScriptContext) -> Bool {
+    let ScriptContext { transaction, purpose } = c
+    expect Spend(oref) = purpose
+
+    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
+
+    expect Some(refIn) =
+      find(reference_inputs, fn(input) { has(policies(input.output.value), o) })
+
+    expect InlineDatum(datum) = refIn.output.datum
+    expect rDatum: OracleDatum = datum
+    let exchangeRate = rDatum.usdAda
+
+    when r.a is {
+      1 -> {
+        // balance
+        let ownOut = get_own_singleton_output(transaction, oref)
+        let adaOut = lovelace_of(ownOut.value) / 1000000
+        let newCollateralValue = adaOut / exchangeRate
+        let minCollateralValue = d.loanValue * exchangeRate * ( 50 / 100 )
+        expect has(policies(ownOut.value), p)
+        expect InlineDatum(datum) = ownOut.datum
+        expect datum: LoanDatum = datum
+
+        datum.collateral == d.collateral && datum.collateralValue == newCollateralValue && datum.loanCurrency == d.loanCurrency && datum.loanValue == d.loanValue && datum.timestamp == r.b && adaOut >= minCollateralValue
+      }
+
+      2 -> {
+        // liquidate
+        let ownOut = get_own_singleton_output(transaction, oref)
+        let adaOut = lovelace_of(ownOut.value) / 1000000
+        let newCollateralValue = adaOut / exchangeRate
+        expect has(policies(ownOut.value), p)
+        expect InlineDatum(datum) = ownOut.datum
+        expect datum: LoanDatum = datum
+        let minCollateralValue = datum.loanValue * exchangeRate * ( 85 / 100 )
+
+        datum.collateral == d.collateral && datum.collateralValue == newCollateralValue && datum.loanCurrency == d.loanCurrency && datum.loanValue == d.loanValue - r.c && datum.timestamp == r.b && adaOut >= minCollateralValue
+      }
+      // close
+      _ -> {
+        expect Some(refConfig) =
+          find(
+            reference_inputs,
+            fn(input) { has(policies(input.output.value), cp) },
+          )
+
+        expect InlineDatum(datum) = refConfig.output.datum
+        expect cDatum: SConfigDatum = datum
+        let rewardsHash = cDatum.rewardsVal
+
+        has(extra_signatories, rewardsHash) && d.loanValue == 0
+      }
     }
   }
 }
