@@ -15,6 +15,9 @@ use aiken/transaction/value.{
   tokens, without_lovelace,
 }
 
+// TODO : I need to force the oracle to update in these contracts so I have everything avaiable to run
+// then I can begin optimisations
+
 type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>
 
@@ -116,17 +119,21 @@ validator(o: VerificationKeyHash, p: PolicyId) {
 
     when r is {
       Update -> {
+        // check own output
         let out = get_own_singleton_output(transaction, ownRef)
+        // expect single token ignoring Token Name
         expect [(_, 1)] =
           without_lovelace(out.value)
             |> tokens(p)
             |> to_list()
+        // expect variable oracle datum
         expect InlineDatum(datum) = out.datum
         expect datum: VarODatum = datum
-
+        // signed by owner
         has(transaction.extra_signatories, o)
       }
       Close -> {
+        // get input from oref
         expect Some(input) = find_input(transaction.inputs, ownRef)
 
         expect [(oName, 1)] =
@@ -134,13 +141,13 @@ validator(o: VerificationKeyHash, p: PolicyId) {
           without_lovelace(input.output.value)
             |> tokens(p)
             |> to_list()
-
+        // expect single token burns in the transaction
         expect [(oName, -1)] =
           transaction.mint
             |> value.from_minted_value()
             |> value.tokens(p)
             |> dict.to_list()
-
+        // signed by owner
         has(transaction.extra_signatories, o)
       }
     }
@@ -163,6 +170,7 @@ validator(o: VerificationKeyHash) {
         |> to_list()
 
     when r is {
+      // checks signed bt owner and No. of tokens
       OMint -> list.has(transaction.extra_signatories, o) && oAmt == 1
       OBurn -> list.has(transaction.extra_signatories, o) && oAmt == -1
     }
@@ -172,6 +180,8 @@ validator(o: VerificationKeyHash) {
 //                  //
 // Config Validator //
 //                  //
+
+// This holds Script Hashes to key validators so we can check for outputs and signatures
 
 validator(o: VerificationKeyHash, cp: PolicyId) {
   fn configValidator(
@@ -186,13 +196,15 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
 
     when r is {
       ConUpdate { loanVal, colVal } -> {
+        // gets own output (ensures there is only one)
         let ownOut = get_own_singleton_output(transaction, oref)
+        // checks output datum
         expect InlineDatum(datum) = ownOut.datum
         expect outDatum: SConfigDatum = datum
-
+        // checks signed by owner, has a Config Token Datum values match redeemer
         has(extra_signatories, o) && has(policies(ownOut.value), cp) && outDatum.loanVal == loanVal && outDatum.colVal == colVal
       }
-
+      // checks signed by owner
       ConClose -> has(extra_signatories, o)
     }
   }
@@ -201,6 +213,8 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
 //                       //
 // Config Minting Policy //
 //                       //
+
+// this mints the config token for the config validator
 
 validator(o: VerificationKeyHash) {
   fn configMint(r: SConfigAction, c: ScriptContext) -> Bool {
@@ -217,34 +231,43 @@ validator(o: VerificationKeyHash) {
 
     when r is {
       ConUpdate { loanVal, colVal } -> {
+        // checks the output with the token
         expect Some(ownOut) =
           find(outputs, fn(output) { has(policies(output.value), policyId) })
+        // has the appropriate datum        
         expect InlineDatum(datum) = ownOut.datum
         expect outDatum: SConfigDatum = datum
-
+        // output datum matches redeemer && only 1 token is minted && signed by owner
         outDatum.loanVal == loanVal && outDatum.colVal == colVal && has(
           extra_signatories,
           o,
         ) && tAmt == 1
       }
-
+      // signed by owner and mint amount is -1
       ConClose -> has(extra_signatories, o) && tAmt == -1
     }
   }
 }
 
+//                              //
+// Rewards Token Minting Policy //
+//                              //
+
+// This is responsible for minting the rewards tokens for loans once they are closed
+
 validator(cp: PolicyId, o: VerificationKeyHash) {
-  // config policy
   fn rewardsMint(r: RewardsAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
     let Transaction { mint, outputs, .. } = transaction
 
+    // checks for config ref input
     expect Some(refIn) =
       find(
         transaction.reference_inputs,
         fn(input) { has(policies(input.output.value), cp) },
       )
+    // config input has the right datum
     expect InlineDatum(datum) = refIn.output.datum
     expect cDatum: RConfigDatum = datum
 
@@ -256,20 +279,21 @@ validator(cp: PolicyId, o: VerificationKeyHash) {
 
     when r is {
       RewardMint -> {
+        // checks for loan input (need to add LP as param)
         expect Some(loanIn) =
           find(
             transaction.inputs,
-            fn(input) { has(policies(input.output.value), cp) },
+            fn(input) { has(policies(input.output.value), lp) },
           )
-
+        // checks datum is correct
         expect InlineDatum(datum) = loanIn.output.datum
         expect lDatum: RLoanDatum = datum
-
+        // checks no loan outputs
         expect [] = find_script_outputs(outputs, cDatum.loanVal)
-
+        // checks mint amount == rewards
         tAmt == lDatum.rewards
       }
-
+      // checks burn is -1 or less and tx signed by owner
       RewardBurn -> has(transaction.extra_signatories, o) && tAmt <= -1
     }
   }
@@ -298,6 +322,7 @@ validator(op: PolicyId, cp: PolicyId) {
 
     when r is {
       AMint { loanCurrency, loanValue, timestamp } -> {
+        // checks for Oracle ref in
         expect Some(oracleIn) =
           head(
             filter(
@@ -305,10 +330,12 @@ validator(op: PolicyId, cp: PolicyId) {
               fn(ref) { has(policies(ref.output.value), op) },
             ),
           )
+        // checks oracle datum
         expect InlineDatum(datum) = oracleIn.output.datum
         expect rDatum: OracleDatum = datum
+        // pulls exchange rate
         let exchangeRate = rDatum.usdAda
-
+        // checks for config input
         expect Some(configIn) =
           head(
             filter(
@@ -316,9 +343,10 @@ validator(op: PolicyId, cp: PolicyId) {
               fn(ref) { has(policies(ref.output.value), cp) },
             ),
           )
+        // checks config datum
         expect InlineDatum(datum) = configIn.output.datum
         expect cDatum: SConfigDatum = datum
-
+        // sends to loan validator in config
         expect Some(loanOut) =
           find(
             outputs,
@@ -328,6 +356,7 @@ validator(op: PolicyId, cp: PolicyId) {
               ) && has(policies(output.value), policyId)
             },
           )
+        // sends to collateral validator in config
         expect Some(colOut) =
           find(
             outputs,
@@ -337,15 +366,19 @@ validator(op: PolicyId, cp: PolicyId) {
               ) && has(policies(output.value), policyId)
             },
           )
+        // checks loan output datum
         expect InlineDatum(datum) = loanOut.datum
         expect lDatum: SLoanDatum = datum
+        // checks collateral output datum
         expect InlineDatum(datum) = colOut.datum
         expect cDatum: SColDatum = datum
+        // checks loan values against redeemer && collateral && 2 tokens minted
         lDatum.amount == loanValue && lDatum.interest == 15 && lDatum.term == 0 && lDatum.status == "Active" && cDatum.amount == loanValue * 2 && cDatum.status == "Active" && lovelace_of(
           colOut.value,
         ) >= lDatum.amount * exchangeRate * 1000000 && tAmt == 2
       }
-
+      // always allows Burn -> This needs to be changed to only allow burning when the loan is 
+      // closed or there is no more loan value (ie liquidated)
       ABurn -> True
     }
   }
@@ -355,59 +388,73 @@ validator(op: PolicyId, cp: PolicyId) {
 // Separate Loan Vault //
 //                     //
 
-validator(op: PolicyId, lp: PolicyId) {
+// Loan Vault holds the loan information at a token utxo
+
+validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
   fn sLoanVal(d: SLoanDatum, r: SLoanAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = purpose
 
     let Transaction { inputs, outputs, reference_inputs, .. } = transaction
-
+    // checks for oracle input
     expect Some(oracleIn) =
       find(
         reference_inputs,
         fn(input) { has(policies(input.output.value), op) },
       )
+    // checks oracle datum
     expect InlineDatum(datum) = oracleIn.output.datum
     expect rDatum: OracleDatum = datum
+    // gets exchange rate
     let exchangeRate = rDatum.usdAda
-
+    // checks for Config input
     expect Some(configIn) =
       find(
         reference_inputs,
-        fn(input) { has(policies(input.output.value), lp) },
+        fn(input) { has(policies(input.output.value), cp) },
       )
+    // checks Config Datum
     expect InlineDatum(datum) = configIn.output.datum
     expect cDatum: SConfigDatum = datum
 
     when r is {
       SLBalance -> {
+        // Balance Loan, get own input
         expect Some(ownIn) = find_input(inputs, oref)
-
+        // check for loan token
         expect Some(loanToken) =
           head(flatten(without_lovelace(ownIn.output.value)))
-
+        // check collateral output
         expect Some(colOut) =
           find(
             outputs,
             fn(output) {
+              // check for collateral token
               expect Some(colToken) =
                 head(flatten(without_lovelace(output.value)))
+              // script hash matches config Datum
               output.address.payment_credential == ScriptCredential(
                 cDatum.colVal,
               ) && loanToken == colToken
             },
           )
+        // checks for collateral datum
         expect InlineDatum(datum) = colOut.datum
         expect cDatum: SColDatum = datum
-
+        // find own output
         let ownOut = get_own_singleton_output(transaction, oref)
+        // value in ADA
         let adaOut = lovelace_of(colOut.value) / 1000000
+        // new value acc Exchange rate
         let newCollateralValue = adaOut / exchangeRate
+        // minimum expected collateral value
         let minCollateralValue = d.amount * exchangeRate * ( 50 / 100 )
+        // own out has loan Token
         expect has(policies(ownOut.value), lp)
+        // check own output datum
         expect InlineDatum(datum) = ownOut.datum
         expect datum: SLoanDatum = datum
-
+        // check datum values && ADA collateral output
         datum.amount == d.amount && datum.interest == d.interest && datum.term == d.term && datum.status == d.status && adaOut >= minCollateralValue
       }
 
@@ -457,13 +504,16 @@ validator(op: PolicyId, lp: PolicyId) {
 
     let Transaction { inputs, outputs, reference_inputs, .. } = transaction
 
+    // check Oracle ref input
     expect Some(oracleIn) =
       find(
         reference_inputs,
         fn(input) { has(policies(input.output.value), op) },
       )
+    // check oracle datum
     expect InlineDatum(datum) = oracleIn.output.datum
     expect rDatum: OracleDatum = datum
+    // extract exchange Rate
     let exchangeRate = rDatum.usdAda
 
     expect Some(configIn) =
