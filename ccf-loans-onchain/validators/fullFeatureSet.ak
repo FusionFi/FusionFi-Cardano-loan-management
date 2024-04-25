@@ -15,14 +15,50 @@ use aiken/transaction/value.{
   tokens, without_lovelace,
 }
 
-// TODO : I need to force the oracle to update in these contracts so I have everything avaiable to run
+// Done : I need to force the oracle to update in these contracts so I have everything avaiable to run
 // then I can begin optimisations
+
+//         //
+// Helpers //
+//         //
+
+fn get_own_singleton_output(tx: Transaction, oref: OutputReference) -> Output {
+  expect Some(input) =
+    tx.inputs
+      |> find_input(oref)
+
+  expect ScriptCredential(script_hash) = input.output.address.payment_credential
+  let script_outputs =
+    tx.outputs
+      |> find_script_outputs(script_hash)
+
+  expect list.length(script_outputs) == 1
+  expect Some(output) =
+    tx.outputs
+      |> find_script_outputs(script_hash)
+      |> list.head()
+  output
+}
+
+fn calculate_rate(last: PosixTime, new: PosixTime, rate: Int) -> Int {
+  let day = 86400
+  let diff = new - last
+  let daysToCharge = diff / day
+  let dailyRate = rate / 365
+  let apr = dailyRate * rate
+
+  apr
+}
 
 type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>
 
 type ScriptHash =
   Hash<Blake2b_224, Script>
+
+//                     //
+// Datums && Redeemers //
+//                     //
 
 type SConfigDatum {
   loanVal: ScriptHash,
@@ -64,42 +100,6 @@ type RewardsAction {
   RewardMint
   RewardBurn
 }
-
-//         //
-// Helpers //
-//         //
-
-fn get_own_singleton_output(tx: Transaction, oref: OutputReference) -> Output {
-  expect Some(input) =
-    tx.inputs
-      |> find_input(oref)
-
-  expect ScriptCredential(script_hash) = input.output.address.payment_credential
-  let script_outputs =
-    tx.outputs
-      |> find_script_outputs(script_hash)
-
-  expect list.length(script_outputs) == 1
-  expect Some(output) =
-    tx.outputs
-      |> find_script_outputs(script_hash)
-      |> list.head()
-  output
-}
-
-fn calculate_rate(last: PosixTime, new: PosixTime, rate: Int) -> Int {
-  let day = 86400
-  let diff = new - last
-  let daysToCharge = diff / day
-  let dailyRate = rate / 365
-  let apr = dailyRate * rate
-
-  apr
-}
-
-//                       //
-// Variable Oracle Datum //
-//                       //
 
 type VarODatum {
   usdAda: Int,
@@ -323,15 +323,10 @@ validator(op: PolicyId, cp: PolicyId) {
     when r is {
       AMint { loanCurrency, loanValue, timestamp } -> {
         // checks for Oracle ref in
-        expect Some(oracleIn) =
-          head(
-            filter(
-              reference_inputs,
-              fn(ref) { has(policies(ref.output.value), op) },
-            ),
-          )
+        expect Some(oracleOut) =
+          find(outputs, fn(output) { has(policies(output.value), o) })
         // checks oracle datum
-        expect InlineDatum(datum) = oracleIn.output.datum
+        expect InlineDatum(datum) = oracleOut.output.datum
         expect rDatum: OracleDatum = datum
         // pulls exchange rate
         let exchangeRate = rDatum.usdAda
@@ -397,13 +392,10 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
 
     let Transaction { inputs, outputs, reference_inputs, .. } = transaction
     // checks for oracle input
-    expect Some(oracleIn) =
-      find(
-        reference_inputs,
-        fn(input) { has(policies(input.output.value), op) },
-      )
+    expect Some(oracleOut) =
+      find(outputs, fn(output) { has(policies(output.value), o) })
     // checks oracle datum
-    expect InlineDatum(datum) = oracleIn.output.datum
+    expect InlineDatum(datum) = oracleOut.output.datum
     expect rDatum: OracleDatum = datum
     // gets exchange rate
     let exchangeRate = rDatum.usdAda
@@ -459,30 +451,40 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
       }
 
       SLLiquidate -> {
+        // Liquidate Loan
+        // get own input
         expect Some(ownIn) = find_input(inputs, oref)
+        // check for loan token
         expect Some(loanToken) =
           head(flatten(without_lovelace(ownIn.output.value)))
-
+        // check for collateral output
         expect Some(colOut) =
           find(
             outputs,
             fn(output) {
               expect Some(colToken) =
                 head(flatten(without_lovelace(output.value)))
+              // script hash matches config Datum
               output.address.payment_credential == ScriptCredential(
                 cDatum.colVal,
-              ) && loanToken == colToken
+              ) && // make sure the loan token is the same as the collateral token
+              loanToken == colToken
             },
           )
+        // check collateral datum
         expect InlineDatum(datum) = colOut.datum
         expect cDatum: SColDatum = datum
-
+        // get own output
         let ownOut = get_own_singleton_output(transaction, oref)
+        // calc ADA value
         let adaOut = lovelace_of(colOut.value) / 1000000
+        // new value acc Exchange rate
         let newCollateralValue = adaOut / exchangeRate
         expect has(policies(ownOut.value), lp)
+        // check own output datum
         expect InlineDatum(datum) = ownOut.datum
         expect datum: SLoanDatum = datum
+        // minimum expected collateral value
         let minCollateralValue = datum.amount * exchangeRate * ( 85 / 100 )
 
         datum.amount == d.amount && datum.interest == d.interest && datum.term == d.term && datum.status == d.status && adaOut >= minCollateralValue
@@ -505,85 +507,98 @@ validator(op: PolicyId, lp: PolicyId) {
     let Transaction { inputs, outputs, reference_inputs, .. } = transaction
 
     // check Oracle ref input
-    expect Some(oracleIn) =
-      find(
-        reference_inputs,
-        fn(input) { has(policies(input.output.value), op) },
-      )
+    expect Some(oracleOut) =
+      find(outputs, fn(output) { has(policies(output.value), o) })
     // check oracle datum
-    expect InlineDatum(datum) = oracleIn.output.datum
+    expect InlineDatum(datum) = oracleOut.datum
     expect rDatum: OracleDatum = datum
     // extract exchange Rate
     let exchangeRate = rDatum.usdAda
 
+    // Get config ref input
     expect Some(configIn) =
       find(
         reference_inputs,
         fn(input) { has(policies(input.output.value), lp) },
       )
+    // check config datum
     expect InlineDatum(datum) = configIn.output.datum
     expect cDatum: SConfigDatum = datum
 
     when r is {
       SCBalance -> {
+        // get own input
         expect Some(ownIn) = find_input(inputs, oref)
-
+        // check collateral token
         expect Some(collateralToken) =
           head(flatten(without_lovelace(ownIn.output.value)))
-
+        // check for loan output
         expect Some(loanOut) =
           find(
             outputs,
             fn(output) {
+              // check for loan token
               expect Some(loanToken) =
                 head(flatten(without_lovelace(output.value)))
+              // script hash matches config Datum
               output.address.payment_credential == ScriptCredential(
                 cDatum.loanVal,
-              ) && loanToken == collateralToken
+              ) && // make sure the loan token is the same as the collateral token
+              loanToken == collateralToken
             },
           )
+        // extract loan datum
         expect InlineDatum(datum) = loanOut.datum
         expect lDatum: SLoanDatum = datum
-
+        // get own output
         let ownOut = get_own_singleton_output(transaction, oref)
+        // check it has the right datum
         expect InlineDatum(datum) = ownOut.datum
         expect outDatum: SColDatum = datum
-
+        // check the value of the collateral is greater than the minimum
         lovelace_of(ownOut.value) >= lDatum.amount * exchangeRate * ( 50 / 100 ) * 1000000 && outDatum.amount == lovelace_of(
           ownOut.value,
         ) / exchangeRate / 1000000 && has(
+          // own output has collateral token
           flatten(ownOut.value),
           collateralToken,
         )
       }
       // && outDatum.timestamp == timestamp
       SCLiquidate -> {
+        // get own input
         expect Some(ownIn) = find_input(inputs, oref)
-
+        // check for collateral token
         expect Some(collateralToken) =
           head(flatten(without_lovelace(ownIn.output.value)))
-
+        // check for loan output
         expect Some(loanOut) =
           find(
             outputs,
             fn(output) {
+              // check for loan token
               expect Some(loanToken) =
                 head(flatten(without_lovelace(output.value)))
+              // script hash matches config Datum loan Validator
               output.address.payment_credential == ScriptCredential(
                 cDatum.loanVal,
-              ) && loanToken == collateralToken
+              ) && // make sure the loan token is the same as the collateral token
+              loanToken == collateralToken
             },
           )
+        // check loan datum
         expect InlineDatum(datum) = loanOut.datum
         expect lDatum: SLoanDatum = datum
-
+        // get own output
         let ownOut = get_own_singleton_output(transaction, oref)
+        // check own output datum
         expect InlineDatum(datum) = ownOut.datum
         expect outDatum: SColDatum = datum
-
+        // check the value of the collateral is greater than the minimum
         lovelace_of(ownOut.value) >= lDatum.amount * exchangeRate * ( 50 / 100 ) * 1000000 && outDatum.amount == lovelace_of(
           ownOut.value,
         ) / exchangeRate / 1000000 && has(
+          // output has collateral token
           flatten(ownOut.value),
           collateralToken,
         )

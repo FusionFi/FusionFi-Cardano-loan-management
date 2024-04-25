@@ -23,7 +23,8 @@ Loan Minting Policy `lMint`
 Loan Vault Validator `LVal`
 Collateral Vault Validator `CVal`
 
-// To demonstrate this concept The deom will only hold the Loan & Collateral Validators with an assumed PolicyId and Oracle //
+// To demonstrate this concept The demo will only hold the Loan & Collateral 
+Validators with an assumed PolicyId and Oracle //
 
 LoanMintingPolicy:
   - mints loan token pair

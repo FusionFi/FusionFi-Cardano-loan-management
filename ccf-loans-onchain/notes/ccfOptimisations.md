@@ -38,3 +38,6 @@ This is supposedly a crazy level optimisation which I am looking forward to test
 I am in touch with the man who discovered this, so I will make a point of leaning on him 
 for assistance in implementing this design pattern so I can learn to implement it 
 effectively.
+
+---
+
