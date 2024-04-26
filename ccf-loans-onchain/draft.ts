@@ -17,7 +17,10 @@ import {
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import * as cbor from "https://deno.land/x/cbor@v1.4.1/index.js";
 
-// deno run --allow-net --allow-read --allow-env ideate.ts
+// deno run --allow-net --allow-read --allow-env full.ts
+
+// TODO: This transaction code is WIP not complete
+
 
 const BLOCKFROST = "API_KEY"
  
@@ -44,28 +47,43 @@ const ownerPKH = lucid.utils.getAddressDetails(await Deno.readTextFile("owner.ad
 const oMint = await readOracleMint()
 const oracleCS = lucid.utils.mintingPolicyToId(oMint)
 const oVal = await readOracleValidator()
+const configMint = await readConfigMint()
+const configCS = lucid.utils.mintingPolicyToId(configMint)
+const conVal = await readConfigValidator()
 const lMint = await readLoanMint()
-const loanCS = lucid.utils.mintingPolicyToId(mint)
+const loanCS = lucid.utils.mintingPolicyToId(lMint)
 const lVal = await readLoanValidator()
+const cVal = await readCollateralValidator()
+const rMint = await readRewardsMint()
 
 // --- Supporting functions
 
-async function readOracleMint(): Promise<MintingPolicy> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[0]
+async function readCollateralValidator(): Promise<SpendingValidator> {
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[0];
+  return {
+    type: "PlutusV2",
+    script: applyParamsToScript(
+      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, loanCS, configCS]
+    ),
+  };
+}
+
+async function readConfigMint(): Promise<MintingPolicy> {
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[1];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
       applyDoubleCborEncoding(validator.compiledCode), [ownerPKH]
     ),
-  }
+  };
 }
 
-async function readOracleValidator(): Promise<SpendingValidator> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[1];
+async function readConfigValidator(): Promise<SpendingValidator> {
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[2];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
-      applyDoubleCborEncoding(validator.compiledCode), [ownerPKH, oracleCS]
+      applyDoubleCborEncoding(validator.compiledCode), [ownerPKH, configCS]
     ),
   };
 }
@@ -75,17 +93,47 @@ async function readLoanMint(): Promise<MintingPolicy> {
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
-      applyDoubleCborEncoding(validator.compiledCode), [oracleCS]
+      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, configCS]
     ),
   };
 }
 
 async function readLoanValidator(): Promise<SpendingValidator> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[2];
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[4];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
-      applyDoubleCborEncoding(validator.compiledCode), [ownerPKH, loanCS]
+      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, loanCS, configCS]
+    ),
+  };
+}
+
+async function readOracleMint(): Promise<MintingPolicy> {
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[5]
+  return {
+    type: "PlutusV2",
+    script: applyParamsToScript(
+      applyDoubleCborEncoding(validator.compiledCode), [ownerPKH]
+    ),
+  }
+}
+
+async function readOracleValidator(): Promise<SpendingValidator> {
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[6];
+  return {
+    type: "PlutusV2",
+    script: applyParamsToScript(
+      applyDoubleCborEncoding(validator.compiledCode), [ownerPKH, oracleCS]
+    ),
+  };
+}
+
+async function readRewardsMint(): Promise<MintingPolicy> {
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[7];
+  return {
+    type: "PlutusV2",
+    script: applyParamsToScript(
+      applyDoubleCborEncoding(validator.compiledCode), [ownerPKH, configCS, loanCS]
     ),
   };
 }
@@ -112,13 +160,15 @@ const price5 = 0.4
 const price6 = 0.265
 
 const collateral = "ADA"
-const collateralValue = 1000
+const collateralValue = 1000n
 const loanCurrency = "USDT"
-const loanValue = 500
+const loanValue = 500n
 const timestamp = new Date().getTime()
+const rate = 15n
+const fee = 2n
 
 const mintOracleAction = Data.to(new Constr(0, []))
-const updateOracleAction = Data.to(new Constr(0, [BigInt(price1), timestamp]))
+const updateOracleAction = Data.to(new Constr(0, [BigInt(price2), timestamp, rate, fee]))
 const burnOracleAction = Data.to(new Constr(1, []))
 const mintLoanAction = Data.to(new Constr(0, []))
 const burnLoanAction = Data.to(new Constr(1, []))
@@ -158,21 +208,25 @@ const lAddr = lucid.utils.validatorToAddress(lVal)
 
 // Oracle Minting Transactions //
 
-async function makeOracle() {
-  const utxos: [UTxO] = await lucid.getUtxos()
-  const utxo: UTxO = utxos[0]
+// async function makeOracle() {
+//   const utxos: [UTxO] = await lucid.getUtxos()
+//   const utxo: UTxO = utxos[0]
   
-  return oracleTN
-}
+//   return utxo.txHash.toString() + utxo.outputIndex.toString()
+// }
 
-const oracleTN = await makeOracle()
+// const oracleTN = await makeOracle()
+
+const oracleTN = "oracleTN"
+const oracleToken = toUnit(oracleCS, oracleTN)
 
 async function mintOracle() {
   const utxos: [UTxO] = await lucid.getUtxos()
   const utxo: UTxO = utxos[0]
   const oracleTN = fromText(utxo.txHash.toString() + utxo.outputIndex.toString())
   console.log("Oracle Token Name: ", oracleTN)
-
+  const oracleUnit = toUnit(oracleCS, oracleTN)
+  console.log("Oracle Unit: ", oracleUnit)
   
   const tx = await Lucid
     .newTx()
@@ -184,17 +238,15 @@ async function mintOracle() {
     .payToContract(
       oAddr, 
       { inline: oracleDatum }, 
-      { [toUnit(oracleCS, oracleTN)]: 1 }
+      { [oracleUnit]: 1 }
     )
     .addSignerKey(ownerPKH)
     .complete()
 
-  const txSigned = await lucid.signTx().complete()
+  const txSigned = await tx.signTx().complete()
 
   return txSigned.submit()
 }
-
-const oracleToken = toUnit(oracleCS, oracleTN)
 
 // Oracle Update Functions //
 

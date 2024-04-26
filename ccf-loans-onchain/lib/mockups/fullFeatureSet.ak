@@ -45,7 +45,7 @@ fn calculate_rate(last: PosixTime, new: PosixTime, rate: Int) -> Int {
   let diff = new - last
   let daysToCharge = diff / day
   let dailyRate = rate / 365
-  let apr = dailyRate * rate
+  let apr = dailyRate * daysToCharge
 
   apr
 }
@@ -499,7 +499,7 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
 // Separate Collateral Vault //
 //                           //
 
-validator(op: PolicyId, lp: PolicyId) {
+validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
   fn cVal(d: SColDatum, r: SColAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(oref) = purpose
@@ -508,7 +508,7 @@ validator(op: PolicyId, lp: PolicyId) {
 
     // check Oracle ref input
     expect Some(oracleOut) =
-      find(outputs, fn(output) { has(policies(output.value), o) })
+      find(outputs, fn(output) { has(policies(output.value), op) })
     // check oracle datum
     expect InlineDatum(datum) = oracleOut.datum
     expect rDatum: OracleDatum = datum
@@ -519,7 +519,7 @@ validator(op: PolicyId, lp: PolicyId) {
     expect Some(configIn) =
       find(
         reference_inputs,
-        fn(input) { has(policies(input.output.value), lp) },
+        fn(input) { has(policies(input.output.value), cp) },
       )
     // check config datum
     expect InlineDatum(datum) = configIn.output.datum
