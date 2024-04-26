@@ -75,7 +75,7 @@ type LoanAction {
 }
 
 type LoanMintAction {
-  AMint { loanCurrency: ScriptHash, loanValue: Int, timestamp: PosixTime }
+  AMint { loanCurrency: ByteArray, loanValue: Int, timestamp: PosixTime }
   ABurn
 }
 

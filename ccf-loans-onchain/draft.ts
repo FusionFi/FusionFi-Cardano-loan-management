@@ -167,14 +167,29 @@ const timestamp = new Date().getTime()
 const rate = 15n
 const fee = 2n
 
+const oAddr = lucid.utils.validatorToAddress(oVal)
+const lAddr = lucid.utils.validatorToAddress(lVal)
+const cAddr = lucid.utils.validatorToAddress(cVal)
+const conAddr = lucid.utils.validatorToAddress(conVal)
+
+const oracleHash = await lucid.getAddressDetails(oAddr).paymentCredential.hash
+const loanHash = await lucid.getAddressDetails(lAddr).paymentCredential.hash
+const configHash = await lucid.getAddressDetails(conAddr).paymentCredential.hash
+const collateralHash = await lucid.getAddressDetails(cAddr).paymentCredential.hash
+const rewardsHash = await lucid.toScriptRef(rMint)
+
 const mintOracleAction = Data.to(new Constr(0, []))
 const updateOracleAction = Data.to(new Constr(0, [BigInt(price2), timestamp, rate, fee]))
 const burnOracleAction = Data.to(new Constr(1, []))
-const mintLoanAction = Data.to(new Constr(0, []))
+const mintLoanAction = Data.to(new Constr(0, [loanCurrency, loanValue, timestamp]))
 const burnLoanAction = Data.to(new Constr(1, []))
 const balanceLoanAction = Data.to(new Constr(0, []))
 const liquidateLoanAction = Data.to(new Constr(1, []))
 const closeLoanAction = Data.to(new Constr(2, []))
+const configUpdateAction = Data.to(new Constr(0, [loanHash, configHash, rewardsHash]))
+const configCloseAction = Data.to(new Constr(1, []))
+const rewardMintAction = Data.to(new Constr(0, []))
+const rewardsBurnAction = Data.to(new Constr(1, []))
 
 const oracleDatum = Data.to(new Constr(0, [BigInt(price1), timestamp]))
 const loanDatum = Data.to(
@@ -192,9 +207,6 @@ const oracleDatum4 = Data.to(new Constr(0, [BigInt(price4), timestamp]))
 const oracleDatum5 = Data.to(new Constr(0, [BigInt(price5), timestamp]))
 const oracleDatum6 = Data.to(new Constr(0, [BigInt(price6), timestamp]))
 
-const oAddr = lucid.utils.validatorToAddress(oVal)
-const lAddr = lucid.utils.validatorToAddress(lVal)
-
 // ---------------------------------------- //
 
 // Transactions //
@@ -205,6 +217,8 @@ const lAddr = lucid.utils.validatorToAddress(lVal)
 // The spending utxo to create the token name
 // This ensures that even if someone manages to bypass the signature they could
 // never duplicate the token
+// When testing these transactions you will need to record the token name when you mint,
+// and use it as a constant in the subsequent transactions
 
 // Oracle Minting Transactions //
 
@@ -217,7 +231,7 @@ const lAddr = lucid.utils.validatorToAddress(lVal)
 
 // const oracleTN = await makeOracle()
 
-const oracleTN = "oracleTN"
+const oracleTN = fromText("oracleTN")
 const oracleToken = toUnit(oracleCS, oracleTN)
 
 async function mintOracle() {
@@ -320,16 +334,16 @@ async function oracleClose() {
 // this will enable users to have multiple loans and not require their pkh 
 // or other as token names
 
-async function makeLoan() {
-  const utxos: [UTxO] = await lucid.getUtxos()
-  const utxo: UTxO = utxos[0]
-  const loanTN = fromText(utxo.txHash.toString() + utxo.outputIndex.toString())
+// async function makeLoan() {
+//   const utxos: [UTxO] = await lucid.getUtxos()
+//   const utxo: UTxO = utxos[0]
+//   const loanTN = fromText(utxo.txHash.toString() + utxo.outputIndex.toString())
   
-  return loanTN
-}
+//   return loanTN
+// }
 
-const loanTN = await makeLoan()
-
+// const loanTN = await makeLoan()
+const loanTn = fromText("loanTN")
 const loanToken = toUnit(loanCS, loanTN)
 
 async function mintLoan() {
@@ -339,7 +353,7 @@ async function mintLoan() {
   const oracleUtxos: UTxO = await lucid.getUtxosAtWithUnit(oAddr, oracleToken)
   const oracleUtxo: UTxO = oracleUtxos[0]
   const oracleDatum = Data.from(oracleUtxo.datum)
-  const deposit = oracleDatum[0] * loanValue * 1000000
+  const deposit = oracleDatum[0] * loanValue * 1000000n
   
   const tx = await Lucid
     .newTx()
@@ -508,6 +522,98 @@ async function repayLoan() {
   return txSigned.submit()
 }
 
+// Config Transactions //
+
+async function mintConfig() {
+  const utxos: [UTxO] = await lucid.getUtxos()
+  const utxo: UTxO = utxos[0]
+
+  const tx = await Lucid
+    .newTx()
+    .collectFrom([utxo])
+    .mintAssets({
+      [configCS]: 1,
+    }, configUpdateAction)
+    .attachMintingPolicy(configMint)
+    .payToContract(
+      conAddr, 
+      { inline: configDatum }, 
+      { configCS: 1 }
+    )
+    .addSignerKey(ownerPKH)
+    .complete()
+
+  const txSigned = await tx.sign().complete()
+
+  return txSigned.submit()
+}
+
+async function burnConfig() {
+  const utxos: [UTxO] = await lucid.getUtxosAtWithUnit(conAddr, configCS)
+  const utxo: UTxO = utxos[0]
+
+  const tx = await Lucid
+    .newTx()
+    .collectFrom([utxo], configCloseAction)
+    .mintAssets({
+      [configCS]: -1,
+    }, configCloseAction)
+    .attachMintingPolicy(configMint)
+    .attachSpendingValidator(conVal)
+    .addSignerKey(ownerPKH)
+    .complete()
+
+  const txSigned = await tx.sign().complete()
+
+  return txSigned.submit()
+}
+
+// Rewards Transactions //
+
+async function mintRewards() {
+  const utxos: [UTxO] = await lucid.getUtxos()
+  const utxo: UTxO = utxos[0]
+
+  const tx = await Lucid
+    .newTx()
+    .collectFrom([utxo])
+    .mintAssets({
+      [rMint]: 1,
+    }, mintRewardsAction)
+    .attachMintingPolicy(rMint)
+    .payToContract(
+      ownerAddress, 
+      { inline: configUpdateAction }, 
+      { rMint: 1 }
+    )
+    .addSignerKey(ownerPKH)
+    .complete()
+
+  const txSigned = await tx.sign().complete()
+
+  return txSigned.submit()
+}
+
+async function burnRewards() {
+  const utxos: [UTxO] = await lucid.getUtxosAtWithUnit(ownerAddress, rMint)
+  const utxo: UTxO = utxos[0]
+
+  const tx = await Lucid
+    .newTx()
+    .collectFrom([utxo], rewardsBurnAction)
+    .mintAssets({
+      [rMint]: -1,
+    }, rewardsBurnAction)
+    .attachMintingPolicy(rMint)
+    .attachSpendingValidator(conVal)
+    .addSignerKey(ownerPKH)
+    .complete()
+
+  const txSigned = await tx.sign().complete()
+
+  return txSigned.submit()
+}
+
 // ---------------------------------------- //
 
 // Transaction Execution //
@@ -519,6 +625,16 @@ const mintOracleTx = await mintOracle()
 console.log("Mint Oracle Tx: ", mintOracleTx,
   "Oracle Token Name: ", oracleTN
 )
+
+// mintConfig
+const mintConfigTx = await mintConfig()
+console.log("Mint Config Tx: ", mintConfigTx,
+  "Config Token Name: ", configTN
+)
+
+// burnConfig
+const burnConfigTx = await burnConfig()
+console.log("Burn Config Tx: ", burnConfigTx)
 
 // updateOracle
 const updateOracleTX = await oAutoUpdate()
@@ -557,3 +673,11 @@ console.log("Burn Loan Tx: ", burnLoanTx)
 // closeOracle
 const closeOracleTx = await oracleClose()
 console.log("Close Oracle Tx: ", closeOracleTx)
+
+// mintRewards
+const mintRewardsTx = await mintRewards()
+console.log("Mint Rewards Tx: ", mintRewardsTx)
+
+// burnRewards
+const burnRewardsTx = await burnRewards()
+console.log("Burn Rewards Tx: ", burnRewardsTx)
