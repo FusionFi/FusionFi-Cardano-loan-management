@@ -9,7 +9,6 @@ use aiken/transaction/credential.{
   VerificationKeyCredential,
 }
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
-use tx_util/builder as b
 
 pub const collateralValHash =
   #"c87cb59525bbb34ecaa261fa002ef290748317e1cbb0300aeeec62d7"
@@ -147,7 +146,7 @@ pub fn test_value_with_token() {
 }
 
 pub fn makeAdaValue(l: Int) -> Value {
-  value.from_lovelace(l)
+  value.from_lovelace(l * 1000000)
 }
 
 pub fn test_input(oref: OutputReference, out: Output) -> Input {
