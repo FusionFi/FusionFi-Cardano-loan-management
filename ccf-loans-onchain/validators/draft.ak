@@ -1,19 +1,17 @@
-use aiken/dict.{to_list, values}
+use aiken/dict.{to_list}
 use aiken/hash.{Blake2b_224, Hash}
 use aiken/list.{any, filter, find, has, head}
 use aiken/time.{PosixTime}
 use aiken/transaction.{
-  InlineDatum, Input, Mint, Output, OutputReference, ScriptContext, Spend,
-  Transaction, find_input, find_script_outputs,
+  InlineDatum, Input, Mint, NoDatum, Output, OutputReference, ScriptContext,
+  Spend, Transaction, find_input, find_script_outputs, placeholder,
 }
-use aiken/transaction/credential.{
-  Credential, PaymentCredential, Script, ScriptCredential, VerificationKey,
-  VerificationKeyCredential,
-}
+use aiken/transaction/credential.{Script, ScriptCredential, VerificationKey}
 use aiken/transaction/value.{
-  PolicyId, flatten, from_minted_value, lovelace_of, policies, quantity_of,
-  tokens, without_lovelace,
+  PolicyId, flatten, from_minted_value, lovelace_of, policies, tokens,
+  without_lovelace,
 }
+use tests/tools as t
 
 //         //
 // Helpers //
@@ -37,15 +35,15 @@ fn get_own_singleton_output(tx: Transaction, oref: OutputReference) -> Output {
   output
 }
 
-fn calculate_rate(last: PosixTime, new: PosixTime, rate: Int) -> Int {
-  let day = 86400
-  let diff = new - last
-  let daysToCharge = diff / day
-  let dailyRate = rate / 365
-  let apr = dailyRate * daysToCharge
+// fn calculate_rate(last: PosixTime, new: PosixTime, rate: Int) -> Int {
+//   let day = 86400
+//   let diff = new - last
+//   let daysToCharge = diff / day
+//   let dailyRate = rate / 365
+//   let apr = dailyRate * daysToCharge
 
-  apr
-}
+//   apr
+// }
 
 type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>
@@ -614,3 +612,1155 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
     }
   }
 }
+
+//       //
+// Tests //
+//       //
+
+// Oracle Val Tests 
+test oracle_vault() {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
+
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let oracleAction = oracleAction(2, 11111112, 15, 2)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
+
+test oracle_vault_datum_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(1, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
+
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let oracleAction = oracleAction(2, 11111112, 15, 2)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
+
+test oracle_vault_redeemer_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
+
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let oracleAction = oracleAction(1, 11111112, 15, 2)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
+
+test oracle_vault_sig_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
+
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let oracleAction = oracleAction(2, 11111112, 15, 2)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [#"dead"],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
+
+test oracle_vault_token_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
+
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.makeAdaValue(2),
+      outDatum,
+    )
+
+  let oracleAction = oracleAction(2, 11111112, 15, 2)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
+
+// Oracle Mint Tests
+test oracle_mint() {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let outDatum = InlineDatum(oracleDatum1)
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.oracleMintedValue(),
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+
+  oracleMint(test_owner, oracleMintActionMint(), ctx)?
+}
+
+test oracle_mint_qty_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let outDatum = InlineDatum(oracleDatum1)
+
+  let mintValue =
+    value.to_minted_value(
+      value.merge(t.oracleTokenValue(), t.oracleTokenValue()),
+    )
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: mintValue,
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+
+  oracleMint(test_owner, oracleMintActionMint(), ctx)?
+}
+
+test oracle_mint_datum_fail() fail {
+  // This passes because we dont guarantee output datum
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = collateralDatum(1, 11111111)
+  let outDatum = InlineDatum(oracleDatum1)
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.oracleMintedValue(),
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+
+  oracleMint(test_owner, oracleMintActionMint(), ctx)?
+}
+
+test oracle_mint_sig_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let outDatum = InlineDatum(oracleDatum1)
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.oracleMintedValue(),
+      extra_signatories: [#"cafe"],
+      inputs: [ownerInput],
+      outputs: [oracleOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+
+  oracleMint(test_owner, oracleMintActionMint(), ctx)?
+}
+
+// Config Mint Tests
+test config_mint() {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let outDatum = InlineDatum(configDatum1)
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.configMintedValue(),
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [configOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+
+  configMint(test_owner, configAction, ctx)?
+}
+
+test config_mint_qty_fail() fail {
+  let test_owner = #"face"
+
+  let mintValue =
+    value.to_minted_value(
+      value.merge(t.configTokenValue(), t.configTokenValue()),
+    )
+
+  let oref = t.test_oref(#"face", 1)
+
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let outDatum = InlineDatum(configDatum1)
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: mintValue,
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [configOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+
+  configMint(test_owner, configAction, ctx)?
+}
+
+test config_mint_datum_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let configDatum1 = oracleDatum(1, 1111111111, 15, 2)
+  let outDatum = InlineDatum(configDatum1)
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.configMintedValue(),
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [configOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+
+  configMint(test_owner, configAction, ctx)?
+}
+
+test config_mint_sigs_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let outDatum = InlineDatum(configDatum1)
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.configMintedValue(),
+      extra_signatories: [#"cafe"],
+      inputs: [ownerInput],
+      outputs: [configOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+
+  configMint(test_owner, configAction, ctx)?
+}
+
+// Config Val Tests
+test config_val() {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let inDatum = InlineDatum(configDatum1)
+  let outDatum = InlineDatum(configDatum1)
+
+  let configInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        inDatum,
+      ),
+    )
+
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+}
+
+test config_val_token_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let inDatum = InlineDatum(configDatum1)
+  let outDatum = InlineDatum(configDatum1)
+
+  let configInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.makeAdaValue(10),
+        // we dont check for a token input
+        inDatum,
+      ),
+    )
+
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.makeAdaValue(10),
+      // this only fails because there is no token output
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+}
+
+test config_val_datum_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let oracleDatum = oracleDatum(1, 1111111111, 1, 1)
+
+  let inDatum = InlineDatum(configDatum1)
+  let outDatum = InlineDatum(oracleDatum)
+
+  let configInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        inDatum,
+      ),
+    )
+
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+}
+
+test config_val_sig_fail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let inDatum = InlineDatum(configDatum1)
+  let outDatum = InlineDatum(configDatum1)
+
+  let configInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        inDatum,
+      ),
+    )
+
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [#"cafe"],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+}
+
+// Rewards Mint Tests
+test rewards_mint() {
+  let test_owner = #"face"
+  let test_user = #"cafe"
+
+  let oref = t.test_oref(#"face", 1)
+  let rref = t.test_oref(#"dead", 6)
+
+  let rewardsAction = rewardsActionMint()
+
+  let configDatum =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let configInDatum = InlineDatum(configDatum)
+
+  let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
+  let loanInDatum = InlineDatum(loanDatum)
+  let outDatum = NoDatum
+
+  let loanInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.loanValHash),
+        t.loanValue(),
+        loanInDatum,
+      ),
+    )
+
+  let userOutput =
+    t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+  let configIn =
+    t.test_input(
+      rref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        configInDatum,
+      ),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.rewardsMintedValue(1000),
+      extra_signatories: [test_owner],
+      inputs: [loanInput],
+      outputs: [userOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+
+  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+}
+
+// not a test but a thought for improvement:
+// We should enforce an empty token name so we cant mint tokens with different ones
+
+test rewards_mint_qty_fail() fail {
+  let test_owner = #"face"
+  let test_user = #"cafe"
+
+  let oref = t.test_oref(#"face", 1)
+  let rref = t.test_oref(#"dead", 6)
+
+  let rewardsAction = rewardsActionMint()
+
+  let configDatum =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let configInDatum = InlineDatum(configDatum)
+
+  let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
+  let loanInDatum = InlineDatum(loanDatum)
+  let outDatum = NoDatum
+
+  let loanInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.loanValHash),
+        t.loanValue(),
+        loanInDatum,
+      ),
+    )
+
+  let userOutput =
+    t.test_output(t.test_address(test_owner), t.rewardsValue(100), outDatum)
+  let configIn =
+    t.test_input(
+      rref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        configInDatum,
+      ),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.rewardsMintedValue(100),
+      extra_signatories: [test_owner],
+      inputs: [loanInput],
+      outputs: [userOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+
+  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+}
+
+test rewards_mint_loanOutput_fail() fail {
+  let test_owner = #"face"
+  let test_user = #"cafe"
+
+  let oref = t.test_oref(#"face", 1)
+  let rref = t.test_oref(#"dead", 6)
+
+  let rewardsAction = rewardsActionMint()
+
+  let configDatum =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let configInDatum = InlineDatum(configDatum)
+
+  let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
+  let loanInDatum = InlineDatum(loanDatum)
+  let outDatum = NoDatum
+
+  let loanInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.loanValHash),
+        t.loanValue(),
+        loanInDatum,
+      ),
+    )
+
+  let loanOutput =
+    t.test_output(
+      t.test_script_address(t.loanValHash),
+      t.loanValue(),
+      loanInDatum,
+    )
+
+  let userOutput =
+    t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+  let configIn =
+    t.test_input(
+      rref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        configInDatum,
+      ),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.rewardsMintedValue(1000),
+      extra_signatories: [test_owner],
+      inputs: [loanInput],
+      outputs: [userOutput, loanOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+
+  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+}
+
+test rewards_mint_config_fail() fail {
+  let test_owner = #"face"
+  let test_user = #"cafe"
+
+  let oref = t.test_oref(#"face", 1)
+  let rref = t.test_oref(#"dead", 6)
+
+  let rewardsAction = rewardsActionMint()
+
+  let configDatum =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let configInDatum = InlineDatum(configDatum)
+
+  let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
+  let loanInDatum = InlineDatum(loanDatum)
+  let outDatum = NoDatum
+
+  let loanInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.loanValHash),
+        t.loanValue(),
+        loanInDatum,
+      ),
+    )
+
+  let userOutput =
+    t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+  let configIn =
+    t.test_input(
+      rref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.makeAdaValue(2),
+        configInDatum,
+      ),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.rewardsMintedValue(1000),
+      extra_signatories: [test_owner],
+      inputs: [loanInput],
+      outputs: [userOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+
+  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+}
+
+test rewards_mint_noRewards_fail() fail {
+  let test_owner = #"face"
+  let test_user = #"cafe"
+
+  let oref = t.test_oref(#"face", 1)
+  let rref = t.test_oref(#"dead", 6)
+
+  let rewardsAction = rewardsActionMint()
+
+  let configDatum =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let configInDatum = InlineDatum(configDatum)
+
+  let loanDatum = loanDatum(1000, 15, 0, 2, 1111111190)
+  let loanInDatum = InlineDatum(loanDatum)
+  let outDatum = NoDatum
+
+  let loanInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.loanValHash),
+        t.loanValue(),
+        loanInDatum,
+      ),
+    )
+
+  let userOutput =
+    t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+  let configIn =
+    t.test_input(
+      rref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        configInDatum,
+      ),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.rewardsMintedValue(1000),
+      extra_signatories: [test_owner],
+      inputs: [loanInput],
+      outputs: [userOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+
+  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+}
+
+test rewards_mint_fakeLoanIn_fail() fail {
+  // this fails because we dont check the incoming script hash
+  // if we can't remove a loan token from our control, it doesnt matter
+  // but we could verify the loanIn Credential as we have the config refInput
+  let test_owner = #"face"
+  let test_user = #"cafe"
+
+  let oref = t.test_oref(#"face", 1)
+  let rref = t.test_oref(#"dead", 6)
+
+  let rewardsAction = rewardsActionMint()
+
+  let configDatum =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let configInDatum = InlineDatum(configDatum)
+
+  let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
+  let loanInDatum = InlineDatum(loanDatum)
+  let outDatum = NoDatum
+
+  let loanInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.loanValue(),
+        loanInDatum,
+      ),
+    )
+
+  let userOutput =
+    t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+  let configIn =
+    t.test_input(
+      rref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        configInDatum,
+      ),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.rewardsMintedValue(1000),
+      extra_signatories: [test_owner],
+      inputs: [loanInput],
+      outputs: [userOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+
+  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+}
+
+// Loan Mint Tests
+test loan_mint() {
+  todo
+}
+
+//              //
+// Test Helpers //
+//              //
+
+fn oracleDatum(x: Int, t: PosixTime, r: Int, f: Int) -> OracleDatum {
+  let datum = OracleDatum { usdAda: x, timestamp: t, rate: r, fee: f }
+  datum
+}
+
+fn oracleAction(x: Int, t: PosixTime, r: Int, f: Int) -> OracleAction {
+  let redeemer = OracleUpdate { usdAda: x, timestamp: t, rate: r, fee: f }
+  redeemer
+}
+
+// fn oracleActionClose() -> OracleAction {
+//   let redeemer = OracleClose
+//   redeemer
+// }
+
+fn configDatum(l: ScriptHash, c: ScriptHash, r: ScriptHash) -> ConfigDatum {
+  let datum = ConfigDatum { loanVal: l, colVal: c, rewardsVal: r }
+  datum
+}
+
+fn configActionUpdate(
+  l: ScriptHash,
+  c: ScriptHash,
+  r: ScriptHash,
+) -> ConfigAction {
+  let redeemer = ConUpdate { loanVal: l, colVal: c, rewardsVal: r }
+  redeemer
+}
+
+// fn configActionClose() -> ConfigAction {
+//   let redeemer = ConClose
+//   redeemer
+// }
+
+// fn loanActionBalance() -> LoanAction {
+//   let redeemer = SLBalance
+//   redeemer
+// }
+
+// fn loanActionLiquidate() -> LoanAction {
+//   let redeemer = SLLiquidate
+//   redeemer
+// }
+
+// fn loanActionClose() -> LoanAction {
+//   let redeemer = SLClose
+//   redeemer
+// }
+
+// fn loanMintActionMint(c: ByteArray, v: Int, t: PosixTime) -> LoanMintAction {
+//   let redeemer = AMint { loanCurrency: c, loanValue: v, timestamp: t }
+//   redeemer
+// }
+
+// fn loanMintActionBurn() -> LoanMintAction {
+//   let redeemer = ABurn
+//   redeemer
+// }
+
+fn loanDatum(a: Int, i: Int, r: Int, t: Int, ti: PosixTime) -> LoanDatum {
+  let datum =
+    LoanDatum { amount: a, interest: i, rewards: r, term: t, timestamp: ti }
+  datum
+}
+
+// fn collateralActionBalance() -> CollateralAction {
+//   let redeemer = SCBalance
+//   redeemer
+// }
+
+// fn collateralActionLiquidate() -> CollateralAction {
+//   let redeemer = SCLiquidate
+//   redeemer
+// }
+
+// fn collateralActionClose() -> CollateralAction {
+//   let redeemer = SCClose
+//   redeemer
+// }
+
+fn collateralDatum(a: Int, t: PosixTime) -> CollateralDatum {
+  let datum = CollateralDatum { amount: a, timestamp: t }
+  datum
+}
+
+fn rewardsActionMint() -> RewardsAction {
+  let redeemer = RewardMint
+  redeemer
+}
+
+// fn rewardsActionBurn() -> RewardsAction {
+//   let redeemer = RewardMint
+//   redeemer
+// }
+
+fn oracleMintActionMint() -> OracleMintAction {
+  let redeemer = OMint
+  redeemer
+}
+// fn oracleMintActionBurn() -> OracleMintAction {
+//   let redeemer = OBurn
+//   redeemer
+// }
