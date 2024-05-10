@@ -1,17 +1,12 @@
-use aiken/dict.{to_list}
 use aiken/hash.{Blake2b_224, Hash}
-use aiken/list.{any, filter, find, has, head}
-use aiken/time.{PosixTime}
+use aiken/list
 use aiken/transaction.{
-  InlineDatum, Input, Mint, NoDatum, Output, OutputReference, ScriptContext,
-  Spend, Transaction, find_input, find_script_outputs, placeholder,
+  Output, OutputReference, Redeemer, ScriptContext, Transaction, WithdrawFrom,
+  find_input, find_script_outputs,
 }
-use aiken/transaction/credential.{Script, ScriptCredential, VerificationKey}
-use aiken/transaction/value.{
-  PolicyId, flatten, from_minted_value, lovelace_of, policies, tokens,
-  without_lovelace,
+use aiken/transaction/credential.{
+  Inline, Script, ScriptCredential, VerificationKey,
 }
-use tests/tools as t
 
 //         //
 // Helpers //
@@ -36,4 +31,17 @@ pub fn get_own_singleton_output(
       |> find_script_outputs(script_hash)
       |> list.head()
   output
+}
+
+pub fn withdraw0(
+  withdrawal_logic: fn(Redeemer, Hash<Blake2b_224, Script>, Transaction) -> Bool,
+  redeemer: Redeemer,
+  ctx: ScriptContext,
+) -> Bool {
+  expect ScriptContext { transaction: tx, purpose: WithdrawFrom(stake_cred) } =
+    ctx
+
+  expect Inline(ScriptCredential(own_validator)) = stake_cred
+
+  withdrawal_logic(redeemer, own_validator, tx)
 }

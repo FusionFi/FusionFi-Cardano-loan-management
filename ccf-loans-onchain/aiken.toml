@@ -22,3 +22,8 @@ source = "github"
 name = "aiken-extra/tx_util"
 version = "main"
 source = "github"
+
+[[dependencies]]
+name = "aiken-lang/fortuna"
+version = "d2e5831f92b1b596bb2cc1ab801509da28650fcc"
+source = "github"

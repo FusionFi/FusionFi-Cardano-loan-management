@@ -243,11 +243,11 @@ test loan_val() {
       ..placeholder(),
       reference_inputs: [configIn],
       extra_signatories: [test_owner],
-      inputs: [userIn, oracleIn, colIn, loanIn],
+      inputs: [oracleIn, userIn, colIn, loanIn],
       outputs: [loanOut, colOut, oracleOut],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let ctx1 = ScriptContext { purpose: Spend(oref), transaction: tx }
 
   loanVal(
     t.oracleMintHash,
@@ -255,6 +255,6 @@ test loan_val() {
     t.configMintHash,
     loanDatum1,
     loanAction,
-    ctx,
+    ctx1,
   )?
 }

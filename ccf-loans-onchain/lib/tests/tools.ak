@@ -2,13 +2,16 @@ use aiken/hash.{Blake2b_224, Hash}
 use aiken/time.{PosixTime}
 use aiken/transaction.{
   Datum, InlineDatum, Input, Mint, Output, OutputReference, ScriptContext,
-  ScriptPurpose, Spend, Transaction, TransactionId,
+  ScriptPurpose, Spend, Transaction, TransactionId, WithdrawFrom,
 }
 use aiken/transaction/credential.{
-  Address, Credential, Script, ScriptCredential, VerificationKey,
-  VerificationKeyCredential,
+  Address, Credential, Inline, Referenced, Script, ScriptCredential,
+  VerificationKey, VerificationKeyCredential,
 }
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
+
+pub const withLoanHash =
+  #"4ec845bbc68fb454403c577635e5d934ead056c206f1e5b351f2d9ee"
 
 pub const collateralValHash =
   #"c87cb59525bbb34ecaa261fa002ef290748317e1cbb0300aeeec62d7"
@@ -210,4 +213,32 @@ pub fn test_signatories() -> List<ByteArray> {
 pub fn test_tx_id(h: ByteArray) -> TransactionId {
   let txid = TransactionId { hash: h }
   txid
+}
+
+// Testing Helper Functions //
+
+pub fn create_stake_credential(
+  s: Hash<Blake2b_224, Script>,
+) -> Referenced<Credential> {
+  Inline(ScriptCredential(s))
+}
+
+pub fn stakeCompare(
+  left: Referenced<Credential>,
+  right: Referenced<Credential>,
+) -> Ordering {
+  if left == right {
+    Equal
+  } else {
+    Less
+  }
+}
+
+pub fn scriptCompare(_left: ScriptPurpose, _right: ScriptPurpose) -> Ordering {
+  Less
+}
+
+pub fn withPurpose(hash: ByteArray) -> ScriptPurpose {
+  let stake = create_stake_credential(hash)
+  WithdrawFrom(stake)
 }

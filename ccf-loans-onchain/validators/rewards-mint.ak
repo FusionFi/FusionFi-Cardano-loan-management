@@ -31,7 +31,7 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
     expect InlineDatum(datum) = refIn.output.datum
     expect cDatum: ConfigDatum = datum
 
-    expect [(tName, tAmt)] =
+    expect [(_tName, tAmt)] =
       mint
         |> value.from_minted_value()
         |> value.tokens(policyId)

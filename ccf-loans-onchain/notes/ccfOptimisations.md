@@ -64,3 +64,15 @@ is the logic applied for the withdrawal.
 with that we can focus on running withdrawals for scripts we need to execute only, if i 
 am understanding it right.
 
+---
+
+## Optimisations
+
+We have a few options for optimisation but assuming we go with the Merkle V if it suits the use case I have proposed above, we will need to make some adjustments to how the validators work and the data structures used.
+
+we will need to add a list of all the validators to the config datum so we can reference them on the fly, then we can use an index value in the redeemer so we can apply the spending logic appropriately.
+
+if this works as i envision it, it will mean that we only call the appropriate redeemer case per transaction which will allow us to save a lot of space in transactions and let us have a much higher throughput.
+
+I will start with regular stake validator logic and incrementally expand into the merkle val as necessary when i know it is working at each level.
+
