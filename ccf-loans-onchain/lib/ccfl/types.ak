@@ -53,6 +53,12 @@ pub type LoanDatum {
   timestamp: PosixTime,
 }
 
+type MerkelLoanAction {
+  // index of withdrawalValidator
+  // This is a reference to the redeemer case we are validating
+  i: Int,
+}
+
 pub type CollateralAction {
   SCBalance
   SCLiquidate

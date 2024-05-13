@@ -35,6 +35,67 @@ pub fn get_own_singleton_output(
   output
 }
 
+pub fn withBurn(
+  checkBurn: fn(Output) -> Bool,
+  redeemer: List<Int>,
+  ctx: ScriptContext,
+) -> Bool {
+  withdraw0(
+    fn(indicesData, own_validator, tx) {
+      let Transaction { inputs, outputs, .. } = tx
+      let (script_inputs, script_input_count) =
+        list.foldr(
+          inputs,
+          ([], 0),
+          fn(i, acc_tuple) {
+            expect Input {
+              output: Output {
+                address: Address {
+                  payment_credential: ScriptCredential(script),
+                  ..
+                },
+                ..
+              } as o,
+              ..
+            } = i
+            if script == own_validator {
+              let (acc, count) = acc_tuple
+              ([o, ..acc], count + 1)
+            } else {
+              acc_tuple
+            }
+          },
+        )
+
+      expect indices: List<Int> = indicesData
+      let (_, input_index_count) =
+        list.foldl(
+          indices,
+          (-1, 0),
+          fn(curr, acc) {
+            let (in0, count) = acc
+            let (in1) = curr
+            if in1 > in0 {
+              expect Some(in_utxo) = script_inputs |> list.at(in1)
+              if checkBurn(in_utxo) {
+                (in1, count + 1)
+              } else {
+                fail @"Validation failed"
+              }
+            } else {
+              // Input and output indices must be ordered to disallow
+              // duplicates.
+              fail @"Input and output indices must be in ascending orders"
+            }
+          },
+        )
+      (script_input_count == input_index_count)?
+    },
+    redeemer,
+    ctx,
+  )
+}
+
 pub fn withdraw0(
   withdrawal_logic: fn(Redeemer, Hash<Blake2b_224, Script>, Transaction) -> Bool,
   redeemer: Redeemer,
@@ -115,7 +176,7 @@ pub fn withdraw1(
 
 pub fn withdraw2(
   validation_logic: fn(Output, Output) -> Bool,
-  redeemer: List<(Int, Int, Int)>,
+  redeemer: List<(Int, Int)>,
   ctx: ScriptContext,
 ) -> Bool {
   withdraw0(
