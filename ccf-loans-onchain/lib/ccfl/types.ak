@@ -24,6 +24,12 @@ pub type ConfigDatum {
   loanVal: ScriptHash,
   colVal: ScriptHash,
   rewardsVal: ScriptHash,
+}
+
+pub type MerkelConfigDatum {
+  loanVal: ScriptHash,
+  colVal: ScriptHash,
+  rewardsVal: ScriptHash,
   oracleVal: ScriptHash,
   loanRedeemers: List<ScriptHash>,
   collateralRedeemers: List<ScriptHash>,
@@ -53,7 +59,7 @@ pub type LoanDatum {
   timestamp: PosixTime,
 }
 
-type MerkelLoanAction {
+pub type MerkelLoanAction {
   // index of withdrawalValidator
   // This is a reference to the redeemer case we are validating
   i: Int,

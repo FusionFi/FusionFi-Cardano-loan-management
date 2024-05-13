@@ -2,8 +2,8 @@ use aiken/bytearray
 use aiken/dict
 use aiken/list.{find, has, head}
 use aiken/transaction.{
-  InlineDatum, Input, NoDatum, Output, ScriptContext, Spend, Transaction,
-  WithdrawFrom, placeholder,
+  InlineDatum, Input, NoDatum, Output, ScriptContext, ScriptPurpose, Spend,
+  Transaction, WithdrawFrom, placeholder,
 }
 use aiken/transaction/credential.{Inline, Referenced, ScriptCredential}
 use aiken/transaction/value.{
@@ -276,16 +276,18 @@ test loan_val() {
   let redeemerList =
     [(3, 1, 0), (6, 3, 1), (9, 5, 2), (12, 7, 3)]
 
-  let list: List<(ScriptPurpose, _)> =
+  let list: List<(ScriptPurpose, LoanAction)> =
     [
       (Spend(oref1), r1),
       (Spend(oref2), r2),
       (Spend(oref3), r3),
       (Spend(oref4), r4),
-      (t.withPurpose(t.with2Hash), redeemerList),
     ]
-  let redeemers = dict.from_list(list, bytearray.compare)
 
+  // (t.withPurpose(t.with2Hash), redeemerList),
+  let redeemers = dict.from_list(list, t.scriptCompare)
+
+  // |> dict.insert(t.withPurpose(t.with2Hash), redeemerList, t.scriptCompare)
   let loanIn1 =
     t.test_input(
       oref1,
@@ -502,8 +504,8 @@ test loan_val() {
         loanOut4,
         colOut4,
       ],
-      redeemers: redeemers,
-      withdrawals: withdraw0,
+      withdrawals: // redeemers: redeemers,
+      withdraw0,
     }
 
   let ctx1 = ScriptContext { purpose: Spend(oref1), transaction: tx }
@@ -511,7 +513,7 @@ test loan_val() {
   let ctx3 = ScriptContext { purpose: Spend(oref3), transaction: tx }
   let ctx4 = ScriptContext { purpose: Spend(oref4), transaction: tx }
   let ctx5 =
-    ScriptContext { purpose: withPurpose(t.with2Hash), transaction: tx }
+    ScriptContext { purpose: t.withPurpose(t.with2Hash), transaction: tx }
 
   loanVal(
     t.oracleMintHash,

@@ -74,7 +74,7 @@ pub fn withBurn(
           (-1, 0),
           fn(curr, acc) {
             let (in0, count) = acc
-            let (in1) = curr
+            let in1 = curr
             if in1 > in0 {
               expect Some(in_utxo) = script_inputs |> list.at(in1)
               if checkBurn(in_utxo) {
