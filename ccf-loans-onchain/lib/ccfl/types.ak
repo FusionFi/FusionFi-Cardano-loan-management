@@ -24,6 +24,9 @@ pub type ConfigDatum {
   loanVal: ScriptHash,
   colVal: ScriptHash,
   rewardsVal: ScriptHash,
+  oracleVal: ScriptHash,
+  loanRedeemers: List<ScriptHash>,
+  collateralRedeemers: List<ScriptHash>,
 }
 
 pub type ConfigAction {

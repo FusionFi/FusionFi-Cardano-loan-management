@@ -25,6 +25,10 @@ use tests/transactions.{
 //                     //
 
 // Loan Vault holds the loan information at a token utxo
+// This validator pair uses the withdraw zero trick to validate many inputs and outputs
+// together by passing a list of inputs outputs and redeemers to the staking validator
+// in order to optimise this further, we will try and separate redeemer cases so they all
+// get handled by individual stake validators
 
 validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
   // this need to take a list of inputs & outputs, and extract the appropriate redeemer
