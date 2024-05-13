@@ -1,130 +1,130 @@
-use aiken/dict
-use aiken/list.{find, has, head}
-use aiken/transaction.{
-  InlineDatum, Input, NoDatum, Output, ScriptContext, Spend, Transaction,
-  find_input, placeholder,
-}
-use aiken/transaction/credential.{ScriptCredential}
-use aiken/transaction/value.{
-  PolicyId, flatten, lovelace_of, policies, without_lovelace,
-}
-use ccfl/helpers.{get_own_singleton_output}
-use ccfl/types.{
-  CollateralAction, CollateralDatum, ConfigDatum, LoanDatum, OracleDatum,
-  SCBalance, SCClose, SCLiquidate,
-}
-use tests/tools as t
-use tests/transactions.{
-  collateralActionBalance, collateralDatum, configDatum, loanDatum, oracleDatum,
-}
+// use aiken/dict
+// use aiken/list.{find, has, head}
+// use aiken/transaction.{
+//   InlineDatum, Input, NoDatum, Output, ScriptContext, Spend, Transaction,
+//   find_input, placeholder,
+// }
+// use aiken/transaction/credential.{ScriptCredential}
+// use aiken/transaction/value.{
+//   PolicyId, flatten, lovelace_of, policies, without_lovelace,
+// }
+// use ccfl/helpers.{get_own_singleton_output}
+// use ccfl/types.{
+//   CollateralAction, CollateralDatum, ConfigDatum, LoanDatum, OracleDatum,
+//   SCBalance, SCClose, SCLiquidate,
+// }
+// use tests/tools as t
+// use tests/transactions.{
+//   collateralActionBalance, collateralDatum, configDatum, loanDatum, oracleDatum,
+// }
 
-//                           //
-// Separate Collateral Vault //
-//                           //
+// //                           //
+// // Separate Collateral Vault //
+// //                           //
 
-validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
-  fn collateralVal(
-    _d: CollateralDatum,
-    r: CollateralAction,
-    c: ScriptContext,
-  ) -> Bool {
-    let ScriptContext { transaction, purpose } = c
-    expect Spend(oref) = purpose
+// validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
+//   fn collateralVal(
+//     _d: CollateralDatum,
+//     r: CollateralAction,
+//     c: ScriptContext,
+//   ) -> Bool {
+//     let ScriptContext { transaction, purpose } = c
+//     expect Spend(oref) = purpose
 
-    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
+//     let Transaction { inputs, outputs, reference_inputs, .. } = transaction
 
-    expect Some(oracleOut) =
-      find(outputs, fn(output) { has(policies(output.value), op) })
+//     expect Some(oracleOut) =
+//       find(outputs, fn(output) { has(policies(output.value), op) })
 
-    expect InlineDatum(datum) = oracleOut.datum
-    expect rDatum: OracleDatum = datum
+//     expect InlineDatum(datum) = oracleOut.datum
+//     expect rDatum: OracleDatum = datum
 
-    let exchangeRate = rDatum.usdAda
+//     let exchangeRate = rDatum.usdAda
 
-    expect Some(configIn) =
-      find(
-        reference_inputs,
-        fn(input) { has(policies(input.output.value), cp) },
-      )
+//     expect Some(configIn) =
+//       find(
+//         reference_inputs,
+//         fn(input) { has(policies(input.output.value), cp) },
+//       )
 
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: ConfigDatum = datum
+//     expect InlineDatum(datum) = configIn.output.datum
+//     expect cDatum: ConfigDatum = datum
 
-    when r is {
-      SCBalance -> {
-        expect Some(ownIn) = find_input(inputs, oref)
+//     when r is {
+//       SCBalance -> {
+//         expect Some(ownIn) = find_input(inputs, oref)
 
-        expect Some(collateralToken) =
-          head(flatten(without_lovelace(ownIn.output.value)))
+//         expect Some(collateralToken) =
+//           head(flatten(without_lovelace(ownIn.output.value)))
 
-        expect Some(loanOut) =
-          find(
-            outputs,
-            fn(output) {
-              expect Some(loanToken) =
-                head(flatten(without_lovelace(output.value)))
+//         expect Some(loanOut) =
+//           find(
+//             outputs,
+//             fn(output) {
+//               expect Some(loanToken) =
+//                 head(flatten(without_lovelace(output.value)))
 
-              output.address.payment_credential == ScriptCredential(
-                cDatum.loanVal,
-              ) && loanToken == collateralToken
-            },
-          )
+//               output.address.payment_credential == ScriptCredential(
+//                 cDatum.loanVal,
+//               ) && loanToken == collateralToken
+//             },
+//           )
 
-        expect InlineDatum(datum) = loanOut.datum
-        expect lDatum: LoanDatum = datum
+//         expect InlineDatum(datum) = loanOut.datum
+//         expect lDatum: LoanDatum = datum
 
-        let ownOut = get_own_singleton_output(transaction, oref)
+//         let ownOut = get_own_singleton_output(transaction, oref)
 
-        expect InlineDatum(datum) = ownOut.datum
-        expect outDatum: CollateralDatum = datum
+//         expect InlineDatum(datum) = ownOut.datum
+//         expect outDatum: CollateralDatum = datum
 
-        lovelace_of(ownOut.value) >= lDatum.amount * exchangeRate * ( 50 / 100 ) * 1000000 && outDatum.amount == lovelace_of(
-          ownOut.value,
-        ) / exchangeRate / 1000000 && has(
-          flatten(ownOut.value),
-          collateralToken,
-        )
-      }
+//         lovelace_of(ownOut.value) >= lDatum.amount * exchangeRate * ( 50 / 100 ) * 1000000 && outDatum.amount == lovelace_of(
+//           ownOut.value,
+//         ) / exchangeRate / 1000000 && has(
+//           flatten(ownOut.value),
+//           collateralToken,
+//         )
+//       }
 
-      SCLiquidate -> {
-        expect Some(ownIn) = find_input(inputs, oref)
+//       SCLiquidate -> {
+//         expect Some(ownIn) = find_input(inputs, oref)
 
-        expect Some(collateralToken) =
-          head(flatten(without_lovelace(ownIn.output.value)))
+//         expect Some(collateralToken) =
+//           head(flatten(without_lovelace(ownIn.output.value)))
 
-        expect Some(loanOut) =
-          find(
-            outputs,
-            fn(output) {
-              expect Some(loanToken) =
-                head(flatten(without_lovelace(output.value)))
+//         expect Some(loanOut) =
+//           find(
+//             outputs,
+//             fn(output) {
+//               expect Some(loanToken) =
+//                 head(flatten(without_lovelace(output.value)))
 
-              output.address.payment_credential == ScriptCredential(
-                cDatum.loanVal,
-              ) && loanToken == collateralToken
-            },
-          )
+//               output.address.payment_credential == ScriptCredential(
+//                 cDatum.loanVal,
+//               ) && loanToken == collateralToken
+//             },
+//           )
 
-        expect InlineDatum(datum) = loanOut.datum
-        expect lDatum: LoanDatum = datum
+//         expect InlineDatum(datum) = loanOut.datum
+//         expect lDatum: LoanDatum = datum
 
-        let ownOut = get_own_singleton_output(transaction, oref)
+//         let ownOut = get_own_singleton_output(transaction, oref)
 
-        expect InlineDatum(datum) = ownOut.datum
-        expect outDatum: CollateralDatum = datum
+//         expect InlineDatum(datum) = ownOut.datum
+//         expect outDatum: CollateralDatum = datum
 
-        lovelace_of(ownOut.value) >= lDatum.amount * exchangeRate * ( 50 / 100 ) * 1000000 && outDatum.amount == lovelace_of(
-          ownOut.value,
-        ) / exchangeRate / 1000000 && has(
-          flatten(ownOut.value),
-          collateralToken,
-        )
-      }
+//         lovelace_of(ownOut.value) >= lDatum.amount * exchangeRate * ( 50 / 100 ) * 1000000 && outDatum.amount == lovelace_of(
+//           ownOut.value,
+//         ) / exchangeRate / 1000000 && has(
+//           flatten(ownOut.value),
+//           collateralToken,
+//         )
+//       }
 
-      SCClose -> True
-    }
-  }
-}
+//       SCClose -> True
+//     }
+//   }
+// }
 // Collateral Validator Tests
 // test collateral_val() {
 //   let test_owner = #"face"

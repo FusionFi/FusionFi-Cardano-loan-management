@@ -10,6 +10,9 @@ use aiken/transaction/credential.{
 }
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
 
+pub const with2Hash =
+  #"9c27818fc34b7a088a395cc09028359358810d1659a7379a7c8fd647"
+
 pub const withLoanHash =
   #"4ec845bbc68fb454403c577635e5d934ead056c206f1e5b351f2d9ee"
 

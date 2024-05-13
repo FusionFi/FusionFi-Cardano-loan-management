@@ -1,14 +1,15 @@
+use aiken/bytearray
 use aiken/dict
 use aiken/list.{find, has, head}
 use aiken/transaction.{
   InlineDatum, Input, NoDatum, Output, ScriptContext, Spend, Transaction,
-  placeholder,
+  WithdrawFrom, placeholder,
 }
-use aiken/transaction/credential.{Inline, ScriptCredential}
+use aiken/transaction/credential.{Inline, Referenced, ScriptCredential}
 use aiken/transaction/value.{
   PolicyId, flatten, lovelace_of, policies, without_lovelace,
 }
-use ccfl/helpers.{withdraw0}
+use ccfl/helpers.{withdraw1}
 use ccfl/types.{
   CollateralDatum, ConfigDatum, LoanAction, LoanDatum, OracleDatum, SLBalance,
   SLClose, SLLiquidate,
@@ -27,9 +28,13 @@ use tests/transactions.{
 
 validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
   // this need to take a list of inputs & outputs, and extract the appropriate redeemer
-  // Redeemer = [InputIndex, OutputIndex]
-  fn withdraw(r: LoanAction, c: ScriptContext) {
-    let Transaction { inputs, outputs, reference_inputs, .. } = c.transaction
+  // Redeemer = [InputIndex, OutputIndex, RedeemerIndex]
+  fn withdraw(r: List<(Int, Int, Int)>, c: ScriptContext) {
+    expect ScriptContext { transaction, purpose: WithdrawFrom(stake_cred) } = c
+
+    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
+
+    expect Inline(ScriptCredential(own_validator)) = stake_cred
 
     expect Some(oracleOut) =
       find(outputs, fn(output) { has(policies(output.value), op) })
@@ -47,9 +52,10 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
 
     expect InlineDatum(datum) = configIn.output.datum
     expect cDatum: ConfigDatum = datum
-    withdraw0(
-      fn(red, own_validator, tx) {
-        when r is {
+
+    withdraw1(
+      fn(in_utxo, out_utxo, rdmr) {
+        when rdmr is {
           SLBalance -> {
             expect Some(ownIn) =
               find(
@@ -257,6 +263,24 @@ test loan_val() {
       [(t.create_stake_credential(t.withLoanHash), 0)],
       t.stakeCompare,
     )
+
+  let r1 = loanAction
+  let r2 = loanAction
+  let r3 = loanAction
+  let r4 = loanAction
+
+  let redeemerList =
+    [(3, 1, 0), (6, 3, 1), (9, 5, 2), (12, 7, 3)]
+
+  let list: List<(ScriptPurpose, _)> =
+    [
+      (Spend(oref1), r1),
+      (Spend(oref2), r2),
+      (Spend(oref3), r3),
+      (Spend(oref4), r4),
+      (t.withPurpose(t.with2Hash), redeemerList),
+    ]
+  let redeemers = dict.from_list(list, bytearray.compare)
 
   let loanIn1 =
     t.test_input(
@@ -474,6 +498,7 @@ test loan_val() {
         loanOut4,
         colOut4,
       ],
+      redeemers: redeemers,
       withdrawals: withdraw0,
     }
 
@@ -481,34 +506,36 @@ test loan_val() {
   let ctx2 = ScriptContext { purpose: Spend(oref2), transaction: tx }
   let ctx3 = ScriptContext { purpose: Spend(oref3), transaction: tx }
   let ctx4 = ScriptContext { purpose: Spend(oref4), transaction: tx }
+  let ctx5 =
+    ScriptContext { purpose: withPurpose(t.with2Hash), transaction: tx }
 
   loanVal(
     t.oracleMintHash,
     t.loanMintHash,
     t.configMintHash,
     loanDatum1,
-    loanAction,
+    r1,
     ctx1,
   )? && loanVal(
     t.oracleMintHash,
     t.loanMintHash,
     t.configMintHash,
     loanDatum1,
-    loanAction,
+    r2,
     ctx2,
   )? && loanVal(
     t.oracleMintHash,
     t.loanMintHash,
     t.configMintHash,
     loanDatum1,
-    loanAction,
+    r3,
     ctx3,
   )? && loanVal(
     t.oracleMintHash,
     t.loanMintHash,
     t.configMintHash,
     loanDatum1,
-    loanAction,
+    r4,
     ctx4,
   )?
 }

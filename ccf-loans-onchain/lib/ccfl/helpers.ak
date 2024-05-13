@@ -1,12 +1,14 @@
+use aiken/dict
 use aiken/hash.{Blake2b_224, Hash}
 use aiken/list
 use aiken/transaction.{
-  Output, OutputReference, Redeemer, ScriptContext, Transaction, WithdrawFrom,
-  find_input, find_script_outputs,
+  Input, Output, OutputReference, Redeemer, ScriptContext, Transaction,
+  WithdrawFrom, find_input, find_script_outputs,
 }
 use aiken/transaction/credential.{
-  Inline, Script, ScriptCredential, VerificationKey,
+  Address, Inline, Script, ScriptCredential, VerificationKey,
 }
+use ccfl/types.{LoanAction}
 
 //         //
 // Helpers //
@@ -44,4 +46,164 @@ pub fn withdraw0(
   expect Inline(ScriptCredential(own_validator)) = stake_cred
 
   withdrawal_logic(redeemer, own_validator, tx)
+}
+
+pub fn withdraw1(
+  validation_logic: fn(Output, Output, LoanAction) -> Bool,
+  redeemer: List<(Int, Int, Int)>,
+  ctx: ScriptContext,
+) -> Bool {
+  withdraw0(
+    fn(indicesData, own_validator, tx) {
+      let Transaction { inputs, outputs, redeemers, .. } = tx
+      let (script_inputs, script_input_count) =
+        list.foldr(
+          inputs,
+          ([], 0),
+          fn(i, acc_tuple) {
+            expect Input {
+              output: Output {
+                address: Address {
+                  payment_credential: ScriptCredential(script),
+                  ..
+                },
+                ..
+              } as o,
+              ..
+            } = i
+            if script == own_validator {
+              let (acc, count) = acc_tuple
+              ([o, ..acc], count + 1)
+            } else {
+              acc_tuple
+            }
+          },
+        )
+
+      expect indices: List<(Int, Int, Int)> = indicesData
+      let (_, _, _, input_index_count) =
+        list.foldl(
+          indices,
+          (-1, -1, -1, 0),
+          fn(curr, acc) {
+            let (in0, out0, red0, count) = acc
+            let (in1, out1, red1) = curr
+            if in1 > in0 && out1 > out0 && red1 > red0 {
+              expect Some(in_utxo) = script_inputs |> list.at(in1)
+              expect Some(out_utxo) = outputs |> list.at(out1)
+              expect Some((purpose, rdmr)) =
+                redeemers |> dict.to_list |> list.at(red1)
+              expect red: LoanAction = rdmr
+              if validation_logic(in_utxo, out_utxo, red) {
+                (in1, out1, red1, count + 1)
+              } else {
+                fail @"Validation failed"
+              }
+            } else {
+              // Input and output indices must be ordered to disallow
+              // duplicates.
+              fail @"Input and output indices must be in ascending orders"
+            }
+          },
+        )
+      (script_input_count == input_index_count)?
+    },
+    redeemer,
+    ctx,
+  )
+}
+
+pub fn withdraw2(
+  input_validator: fn(Input) -> Bool,
+  input_output_validator: fn(Output, Output) -> Bool,
+  collective_output_validator: fn(List<Output>, Int) -> Bool,
+  redeemer: List<(Int, List<Int>)>,
+  ctx: ScriptContext,
+) -> Bool {
+  withdraw0(
+    fn(indicesData, own_validator, tx) {
+      let Transaction { inputs, outputs, .. } = tx
+      let (script_inputs, script_input_count) =
+        list.foldr(
+          inputs,
+          ([], 0),
+          fn(i, acc_tuple) {
+            expect Input {
+              output: Output {
+                address: Address {
+                  payment_credential: ScriptCredential(script),
+                  ..
+                },
+                ..
+              },
+              ..
+            } = i
+            if script == own_validator {
+              let (acc, count) = acc_tuple
+              ([i, ..acc], count + 1)
+            } else {
+              acc_tuple
+            }
+          },
+        )
+      expect indices: List<(Int, List<Int>)> = indicesData
+      // Folding the outer list of indices from left.
+      let (_, _, input_index_count) =
+        list.foldl(
+          indices,
+          (-1, -1, 0),
+          fn(curr, prev_ixs_and_count) {
+            let (prev_in_ix, latest_out_ix, input_count_so_far) =
+              prev_ixs_and_count
+
+            let (curr_in_ix, out_ixs) = curr
+
+            expect Some(Input { output: in_utxo, .. } as input) =
+              script_inputs |> list.at(curr_in_ix)
+
+            expect input_validator(input)?
+
+            if curr_in_ix > prev_in_ix {
+              // Folding the inner list of output indices from left. Since
+              // found UTxOs are going to be added to the head of the
+              // accumulator while the folding occurs from left, in order to
+              // provide a more intuitive interface, the UTxOs list need to be
+              // reversed before `validation_logic` is applied to it.
+              let (new_latest_out_ix, out_utxos_reversed, output_count) =
+                list.foldl(
+                  out_ixs,
+                  (latest_out_ix, [], 0),
+                  fn(curr_out_ix, acc_triplet) {
+                    let (prev_out_ix, utxos_so_far, count) = acc_triplet
+                    if curr_out_ix > prev_out_ix {
+                      expect Some(out_utxo) = outputs |> list.at(curr_out_ix)
+                      expect input_output_validator(in_utxo, out_utxo)?
+                      (
+                        curr_out_ix,
+                        utxos_so_far |> list.push(out_utxo),
+                        count + 1,
+                      )
+                    } else {
+                      fail @"All output indices must be in ascending order"
+                    }
+                  },
+                )
+              let out_utxos = list.reverse(out_utxos_reversed)
+              if collective_output_validator(out_utxos, output_count) {
+                // Passing the current input index, and the biggest output
+                // index found with the inner fold.
+                (curr_in_ix, new_latest_out_ix, input_count_so_far + 1)
+              } else {
+                fail @"Collection of outputs are not valid"
+              }
+            } else {
+              fail @"Input indices must be in ascending order"
+            }
+          },
+        )
+      (script_input_count == input_index_count)?
+    },
+    redeemer,
+    ctx,
+  )
 }
