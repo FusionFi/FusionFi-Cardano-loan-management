@@ -74,8 +74,7 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
 
         let adaOut = lovelace_of(colOut.value) / 1000000
 
-        let newCollateralValue = adaOut / exchangeRate
-
+        // let newCollateralValue = adaOut / exchangeRate
         let minCollateralValue = d.amount * exchangeRate * ( 50 / 100 )
 
         expect has(policies(ownOut.value), lp)

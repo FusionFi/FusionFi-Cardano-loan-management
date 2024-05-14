@@ -1,5 +1,4 @@
 use aiken/hash.{Blake2b_224, Hash}
-use aiken/time.{PosixTime}
 use aiken/transaction.{
   Datum, InlineDatum, Input, Mint, Output, OutputReference, ScriptContext,
   ScriptPurpose, Spend, Transaction, TransactionId, WithdrawFrom,
@@ -9,6 +8,21 @@ use aiken/transaction/credential.{
   VerificationKey, VerificationKeyCredential,
 }
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
+
+pub const merkelLoanBalance =
+  #"c2b7ab766c9093e312b35eafb8074af1e05b177a012db3c78fbf3d44"
+
+pub const merkelLoanClose =
+  #"041c193fe41ebe9bc9373a370ea1c4ffee121289e7db87802b799be6"
+
+pub const merkelLoanLiquidate =
+  #"e5abee1df58fb1465dfebd4d4e2a637e3ac0872db1fb3a4489d5991f"
+
+pub const merkelLoanSpend =
+  #"8ed9b99679a54c1bf93924cc0dc79768d93fd2d450943294a27c9c67"
+
+pub const merkelConfigHash =
+  #"1fc6b1b8c65de579cd59e5d8a844c0820eeb24d877c4ea201156d291"
 
 pub const with2Hash =
   #"9c27818fc34b7a088a395cc09028359358810d1659a7379a7c8fd647"
@@ -147,9 +161,9 @@ pub fn make_asset_name(tn: ByteArray) -> AssetName {
   an
 }
 
-pub fn test_value_with_token() {
-  todo
-}
+// pub fn test_value_with_token() {
+//   todo
+// }
 
 pub fn makeAdaValue(l: Int) -> Value {
   value.from_lovelace(l * 1000000)

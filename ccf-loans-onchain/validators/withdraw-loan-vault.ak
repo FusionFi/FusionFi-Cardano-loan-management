@@ -48,7 +48,7 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
     expect InlineDatum(datum) = configIn.output.datum
     expect cDatum: ConfigDatum = datum
     withdraw0(
-      fn(red, own_validator, tx) {
+      fn(_red, own_validator, _tx) {
         when r is {
           SLBalance -> {
             expect Some(ownIn) =
@@ -94,8 +94,7 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
 
             let adaOut = lovelace_of(colOut.value) / 1000000
 
-            let newCollateralValue = adaOut / exchangeRate
-
+            // let newCollateralValue = adaOut / exchangeRate
             let minCollateralValue = d.amount * exchangeRate * ( 50 / 100 )
 
             expect has(policies(ownOut.value), lp)
@@ -185,11 +184,11 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
     )
   }
 
-  fn loanVal(d: LoanDatum, r: LoanAction, c: ScriptContext) {
-    let ScriptContext { transaction, purpose } = c
+  fn loanVal(_d: LoanDatum, _r: LoanAction, c: ScriptContext) {
+    let ScriptContext { purpose, .. } = c
     expect Spend(oref) = purpose
 
-    let Transaction { inputs, outputs, withdrawals, .. } = c.transaction
+    let Transaction { inputs, withdrawals, .. } = c.transaction
 
     let Output { address: own_addr, .. } =
       resolve_output_reference(inputs, oref)
@@ -210,7 +209,7 @@ test loan_val() {
   let oref3 = t.test_oref(#"face", 3)
   let oref4 = t.test_oref(#"face", 4)
   let cref1 = t.test_oref(#"cafe", 2)
-  let cref2 = t.test_oref(#"cafe", 3)
+  // let cref2 = t.test_oref(#"cafe", 3)
   let rref = t.test_oref(#"dead", 6)
   let uref1 = t.test_oref(#"beef", 4)
   let uref2 = t.test_oref(#"beef", 5)

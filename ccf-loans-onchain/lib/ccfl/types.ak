@@ -1,14 +1,10 @@
-use aiken/dict.{to_list}
+use aiken/dict
 use aiken/hash.{Blake2b_224, Hash}
-use aiken/list.{any, filter, find, has, head}
+use aiken/list
 use aiken/time.{PosixTime}
-use aiken/transaction.{
-  InlineDatum, Input, Mint, NoDatum, Output, ScriptContext, Spend, Transaction,
-  find_input, find_script_outputs, placeholder,
-}
-use aiken/transaction/credential.{Script, ScriptCredential, VerificationKey}
-use aiken/transaction/value.{PolicyId, flatten, lovelace_of, tokens}
-use tests/tools as t
+use aiken/transaction
+use aiken/transaction/credential.{Script, VerificationKey}
+use aiken/transaction/value
 
 pub type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>
@@ -38,6 +34,18 @@ pub type MerkelConfigDatum {
 pub type ConfigAction {
   ConUpdate { loanVal: ScriptHash, colVal: ScriptHash, rewardsVal: ScriptHash }
   ConClose
+}
+
+pub type MerkelConfigAction {
+  MConUpdate {
+    loanVal: ScriptHash,
+    colVal: ScriptHash,
+    rewardsVal: ScriptHash,
+    oracleVal: ScriptHash,
+    loanRedeemers: List<ScriptHash>,
+    collateralRedeemers: List<ScriptHash>,
+  }
+  MConClose
 }
 
 pub type LoanAction {
