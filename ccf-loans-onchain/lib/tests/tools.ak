@@ -135,6 +135,12 @@ pub fn loanTokenValue() -> Value {
   loanToken
 }
 
+pub fn loanBurnValue() -> Value {
+  let loanBurn = value.from_asset(loanMintHash, #"cafe", -2)
+
+  loanBurn
+}
+
 pub fn oracleTokenValue() -> Value {
   let oracleToken = value.from_asset(oracleMintHash, #"beef", 1)
 

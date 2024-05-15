@@ -36,63 +36,23 @@ pub fn get_own_singleton_output(
 
 pub fn withBurn(
   checkBurn: fn(Output) -> Bool,
+  loanVal: ScriptHash,
   redeemer: List<Int>,
-  ctx: ScriptContext,
+  tx: Transaction,
 ) -> Bool {
-  withdraw0(
-    fn(indicesData, own_validator, tx) {
-      let Transaction { inputs, .. } = tx
-      let (script_inputs, script_input_count) =
-        list.foldr(
-          inputs,
-          ([], 0),
-          fn(i, acc_tuple) {
-            expect Input {
-              output: Output {
-                address: Address {
-                  payment_credential: ScriptCredential(script),
-                  ..
-                },
-                ..
-              } as o,
-              ..
-            } = i
-            if script == own_validator {
-              let (acc, count) = acc_tuple
-              ([o, ..acc], count + 1)
-            } else {
-              acc_tuple
-            }
-          },
-        )
+  expect Transaction { inputs, .. } = tx
 
-      expect indices: List<Int> = indicesData
-      let (_, input_index_count) =
-        list.foldl(
-          indices,
-          (-1, 0),
-          fn(curr, acc) {
-            let (in0, count) = acc
-            let in1 = curr
-            if in1 > in0 {
-              expect Some(in_utxo) = script_inputs |> list.at(in1)
-              if checkBurn(in_utxo) {
-                (in1, count + 1)
-              } else {
-                fail @"Validation failed"
-              }
-            } else {
-              // Input and output indices must be ordered to disallow
-              // duplicates.
-              fail @"Input and output indices must be in ascending orders"
-            }
-          },
-        )
-      (script_input_count == input_index_count)?
-    },
-    redeemer,
-    ctx,
-  )
+  let txList =
+    list.map(
+      redeemer,
+      fn(index) {
+        expect in = index
+        expect Some(input) = list.at(inputs, in)
+        input
+      },
+    )
+
+  list.all(txList, fn(input) { checkBurn(input.output) })
 }
 
 pub fn withdraw0(
