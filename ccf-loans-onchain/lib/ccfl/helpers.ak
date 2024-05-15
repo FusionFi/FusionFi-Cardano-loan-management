@@ -114,7 +114,7 @@ pub fn merkel0(
   loanVal: ScriptHash,
   ctx: ScriptContext,
 ) -> Bool {
-  expect ScriptContext { transaction: tx, .. } = ctx
+  let ScriptContext { transaction: tx, .. } = ctx
 
   let Transaction { inputs, outputs, .. } = tx
 
@@ -350,5 +350,33 @@ pub fn withdraw3(
     },
     redeemer,
     ctx,
+  )
+}
+
+pub fn withdraw4(
+  validation_logic: fn(Output, Output) -> Bool,
+  loanVal: ScriptHash,
+  redeemer: List<(Int, Int)>,
+  tx: Transaction,
+) -> Bool {
+  let Transaction { inputs, outputs, .. } = tx
+
+  let txList =
+    list.map(
+      redeemer,
+      fn(index) {
+        expect (in, out) = index
+        expect Some(input) = list.at(inputs, in)
+        expect Some(output) = list.at(outputs, out)
+        (input, output)
+      },
+    )
+
+  list.all(
+    txList,
+    fn(io) {
+      expect (input, output) = io
+      validation_logic(input.output, output)
+    },
   )
 }

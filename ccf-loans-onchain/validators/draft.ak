@@ -665,173 +665,173 @@
 //   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
 // }
 
-// test oracle_vault_datum_fail() fail {
-//   let test_owner = #"face"
+// // test oracle_vault_datum_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let oracleDatum2 = oracleDatum(1, 11111112, 15, 2)
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+// //   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+// //   let oracleDatum2 = oracleDatum(1, 11111112, 15, 2)
+// //   let inDatum = InlineDatum(oracleDatum1)
+// //   let outDatum = InlineDatum(oracleDatum2)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+// //   let oracleInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.oracleValHash),
+// //         t.oracleValue(),
+// //         inDatum,
+// //       ),
+// //     )
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+// //   let oracleOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.oracleValHash),
+// //       t.oracleValue(),
+// //       outDatum,
+// //     )
 
-//   let oracleAction = oracleAction(2, 11111112, 15, 2)
+// //   let oracleAction = oracleAction(2, 11111112, 15, 2)
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       extra_signatories: [test_owner],
+// //       inputs: [oracleInput],
+// //       outputs: [oracleOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
+// //   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+// // }
 
-// test oracle_vault_redeemer_fail() fail {
-//   let test_owner = #"face"
+// // test oracle_vault_redeemer_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+// //   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+// //   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+// //   let inDatum = InlineDatum(oracleDatum1)
+// //   let outDatum = InlineDatum(oracleDatum2)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+// //   let oracleInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.oracleValHash),
+// //         t.oracleValue(),
+// //         inDatum,
+// //       ),
+// //     )
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+// //   let oracleOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.oracleValHash),
+// //       t.oracleValue(),
+// //       outDatum,
+// //     )
 
-//   let oracleAction = oracleAction(1, 11111112, 15, 2)
+// //   let oracleAction = oracleAction(1, 11111112, 15, 2)
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       extra_signatories: [test_owner],
+// //       inputs: [oracleInput],
+// //       outputs: [oracleOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
+// //   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+// // }
 
-// test oracle_vault_sig_fail() fail {
-//   let test_owner = #"face"
+// // test oracle_vault_sig_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+// //   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+// //   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+// //   let inDatum = InlineDatum(oracleDatum1)
+// //   let outDatum = InlineDatum(oracleDatum2)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+// //   let oracleInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.oracleValHash),
+// //         t.oracleValue(),
+// //         inDatum,
+// //       ),
+// //     )
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+// //   let oracleOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.oracleValHash),
+// //       t.oracleValue(),
+// //       outDatum,
+// //     )
 
-//   let oracleAction = oracleAction(2, 11111112, 15, 2)
+// //   let oracleAction = oracleAction(2, 11111112, 15, 2)
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [#"dead"],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       extra_signatories: [#"dead"],
+// //       inputs: [oracleInput],
+// //       outputs: [oracleOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
+// //   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+// // }
 
-// test oracle_vault_token_fail() fail {
-//   let test_owner = #"face"
+// // test oracle_vault_token_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+// //   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+// //   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+// //   let inDatum = InlineDatum(oracleDatum1)
+// //   let outDatum = InlineDatum(oracleDatum2)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+// //   let oracleInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.oracleValHash),
+// //         t.oracleValue(),
+// //         inDatum,
+// //       ),
+// //     )
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.makeAdaValue(2),
-//       outDatum,
-//     )
+// //   let oracleOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.oracleValHash),
+// //       t.makeAdaValue(2),
+// //       outDatum,
+// //     )
 
-//   let oracleAction = oracleAction(2, 11111112, 15, 2)
+// //   let oracleAction = oracleAction(2, 11111112, 15, 2)
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       extra_signatories: [test_owner],
+// //       inputs: [oracleInput],
+// //       outputs: [oracleOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
+// //   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+// // }
 
 // // Oracle Mint Tests
 // test oracle_mint() {
@@ -869,116 +869,116 @@
 //   oracleMint(test_owner, oracleMintActionMint(), ctx)?
 // }
 
-// test oracle_mint_qty_fail() fail {
-//   let test_owner = #"face"
+// // test oracle_mint_qty_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let outDatum = InlineDatum(oracleDatum1)
+// //   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+// //   let outDatum = InlineDatum(oracleDatum1)
 
-//   let mintValue =
-//     value.to_minted_value(
-//       value.merge(t.oracleTokenValue(), t.oracleTokenValue()),
-//     )
+// //   let mintValue =
+// //     value.to_minted_value(
+// //       value.merge(t.oracleTokenValue(), t.oracleTokenValue()),
+// //     )
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+// //   let ownerInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+// //     )
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+// //   let oracleOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.oracleValHash),
+// //       t.oracleValue(),
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: mintValue,
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [oracleOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       mint: mintValue,
+// //       extra_signatories: [test_owner],
+// //       inputs: [ownerInput],
+// //       outputs: [oracleOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-//   oracleMint(test_owner, oracleMintActionMint(), ctx)?
-// }
+// //   oracleMint(test_owner, oracleMintActionMint(), ctx)?
+// // }
 
-// test oracle_mint_datum_fail() fail {
-//   // This passes because we dont guarantee output datum
-//   let test_owner = #"face"
+// // test oracle_mint_datum_fail() fail {
+// //   // This passes because we dont guarantee output datum
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = collateralDatum(1, 11111111)
-//   let outDatum = InlineDatum(oracleDatum1)
+// //   let oracleDatum1 = collateralDatum(1, 11111111)
+// //   let outDatum = InlineDatum(oracleDatum1)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+// //   let ownerInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+// //     )
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+// //   let oracleOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.oracleValHash),
+// //       t.oracleValue(),
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: t.oracleMintedValue(),
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [oracleOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       mint: t.oracleMintedValue(),
+// //       extra_signatories: [test_owner],
+// //       inputs: [ownerInput],
+// //       outputs: [oracleOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-//   oracleMint(test_owner, oracleMintActionMint(), ctx)?
-// }
+// //   oracleMint(test_owner, oracleMintActionMint(), ctx)?
+// // }
 
-// test oracle_mint_sig_fail() fail {
-//   let test_owner = #"face"
+// // test oracle_mint_sig_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let outDatum = InlineDatum(oracleDatum1)
+// //   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+// //   let outDatum = InlineDatum(oracleDatum1)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+// //   let ownerInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+// //     )
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+// //   let oracleOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.oracleValHash),
+// //       t.oracleValue(),
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: t.oracleMintedValue(),
-//       extra_signatories: [#"cafe"],
-//       inputs: [ownerInput],
-//       outputs: [oracleOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       mint: t.oracleMintedValue(),
+// //       extra_signatories: [#"cafe"],
+// //       inputs: [ownerInput],
+// //       outputs: [oracleOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-//   oracleMint(test_owner, oracleMintActionMint(), ctx)?
-// }
+// //   oracleMint(test_owner, oracleMintActionMint(), ctx)?
+// // }
 
 // // Config Mint Tests
 // test config_mint() {
@@ -1020,126 +1020,126 @@
 //   configMint(test_owner, configAction, ctx)?
 // }
 
-// test config_mint_qty_fail() fail {
-//   let test_owner = #"face"
+// // test config_mint_qty_fail() fail {
+// //   let test_owner = #"face"
 
-//   let mintValue =
-//     value.to_minted_value(
-//       value.merge(t.configTokenValue(), t.configTokenValue()),
-//     )
+// //   let mintValue =
+// //     value.to_minted_value(
+// //       value.merge(t.configTokenValue(), t.configTokenValue()),
+// //     )
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configAction =
+// //     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let outDatum = InlineDatum(configDatum1)
+// //   let configDatum1 =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let outDatum = InlineDatum(configDatum1)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+// //   let ownerInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+// //     )
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+// //   let configOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.configValHash),
+// //       t.configValue(),
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: mintValue,
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [configOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       mint: mintValue,
+// //       extra_signatories: [test_owner],
+// //       inputs: [ownerInput],
+// //       outputs: [configOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
 
-//   configMint(test_owner, configAction, ctx)?
-// }
+// //   configMint(test_owner, configAction, ctx)?
+// // }
 
-// test config_mint_datum_fail() fail {
-//   let test_owner = #"face"
+// // test config_mint_datum_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configAction =
+// //     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let configDatum1 = oracleDatum(1, 1111111111, 15, 2)
-//   let outDatum = InlineDatum(configDatum1)
+// //   let configDatum1 = oracleDatum(1, 1111111111, 15, 2)
+// //   let outDatum = InlineDatum(configDatum1)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+// //   let ownerInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+// //     )
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+// //   let configOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.configValHash),
+// //       t.configValue(),
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: t.configMintedValue(),
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [configOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       mint: t.configMintedValue(),
+// //       extra_signatories: [test_owner],
+// //       inputs: [ownerInput],
+// //       outputs: [configOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
 
-//   configMint(test_owner, configAction, ctx)?
-// }
+// //   configMint(test_owner, configAction, ctx)?
+// // }
 
-// test config_mint_sigs_fail() fail {
-//   let test_owner = #"face"
+// // test config_mint_sigs_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configAction =
+// //     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let outDatum = InlineDatum(configDatum1)
+// //   let configDatum1 =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let outDatum = InlineDatum(configDatum1)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+// //   let ownerInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+// //     )
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+// //   let configOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.configValHash),
+// //       t.configValue(),
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: t.configMintedValue(),
-//       extra_signatories: [#"cafe"],
-//       inputs: [ownerInput],
-//       outputs: [configOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       mint: t.configMintedValue(),
+// //       extra_signatories: [#"cafe"],
+// //       inputs: [ownerInput],
+// //       outputs: [configOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
 
-//   configMint(test_owner, configAction, ctx)?
-// }
+// //   configMint(test_owner, configAction, ctx)?
+// // }
 
 // // Config Val Tests
 // test config_val() {
@@ -1185,141 +1185,141 @@
 //   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
 // }
 
-// test config_val_token_fail() fail {
-//   let test_owner = #"face"
+// // test config_val_token_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configAction =
+// //     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(configDatum1)
+// //   let configDatum1 =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let inDatum = InlineDatum(configDatum1)
+// //   let outDatum = InlineDatum(configDatum1)
 
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.makeAdaValue(10),
-//         // we dont check for a token input
-//         inDatum,
-//       ),
-//     )
+// //   let configInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.makeAdaValue(10),
+// //         // we dont check for a token input
+// //         inDatum,
+// //       ),
+// //     )
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.makeAdaValue(10),
-//       // this only fails because there is no token output
-//       outDatum,
-//     )
+// //   let configOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.configValHash),
+// //       t.makeAdaValue(10),
+// //       // this only fails because there is no token output
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       extra_signatories: [test_owner],
+// //       inputs: [configInput],
+// //       outputs: [configOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+// //   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+// // }
 
-// test config_val_datum_fail() fail {
-//   let test_owner = #"face"
+// // test config_val_datum_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configAction =
+// //     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configDatum1 =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let oracleDatum = oracleDatum(1, 1111111111, 1, 1)
+// //   let oracleDatum = oracleDatum(1, 1111111111, 1, 1)
 
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(oracleDatum)
+// //   let inDatum = InlineDatum(configDatum1)
+// //   let outDatum = InlineDatum(oracleDatum)
 
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         inDatum,
-//       ),
-//     )
+// //   let configInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.configValue(),
+// //         inDatum,
+// //       ),
+// //     )
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+// //   let configOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.configValHash),
+// //       t.configValue(),
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       extra_signatories: [test_owner],
+// //       inputs: [configInput],
+// //       outputs: [configOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+// //   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+// // }
 
-// test config_val_sig_fail() fail {
-//   let test_owner = #"face"
+// // test config_val_sig_fail() fail {
+// //   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+// //   let oref = t.test_oref(#"face", 1)
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configAction =
+// //     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(configDatum1)
+// //   let configDatum1 =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let inDatum = InlineDatum(configDatum1)
+// //   let outDatum = InlineDatum(configDatum1)
 
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         inDatum,
-//       ),
-//     )
+// //   let configInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.configValue(),
+// //         inDatum,
+// //       ),
+// //     )
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+// //   let configOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.configValHash),
+// //       t.configValue(),
+// //       outDatum,
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [#"cafe"],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       extra_signatories: [#"cafe"],
+// //       inputs: [configInput],
+// //       outputs: [configOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+// //   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+// // }
 
-// // Rewards Mint Tests
+// // // Rewards Mint Tests
 // test rewards_mint() {
 //   let test_owner = #"face"
 //   let test_user = #"cafe"
@@ -1374,8 +1374,8 @@
 //   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
 // }
 
-// // not a test but a thought for improvement:
-// // We should enforce an empty token name so we cant mint tokens with different ones
+// // // not a test but a thought for improvement:
+// // // We should enforce an empty token name so we cant mint tokens with different ones
 
 // test rewards_mint_qty_fail() fail {
 //   let test_owner = #"face"
@@ -1431,233 +1431,233 @@
 //   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
 // }
 
-// test rewards_mint_loanOutput_fail() fail {
-//   let test_owner = #"face"
-//   let test_user = #"cafe"
+// // test rewards_mint_loanOutput_fail() fail {
+// //   let test_owner = #"face"
+// //   let test_user = #"cafe"
 
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
+// //   let oref = t.test_oref(#"face", 1)
+// //   let rref = t.test_oref(#"dead", 6)
 
-//   let rewardsAction = rewardsActionMint()
+// //   let rewardsAction = rewardsActionMint()
 
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
+// //   let configDatum =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configInDatum = InlineDatum(configDatum)
 
-//   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
+// //   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
+// //   let loanInDatum = InlineDatum(loanDatum)
+// //   let outDatum = NoDatum
 
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.loanValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
+// //   let loanInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.loanValHash),
+// //         t.loanValue(),
+// //         loanInDatum,
+// //       ),
+// //     )
 
-//   let loanOutput =
-//     t.test_output(
-//       t.test_script_address(t.loanValHash),
-//       t.loanValue(),
-//       loanInDatum,
-//     )
+// //   let loanOutput =
+// //     t.test_output(
+// //       t.test_script_address(t.loanValHash),
+// //       t.loanValue(),
+// //       loanInDatum,
+// //     )
 
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         configInDatum,
-//       ),
-//     )
+// //   let userOutput =
+// //     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+// //   let configIn =
+// //     t.test_input(
+// //       rref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.configValue(),
+// //         configInDatum,
+// //       ),
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(1000),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput, loanOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       reference_inputs: [configIn],
+// //       mint: t.rewardsMintedValue(1000),
+// //       extra_signatories: [test_owner],
+// //       inputs: [loanInput],
+// //       outputs: [userOutput, loanOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
 
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
+// //   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+// // }
 
-// test rewards_mint_config_fail() fail {
-//   let test_owner = #"face"
-//   let test_user = #"cafe"
+// // test rewards_mint_config_fail() fail {
+// //   let test_owner = #"face"
+// //   let test_user = #"cafe"
 
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
+// //   let oref = t.test_oref(#"face", 1)
+// //   let rref = t.test_oref(#"dead", 6)
 
-//   let rewardsAction = rewardsActionMint()
+// //   let rewardsAction = rewardsActionMint()
 
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
+// //   let configDatum =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configInDatum = InlineDatum(configDatum)
 
-//   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
+// //   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
+// //   let loanInDatum = InlineDatum(loanDatum)
+// //   let outDatum = NoDatum
 
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.loanValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
+// //   let loanInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.loanValHash),
+// //         t.loanValue(),
+// //         loanInDatum,
+// //       ),
+// //     )
 
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.makeAdaValue(2),
-//         configInDatum,
-//       ),
-//     )
+// //   let userOutput =
+// //     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+// //   let configIn =
+// //     t.test_input(
+// //       rref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.makeAdaValue(2),
+// //         configInDatum,
+// //       ),
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(1000),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       reference_inputs: [configIn],
+// //       mint: t.rewardsMintedValue(1000),
+// //       extra_signatories: [test_owner],
+// //       inputs: [loanInput],
+// //       outputs: [userOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
 
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
+// //   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+// // }
 
-// test rewards_mint_noRewards_fail() fail {
-//   let test_owner = #"face"
-//   let test_user = #"cafe"
+// // test rewards_mint_noRewards_fail() fail {
+// //   let test_owner = #"face"
+// //   let test_user = #"cafe"
 
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
+// //   let oref = t.test_oref(#"face", 1)
+// //   let rref = t.test_oref(#"dead", 6)
 
-//   let rewardsAction = rewardsActionMint()
+// //   let rewardsAction = rewardsActionMint()
 
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
+// //   let configDatum =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configInDatum = InlineDatum(configDatum)
 
-//   let loanDatum = loanDatum(1000, 15, 0, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
+// //   let loanDatum = loanDatum(1000, 15, 0, 2, 1111111190)
+// //   let loanInDatum = InlineDatum(loanDatum)
+// //   let outDatum = NoDatum
 
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.loanValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
+// //   let loanInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.loanValHash),
+// //         t.loanValue(),
+// //         loanInDatum,
+// //       ),
+// //     )
 
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         configInDatum,
-//       ),
-//     )
+// //   let userOutput =
+// //     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+// //   let configIn =
+// //     t.test_input(
+// //       rref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.configValue(),
+// //         configInDatum,
+// //       ),
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(1000),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       reference_inputs: [configIn],
+// //       mint: t.rewardsMintedValue(1000),
+// //       extra_signatories: [test_owner],
+// //       inputs: [loanInput],
+// //       outputs: [userOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
 
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
+// //   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+// // }
 
-// test rewards_mint_fakeLoanIn_fail() fail {
-//   // this fails because we dont check the incoming script hash
-//   // if we can't remove a loan token from our control, it doesnt matter
-//   // but we could verify the loanIn Credential as we have the config refInput
-//   let test_owner = #"face"
-//   let test_user = #"cafe"
+// // test rewards_mint_fakeLoanIn_fail() fail {
+// //   // this fails because we dont check the incoming script hash
+// //   // if we can't remove a loan token from our control, it doesnt matter
+// //   // but we could verify the loanIn Credential as we have the config refInput
+// //   let test_owner = #"face"
+// //   let test_user = #"cafe"
 
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
+// //   let oref = t.test_oref(#"face", 1)
+// //   let rref = t.test_oref(#"dead", 6)
 
-//   let rewardsAction = rewardsActionMint()
+// //   let rewardsAction = rewardsActionMint()
 
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
+// //   let configDatum =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configInDatum = InlineDatum(configDatum)
 
-//   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
+// //   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
+// //   let loanInDatum = InlineDatum(loanDatum)
+// //   let outDatum = NoDatum
 
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
+// //   let loanInput =
+// //     t.test_input(
+// //       oref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.loanValue(),
+// //         loanInDatum,
+// //       ),
+// //     )
 
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         configInDatum,
-//       ),
-//     )
+// //   let userOutput =
+// //     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+// //   let configIn =
+// //     t.test_input(
+// //       rref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.configValue(),
+// //         configInDatum,
+// //       ),
+// //     )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(1000),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput],
-//     }
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       reference_inputs: [configIn],
+// //       mint: t.rewardsMintedValue(1000),
+// //       extra_signatories: [test_owner],
+// //       inputs: [loanInput],
+// //       outputs: [userOutput],
+// //     }
 
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+// //   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
 
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
+// //   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+// // }
 
-// // Loan Mint Tests
+// // // Loan Mint Tests
 // test loan_mint() {
 //   let test_owner = #"face"
 //   let test_user = #"cafe"
@@ -1882,6 +1882,241 @@
 //     ctx,
 //   )?
 // }
+
+// // cant test muli because it expects a single script output
+// // test loan_val_multi() {
+// //   let test_owner = #"face"
+// //   let test_user = #"cafe"
+
+// //   let oref1 = t.test_oref(#"face", 1)
+// //   let oref2 = t.test_oref(#"face", 2)
+// //   let oref3 = t.test_oref(#"face", 3)
+// //   let cref = t.test_oref(#"cafe", 2)
+// //   let rref = t.test_oref(#"dead", 6)
+// //   let uref = t.test_oref(#"beef", 4)
+// //   let href1 = t.test_oref(#"feed", 3)
+// //   let href2 = t.test_oref(#"feed", 4)
+// //   let href3 = t.test_oref(#"feed", 5)
+
+// //   let loanAction = loanActionBalance()
+
+// //   let loanMintedValue =
+// //     value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
+
+// //   let configDatum =
+// //     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+// //   let configInDatum = InlineDatum(configDatum)
+
+// //   let loanDatum1 = loanDatum(1000, 15, 1000, 0, 1111111114)
+// //   let loanInDatum = InlineDatum(loanDatum1)
+// //   let loanInValue = t.loanTokenValue()
+
+// //   let loanDatum2 = loanDatum(1000, 15, 1000, 0, 1111111115)
+// //   let loanOutDatum = InlineDatum(loanDatum2)
+// //   let loanOutValue = t.loanTokenValue()
+
+// //   let collateralDatum1 = collateralDatum(2000, 12)
+// //   let colInDatum = InlineDatum(collateralDatum1)
+// //   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
+
+// //   let collateralDatum2 = collateralDatum(1000, 12)
+// //   let colOutDatum = InlineDatum(collateralDatum2)
+// //   let colOutValue = value.merge(t.makeAdaValue(1000), t.loanTokenValue())
+
+// //   let oracleInDatum = oracleDatum(2, 11111112, 15, 2)
+// //   let oracleOutDatum = oracleDatum(2, 11111114, 15, 2)
+// //   let oInDatum = InlineDatum(oracleInDatum)
+// //   let oOutDatum = InlineDatum(oracleOutDatum)
+
+// //   let noDatum = NoDatum
+
+// //   let loanIn1 =
+// //     t.test_input(
+// //       oref1,
+// //       t.test_output(
+// //         t.test_script_address(t.merkelLoanSpend),
+// //         loanInValue,
+// //         loanInDatum,
+// //       ),
+// //     )
+
+// //   let loanIn2 =
+// //     t.test_input(
+// //       oref2,
+// //       t.test_output(
+// //         t.test_script_address(t.merkelLoanSpend),
+// //         loanInValue,
+// //         loanInDatum,
+// //       ),
+// //     )
+
+// //   let loanIn3 =
+// //     t.test_input(
+// //       oref3,
+// //       t.test_output(
+// //         t.test_script_address(t.merkelLoanSpend),
+// //         loanInValue,
+// //         loanInDatum,
+// //       ),
+// //     )
+
+// //   let colIn1 =
+// //     t.test_input(
+// //       href1,
+// //       t.test_output(
+// //         t.test_script_address(t.collateralValHash),
+// //         colInValue,
+// //         colInDatum,
+// //       ),
+// //     )
+
+// //   let colIn2 =
+// //     t.test_input(
+// //       href2,
+// //       t.test_output(
+// //         t.test_script_address(t.collateralValHash),
+// //         colInValue,
+// //         colInDatum,
+// //       ),
+// //     )
+
+// //   let colIn3 =
+// //     t.test_input(
+// //       href3,
+// //       t.test_output(
+// //         t.test_script_address(t.collateralValHash),
+// //         colInValue,
+// //         colInDatum,
+// //       ),
+// //     )
+
+// //   let userIn1 =
+// //     t.test_input(
+// //       uref,
+// //       t.test_output(t.test_address(#"cafe"), t.makeAdaValue(2010), noDatum),
+// //     )
+
+// //   let configIn =
+// //     t.test_input(
+// //       cref,
+// //       t.test_output(
+// //         t.test_script_address(t.configValHash),
+// //         t.configValue(),
+// //         configInDatum,
+// //       ),
+// //     )
+
+// //   let oracleIn =
+// //     t.test_input(
+// //       rref,
+// //       t.test_output(
+// //         t.test_script_address(t.oracleValHash),
+// //         t.oracleValue(),
+// //         oInDatum,
+// //       ),
+// //     )
+
+// //   let oracleOut =
+// //     t.test_output(
+// //       t.test_script_address(t.oracleValHash),
+// //       t.oracleValue(),
+// //       oOutDatum,
+// //     )
+
+// //   let loanOut1 =
+// //     t.test_output(
+// //       t.test_script_address(t.merkelLoanSpend),
+// //       loanOutValue,
+// //       loanOutDatum,
+// //     )
+
+// //   let loanOut2 =
+// //     t.test_output(
+// //       t.test_script_address(t.merkelLoanSpend),
+// //       loanOutValue,
+// //       loanOutDatum,
+// //     )
+
+// //   let loanOut3 =
+// //     t.test_output(
+// //       t.test_script_address(t.merkelLoanSpend),
+// //       loanOutValue,
+// //       loanOutDatum,
+// //     )
+
+// //   let colOut1 =
+// //     t.test_output(
+// //       t.test_script_address(t.collateralValHash),
+// //       colOutValue,
+// //       colOutDatum,
+// //     )
+
+// //   let colOut2 =
+// //     t.test_output(
+// //       t.test_script_address(t.collateralValHash),
+// //       colOutValue,
+// //       colOutDatum,
+// //     )
+// //   let colOut3 =
+// //     t.test_output(
+// //       t.test_script_address(t.collateralValHash),
+// //       colOutValue,
+// //       colOutDatum,
+// //     )
+
+// //   let tx =
+// //     Transaction {
+// //       ..placeholder(),
+// //       reference_inputs: [configIn],
+// //       extra_signatories: [test_owner],
+// //       inputs: [
+// //         loanIn1,
+// //         loanIn2,
+// //         loanIn3,
+// //         oracleIn,
+// //         userIn1,
+// //         colIn1,
+// //         colIn2,
+// //         colIn3,
+// //       ],
+// //       outputs: [
+// //         loanOut1,
+// //         loanOut2,
+// //         loanOut3,
+// //         oracleOut,
+// //         colOut1,
+// //         colOut2,
+// //         colOut3,
+// //       ],
+// //     }
+
+// //   let ctx1 = ScriptContext { purpose: Spend(oref1), transaction: tx }
+// //   let ctx2 = ScriptContext { purpose: Spend(oref2), transaction: tx }
+// //   let ctx3 = ScriptContext { purpose: Spend(oref3), transaction: tx }
+
+// //   loanVal(
+// //     t.oracleMintHash,
+// //     t.loanMintHash,
+// //     t.configMintHash,
+// //     loanDatum1,
+// //     loanAction,
+// //     ctx1,
+// //   )? && loanVal(
+// //     t.oracleMintHash,
+// //     t.loanMintHash,
+// //     t.configMintHash,
+// //     loanDatum1,
+// //     loanAction,
+// //     ctx2,
+// //   )? && loanVal(
+// //     t.oracleMintHash,
+// //     t.loanMintHash,
+// //     t.configMintHash,
+// //     loanDatum1,
+// //     loanAction,
+// //     ctx3,
+// //   )?
+// // }
 
 // // Collateral Validator Tests
 // test collateral_val() {
@@ -2122,3 +2357,5 @@
 // //   let redeemer = OBurn
 // //   redeemer
 // // }
+
+// // oracle, loanValidator, collateralVal, configVal,

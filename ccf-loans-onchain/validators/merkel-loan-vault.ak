@@ -6,7 +6,7 @@ use aiken/transaction.{
 }
 use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkel0, withBurn}
+use ccfl/helpers.{merkel0, withBurn, withdraw4}
 use ccfl/types.{
   CollateralDatum, LoanDatum, MerkelConfigDatum, MerkelLoanAction, OracleDatum,
   ScriptHash,
@@ -69,7 +69,7 @@ validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
     expect InlineDatum(datum) = configIn.output.datum
     expect cDatum: MerkelConfigDatum = datum
 
-    merkel0(
+    withdraw4(
       fn(input, output) {
         expect InlineDatum(datum) = input.datum
         expect d: LoanDatum = datum
@@ -105,9 +105,9 @@ validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
 
         input.address.payment_credential == output.address.payment_credential && datum.amount == d.amount && datum.interest == d.interest && datum.term == d.term && adaOut >= minCollateralValue
       },
-      r,
       loanVal,
-      c,
+      r,
+      transaction,
     )
   }
 }
@@ -271,6 +271,7 @@ test loan_balance() {
   let loanDatum2 = tx.loanDatum(1000, 15, 1000, 0, 1111111115)
   let loanOutDatum = InlineDatum(loanDatum2)
   let loanOutValue = t.loanTokenValue()
+
   let collateralDatum1 = tx.collateralDatum(2000, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
@@ -278,8 +279,10 @@ test loan_balance() {
   let collateralDatum2 = tx.collateralDatum(1000, 12)
   let colOutDatum = InlineDatum(collateralDatum2)
   let colOutValue = value.merge(t.makeAdaValue(1000), t.loanTokenValue())
+
   let oracleInDatum = tx.oracleDatum(2, 11111112, 15, 2)
   let oracleOutDatum = tx.oracleDatum(2, 11111114, 15, 2)
+
   let oInDatum = InlineDatum(oracleInDatum)
   let oOutDatum = InlineDatum(oracleOutDatum)
 
@@ -296,7 +299,7 @@ test loan_balance() {
   // let r3 = loanAction
   // let r4 = loanAction
   let redeemerList =
-    [(0, 0)]
+    [(0, 0), (1, 1), (2, 2)]
 
   //   [(3, 1), (6, 3), (9, 5), (12, 7)]
   let loanIn1 =
@@ -309,7 +312,47 @@ test loan_balance() {
       ),
     )
 
+  let loanIn2 =
+    t.test_input(
+      oref1,
+      t.test_output(
+        t.test_script_address(t.merkelLoanSpend),
+        loanInValue,
+        loanInDatum,
+      ),
+    )
+
+  let loanIn3 =
+    t.test_input(
+      oref1,
+      t.test_output(
+        t.test_script_address(t.merkelLoanSpend),
+        loanInValue,
+        loanInDatum,
+      ),
+    )
+
   let colIn1 =
+    t.test_input(
+      href1,
+      t.test_output(
+        t.test_script_address(t.collateralValHash),
+        colInValue,
+        colInDatum,
+      ),
+    )
+
+  let colIn2 =
+    t.test_input(
+      href1,
+      t.test_output(
+        t.test_script_address(t.collateralValHash),
+        colInValue,
+        colInDatum,
+      ),
+    )
+
+  let colIn3 =
     t.test_input(
       href1,
       t.test_output(
@@ -359,7 +402,34 @@ test loan_balance() {
       loanOutDatum,
     )
 
+  let loanOut2 =
+    t.test_output(
+      t.test_script_address(t.merkelLoanSpend),
+      loanOutValue,
+      loanOutDatum,
+    )
+
+  let loanOut3 =
+    t.test_output(
+      t.test_script_address(t.merkelLoanSpend),
+      loanOutValue,
+      loanOutDatum,
+    )
+
   let colOut1 =
+    t.test_output(
+      t.test_script_address(t.collateralValHash),
+      colOutValue,
+      colOutDatum,
+    )
+
+  let colOut2 =
+    t.test_output(
+      t.test_script_address(t.collateralValHash),
+      colOutValue,
+      colOutDatum,
+    )
+  let colOut3 =
     t.test_output(
       t.test_script_address(t.collateralValHash),
       colOutValue,
@@ -371,8 +441,25 @@ test loan_balance() {
       ..placeholder(),
       reference_inputs: [configIn],
       extra_signatories: [test_owner],
-      inputs: [loanIn1, oracleIn, userIn1, colIn1],
-      outputs: [loanOut1, oracleOut, colOut1],
+      inputs: [
+        loanIn1,
+        loanIn2,
+        loanIn3,
+        oracleIn,
+        userIn1,
+        colIn1,
+        colIn2,
+        colIn3,
+      ],
+      outputs: [
+        loanOut1,
+        loanOut2,
+        loanOut3,
+        oracleOut,
+        colOut1,
+        colOut2,
+        colOut3,
+      ],
       withdrawals: withdraw0,
     }
 
@@ -399,5 +486,5 @@ test loan_balance() {
     t.configMintHash,
     redeemerList,
     ctx5,
-  )
+  )?
 }

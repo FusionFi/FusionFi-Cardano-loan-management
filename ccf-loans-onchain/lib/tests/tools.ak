@@ -10,7 +10,7 @@ use aiken/transaction/credential.{
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
 
 pub const merkelLoanBalance =
-  #"c2b7ab766c9093e312b35eafb8074af1e05b177a012db3c78fbf3d44"
+  #"af19877e58beb387a1d385fa8b7179cf01372760af9b0478a01de4bf"
 
 pub const merkelLoanClose =
   #"041c193fe41ebe9bc9373a370ea1c4ffee121289e7db87802b799be6"
@@ -43,7 +43,7 @@ pub const loanMintHash =
   #"13467ada0ce604c286b879e969231e206dbb95a41eca4722c963085b"
 
 pub const loanValHash =
-  #"8efc8a322434c86df29198ab3f95e7627cf55363177fc3e37abba552"
+  #"a517891be9cb0fb829b2b5ccd1b5616c7b1155c1a7000fd30b329262"
 
 pub const oracleMintHash =
   #"d07d942ea4581f003c2daa0e14799a2ab10063eea81bcf0ea90d1841"
