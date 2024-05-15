@@ -295,14 +295,9 @@ test loan_close() {
       t.stakeCompare,
     )
 
-  // let r1 = loanAction
-  // let r2 = loanAction
-  // let r3 = loanAction
-  // let r4 = loanAction
   let redeemerList =
     [0, 1, 2]
 
-  //   [(3, 1), (6, 3), (9, 5), (12, 7)]
   let loanIn1 =
     t.test_input(
       oref1,
@@ -396,42 +391,6 @@ test loan_close() {
       oOutDatum,
     )
 
-  // let loanOut1 =
-  //   t.test_output(
-  //     t.test_script_address(t.merkelLoanSpend),
-  //     loanOutValue,
-  //     loanOutDatum,
-  //   )
-  // let loanOut2 =
-  //   t.test_output(
-  //     t.test_script_address(t.merkelLoanSpend),
-  //     loanOutValue,
-  //     loanOutDatum,
-  //   )
-  // let loanOut3 =
-  //   t.test_output(
-  //     t.test_script_address(t.merkelLoanSpend),
-  //     loanOutValue,
-  //     loanOutDatum,
-  //   )
-  // let colOut1 =
-  //   t.test_output(
-  //     t.test_script_address(t.collateralValHash),
-  //     colOutValue,
-  //     colOutDatum,
-  //   )
-  // let colOut2 =
-  //   t.test_output(
-  //     t.test_script_address(t.collateralValHash),
-  //     colOutValue,
-  //     colOutDatum,
-  //   )
-  // let colOut3 =
-  //   t.test_output(
-  //     t.test_script_address(t.collateralValHash),
-  //     colOutValue,
-  //     colOutDatum,
-  //   )
   let tx =
     Transaction {
       ..placeholder(),
@@ -447,34 +406,18 @@ test loan_close() {
         colIn2,
         colIn3,
       ],
-      outputs: [
-        // loanOut1,
-        // loanOut2,
-        // loanOut3,
-        oracleOut,
-      ],
+      outputs: [oracleOut],
       mint: value.to_minted_value(t.loanBurnValue()),
       withdrawals: withdraw0,
     }
 
   let ctx5 =
     ScriptContext { purpose: t.withPurpose(t.merkelLoanClose), transaction: tx }
-  // spend(t.configMintHash, loanDatum1, r1, ctx1)? && spend(
-  //   t.configMintHash,
-  //   loanDatum1,
-  //   r2,
-  //   ctx2,
-  // )? && spend(t.configMintHash, loanDatum1, r3, ctx3)? && spend(
-  //   t.configMintHash,
-  //   loanDatum1,
-  //   r4,
-  //   ctx4,
-  // )?
+
   loanClose(
     t.merkelLoanSpend,
     t.loanMintHash,
     t.oracleMintHash,
-    // t.configMintHash,
     redeemerList,
     ctx5,
   )?
@@ -542,14 +485,9 @@ test loan_balance() {
       t.stakeCompare,
     )
 
-  // let r1 = loanAction
-  // let r2 = loanAction
-  // let r3 = loanAction
-  // let r4 = loanAction
   let redeemerList =
     [(0, 0), (1, 1), (2, 2)]
 
-  //   [(3, 1), (6, 3), (9, 5), (12, 7)]
   let loanIn1 =
     t.test_input(
       oref1,
@@ -716,17 +654,7 @@ test loan_balance() {
       purpose: t.withPurpose(t.merkelLoanBalance),
       transaction: tx,
     }
-  // spend(t.configMintHash, loanDatum1, r1, ctx1)? && spend(
-  //   t.configMintHash,
-  //   loanDatum1,
-  //   r2,
-  //   ctx2,
-  // )? && spend(t.configMintHash, loanDatum1, r3, ctx3)? && spend(
-  //   t.configMintHash,
-  //   loanDatum1,
-  //   r4,
-  //   ctx4,
-  // )?
+
   loanBalance(
     t.merkelLoanSpend,
     t.loanMintHash,
