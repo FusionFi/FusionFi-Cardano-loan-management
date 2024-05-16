@@ -14,8 +14,6 @@ For scope of contracts and documentation please refer to `notes`
 .
 ├── aiken.lock
 ├── aiken.toml
-├── draft.ts
-├── initLucid.ts
 ├── lib
 │   ├── ccfl
 │   │   ├── helpers.ak # validator helper functions
@@ -32,8 +30,8 @@ For scope of contracts and documentation please refer to `notes`
     ├── init # initial validators w/ tests
     ├── merkel # merkelised validators
     │   # current optimisation w/ tests
-    ├── loan-vault.ak # Init LoanVault
-    └── merkel-loan-vault.ak # Merkel LoanVault
+    ├── loan-vault.ak # Init LoanVault w/ tests
+    └── merkel-loan-vault.ak # Merkel LoanVault w/ tests
 ```
 
 ## Building
