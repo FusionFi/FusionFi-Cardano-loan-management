@@ -6,7 +6,7 @@ use aiken/transaction.{
 }
 use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkel0, withBurn, withdraw4}
+use ccfl/helpers.{withBurn, withdraw4}
 use ccfl/types.{
   CollateralDatum, LoanDatum, MerkelConfigDatum, MerkelLoanAction, OracleDatum,
   ScriptHash,
@@ -174,7 +174,7 @@ validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
 
         let minCollateralValue = datum.amount * exchangeRate * ( 85 / 100 )
 
-        input.address.payment_credential == output.address.payment_credential && datum.amount == d.amount && datum.interest == d.interest && datum.term == d.term && adaOut >= minCollateralValue
+        input.address.payment_credential == output.address.payment_credential && datum.interest == d.interest && datum.term == d.term && adaOut >= minCollateralValue
       },
       loanVal,
       r,
@@ -233,6 +233,243 @@ validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId) {
 // Validator Tests //
 //                 //
 
+test loan_liquidate() {
+  let test_owner = #"face"
+
+  // let test_user = #"cafe"
+  let oref1 = t.test_oref(#"face", 1)
+  let oref2 = t.test_oref(#"face", 2)
+  let oref3 = t.test_oref(#"face", 3)
+  let cref1 = t.test_oref(#"cafe", 2)
+  let rref = t.test_oref(#"dead", 6)
+  let uref1 = t.test_oref(#"beef", 4)
+  let href1 = t.test_oref(#"feed", 3)
+  let href2 = t.test_oref(#"feed", 2)
+  let href3 = t.test_oref(#"feed", 1)
+
+  let loanAction = tx.merkelLoanAction(1)
+
+  let configDatum =
+    tx.mConfigDatum(
+      t.merkelLoanSpend,
+      t.collateralValHash,
+      t.rewardsMintHash,
+      t.oracleValHash,
+      [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
+      [],
+    )
+  let configInDatum = InlineDatum(configDatum)
+
+  let loanDatum1 = tx.loanDatum(1000, 15, 1000, 0, 1111111114)
+  let loanInDatum = InlineDatum(loanDatum1)
+  let loanInValue = t.loanTokenValue()
+
+  let loanDatum2 = tx.loanDatum(0, 15, 1000, 0, 1111111115)
+  let loanOutDatum = InlineDatum(loanDatum2)
+  let loanOutValue = t.loanTokenValue()
+
+  let collateralDatum1 = tx.collateralDatum(2000, 12)
+  let colInDatum = InlineDatum(collateralDatum1)
+  let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
+
+  let collateralDatum2 = tx.collateralDatum(0, 12)
+  let colOutDatum = InlineDatum(collateralDatum2)
+  let colOutValue = value.merge(t.makeAdaValue(2), t.loanTokenValue())
+
+  let oracleInDatum = tx.oracleDatum(2, 11111112, 15, 2)
+  let oracleOutDatum = tx.oracleDatum(2, 11111114, 15, 2)
+
+  let oInDatum = InlineDatum(oracleInDatum)
+  let oOutDatum = InlineDatum(oracleOutDatum)
+
+  let noDatum = NoDatum
+
+  let withdraw0 =
+    dict.from_ascending_list(
+      [(t.create_stake_credential(t.merkelLoanLiquidate), 0)],
+      t.stakeCompare,
+    )
+
+  let redeemerList =
+    [(0, 0), (1, 1), (2, 2)]
+
+  let loanIn1 =
+    t.test_input(
+      oref1,
+      t.test_output(
+        t.test_script_address(t.merkelLoanSpend),
+        loanInValue,
+        loanInDatum,
+      ),
+    )
+
+  let loanIn2 =
+    t.test_input(
+      oref2,
+      t.test_output(
+        t.test_script_address(t.merkelLoanSpend),
+        loanInValue,
+        loanInDatum,
+      ),
+    )
+
+  let loanIn3 =
+    t.test_input(
+      oref3,
+      t.test_output(
+        t.test_script_address(t.merkelLoanSpend),
+        loanInValue,
+        loanInDatum,
+      ),
+    )
+
+  let colIn1 =
+    t.test_input(
+      href1,
+      t.test_output(
+        t.test_script_address(t.collateralValHash),
+        colInValue,
+        colInDatum,
+      ),
+    )
+
+  let colIn2 =
+    t.test_input(
+      href2,
+      t.test_output(
+        t.test_script_address(t.collateralValHash),
+        colInValue,
+        colInDatum,
+      ),
+    )
+
+  let colIn3 =
+    t.test_input(
+      href3,
+      t.test_output(
+        t.test_script_address(t.collateralValHash),
+        colInValue,
+        colInDatum,
+      ),
+    )
+
+  let userIn1 =
+    t.test_input(
+      uref1,
+      t.test_output(t.test_address(#"cafe"), t.makeAdaValue(2010), noDatum),
+    )
+
+  let configIn =
+    t.test_input(
+      cref1,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        configInDatum,
+      ),
+    )
+
+  let oracleIn =
+    t.test_input(
+      rref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        oInDatum,
+      ),
+    )
+
+  let oracleOut =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      oOutDatum,
+    )
+
+  let loanOut1 =
+    t.test_output(
+      t.test_script_address(t.merkelLoanSpend),
+      loanOutValue,
+      loanOutDatum,
+    )
+
+  let loanOut2 =
+    t.test_output(
+      t.test_script_address(t.merkelLoanSpend),
+      loanOutValue,
+      loanOutDatum,
+    )
+
+  let loanOut3 =
+    t.test_output(
+      t.test_script_address(t.merkelLoanSpend),
+      loanOutValue,
+      loanOutDatum,
+    )
+
+  let colOut1 =
+    t.test_output(
+      t.test_script_address(t.collateralValHash),
+      colOutValue,
+      colOutDatum,
+    )
+
+  let colOut2 =
+    t.test_output(
+      t.test_script_address(t.collateralValHash),
+      colOutValue,
+      colOutDatum,
+    )
+  let colOut3 =
+    t.test_output(
+      t.test_script_address(t.collateralValHash),
+      colOutValue,
+      colOutDatum,
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [
+        loanIn1,
+        loanIn2,
+        loanIn3,
+        oracleIn,
+        userIn1,
+        colIn1,
+        colIn2,
+        colIn3,
+      ],
+      outputs: [
+        loanOut1,
+        loanOut2,
+        loanOut3,
+        oracleOut,
+        colOut1,
+        colOut2,
+        colOut3,
+      ],
+      withdrawals: withdraw0,
+    }
+
+  let ctx5 =
+    ScriptContext {
+      purpose: t.withPurpose(t.merkelLoanLiquidate),
+      transaction: tx,
+    }
+
+  loanLiquidate(
+    t.merkelLoanSpend,
+    t.loanMintHash,
+    t.oracleMintHash,
+    t.configMintHash,
+    redeemerList,
+    ctx5,
+  )?
+}
+
 test loan_close() {
   let test_owner = #"face"
 
@@ -240,17 +477,12 @@ test loan_close() {
   let oref1 = t.test_oref(#"face", 1)
   let oref2 = t.test_oref(#"face", 2)
   let oref3 = t.test_oref(#"face", 3)
-  let oref4 = t.test_oref(#"face", 4)
   let cref1 = t.test_oref(#"cafe", 2)
   let rref = t.test_oref(#"dead", 6)
   let uref1 = t.test_oref(#"beef", 4)
-  let uref2 = t.test_oref(#"beef", 5)
-  let uref3 = t.test_oref(#"beef", 1)
-  let uref4 = t.test_oref(#"beef", 2)
   let href1 = t.test_oref(#"feed", 3)
   let href2 = t.test_oref(#"feed", 2)
   let href3 = t.test_oref(#"feed", 1)
-  let href4 = t.test_oref(#"feed", 4)
 
   let loanAction = tx.merkelLoanAction(2)
 
@@ -430,17 +662,12 @@ test loan_balance() {
   let oref1 = t.test_oref(#"face", 1)
   let oref2 = t.test_oref(#"face", 2)
   let oref3 = t.test_oref(#"face", 3)
-  let oref4 = t.test_oref(#"face", 4)
   let cref1 = t.test_oref(#"cafe", 2)
   let rref = t.test_oref(#"dead", 6)
   let uref1 = t.test_oref(#"beef", 4)
-  let uref2 = t.test_oref(#"beef", 5)
-  let uref3 = t.test_oref(#"beef", 1)
-  let uref4 = t.test_oref(#"beef", 2)
   let href1 = t.test_oref(#"feed", 3)
   let href2 = t.test_oref(#"feed", 2)
   let href3 = t.test_oref(#"feed", 1)
-  let href4 = t.test_oref(#"feed", 4)
 
   let loanAction = tx.merkelLoanAction(0)
 
@@ -500,7 +727,7 @@ test loan_balance() {
 
   let loanIn2 =
     t.test_input(
-      oref1,
+      oref2,
       t.test_output(
         t.test_script_address(t.merkelLoanSpend),
         loanInValue,
@@ -510,7 +737,7 @@ test loan_balance() {
 
   let loanIn3 =
     t.test_input(
-      oref1,
+      oref3,
       t.test_output(
         t.test_script_address(t.merkelLoanSpend),
         loanInValue,
@@ -530,7 +757,7 @@ test loan_balance() {
 
   let colIn2 =
     t.test_input(
-      href1,
+      href2,
       t.test_output(
         t.test_script_address(t.collateralValHash),
         colInValue,
@@ -540,7 +767,7 @@ test loan_balance() {
 
   let colIn3 =
     t.test_input(
-      href1,
+      href3,
       t.test_output(
         t.test_script_address(t.collateralValHash),
         colInValue,

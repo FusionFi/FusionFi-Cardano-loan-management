@@ -1,10 +1,6 @@
-use aiken/dict
 use aiken/hash.{Blake2b_224, Hash}
-use aiken/list
 use aiken/time.{PosixTime}
-use aiken/transaction
 use aiken/transaction/credential.{Script, VerificationKey}
-use aiken/transaction/value
 
 pub type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>

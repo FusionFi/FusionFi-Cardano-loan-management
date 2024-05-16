@@ -1,15 +1,15 @@
 use aiken/list.{has}
-use aiken/transaction.{
-  InlineDatum, Output, ScriptContext, Spend, Transaction, placeholder,
-}
+use aiken/transaction.{InlineDatum, Output, ScriptContext, Spend, Transaction}
+// placeholder,
 use aiken/transaction/value.{PolicyId, policies}
 use ccfl/helpers.{get_own_singleton_output}
 use ccfl/types.{
   MConClose, MConUpdate, MerkelConfigAction, MerkelConfigDatum,
   VerificationKeyHash,
 }
-use tests/tools as t
-use tests/transactions.{configActionUpdate, configDatum, oracleDatum}
+
+// use tests/tools as t
+// use tests/transactions.{configActionUpdate, configDatum, oracleDatum}
 
 //                         //
 // Merkel Config Validator //

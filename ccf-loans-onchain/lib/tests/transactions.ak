@@ -3,7 +3,7 @@ use ccfl/types.{
   AMint, CollateralAction, CollateralDatum, ConUpdate, ConfigAction, ConfigDatum,
   LoanAction, LoanDatum, LoanMintAction, MerkelConfigDatum, MerkelLoanAction,
   OMint, OracleAction, OracleDatum, OracleMintAction, OracleUpdate, RewardMint,
-  RewardsAction, SCBalance, SLBalance, ScriptHash,
+  RewardsAction, SCBalance, SLBalance, SLClose, SLLiquidate, ScriptHash,
 }
 
 //                             //
@@ -74,15 +74,15 @@ pub fn loanActionBalance() -> LoanAction {
   redeemer
 }
 
-// fn loanActionLiquidate() -> LoanAction {
-//   let redeemer = SLLiquidate
-//   redeemer
-// }
+pub fn loanActionLiquidate() -> LoanAction {
+  let redeemer = SLLiquidate
+  redeemer
+}
 
-// fn loanActionClose() -> LoanAction {
-//   let redeemer = SLClose
-//   redeemer
-// }
+pub fn loanActionClose() -> LoanAction {
+  let redeemer = SLClose
+  redeemer
+}
 
 pub fn loanMintActionMint(c: ByteArray, v: Int, t: PosixTime) -> LoanMintAction {
   let redeemer = AMint { loanCurrency: c, loanValue: v, timestamp: t }

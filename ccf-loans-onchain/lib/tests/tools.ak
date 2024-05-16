@@ -13,10 +13,10 @@ pub const merkelLoanBalance =
   #"af19877e58beb387a1d385fa8b7179cf01372760af9b0478a01de4bf"
 
 pub const merkelLoanClose =
-  #"041c193fe41ebe9bc9373a370ea1c4ffee121289e7db87802b799be6"
+  #"85ae5150c9e0210cf0d53efea46ecc285814e4da35d26875520a65db"
 
 pub const merkelLoanLiquidate =
-  #"e5abee1df58fb1465dfebd4d4e2a637e3ac0872db1fb3a4489d5991f"
+  #"0d2bee45fe06c78f25ec4e50b2411970e3b1fe6603447899087001bc"
 
 pub const merkelLoanSpend =
   #"8ed9b99679a54c1bf93924cc0dc79768d93fd2d450943294a27c9c67"
@@ -43,7 +43,7 @@ pub const loanMintHash =
   #"13467ada0ce604c286b879e969231e206dbb95a41eca4722c963085b"
 
 pub const loanValHash =
-  #"a517891be9cb0fb829b2b5ccd1b5616c7b1155c1a7000fd30b329262"
+  #"981f2bd75713db8f52855fa5d48bca04d08fde65a2bb8b486a300621"
 
 pub const oracleMintHash =
   #"d07d942ea4581f003c2daa0e14799a2ab10063eea81bcf0ea90d1841"

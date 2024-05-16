@@ -36,17 +36,17 @@ pub fn get_own_singleton_output(
 
 pub fn withBurn(
   checkBurn: fn(Output) -> Bool,
-  loanVal: ScriptHash,
+  _loanVal: ScriptHash,
   redeemer: List<Int>,
   tx: Transaction,
 ) -> Bool {
-  expect Transaction { inputs, .. } = tx
+  let Transaction { inputs, .. } = tx
 
   let txList =
     list.map(
       redeemer,
       fn(index) {
-        expect in = index
+        let in = index
         expect Some(input) = list.at(inputs, in)
         input
       },
@@ -80,7 +80,7 @@ pub fn merkel0(
 
   expect [(in_ix, out_ix)] = redeemer
 
-  expect Some(Input { output: in_utxo, output_reference: in_ref }) =
+  expect Some(Input { output: in_utxo, output_reference: _in_ref }) =
     inputs |> list.at(in_ix)
 
   expect Some(out_utxo) = outputs |> list.at(out_ix)
