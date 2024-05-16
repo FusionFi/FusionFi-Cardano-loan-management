@@ -73,6 +73,14 @@ Here were my results:
 
 ![image](./CCFLMerkelLoanValTests.png)
 
+## Validator Architecture
+
+Oracle - Onchain price feed (`mint` / `spend`)
+Config - ValidatorState reference_input (`mint` / `spend`)
+Rewards - Rewards Tokens (`mint`)
+Loans - Holds loanData (`mint` / `spend`)
+Collateral - Holds collateral w/loanToken (`spend`)
+
 ## Merkel Validator Design Pattern
 
 This design pattern separates the redeemer cases out of the `init` into separate 
@@ -144,3 +152,4 @@ done.
 
 This will alow us to find ways of removing redundant checks in validation whilst 
 guaranteeing all checks are sufficient on the lowest level.
+
