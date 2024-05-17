@@ -75,6 +75,10 @@ pub type CollateralAction {
   SCClose
 }
 
+pub type MerkelCollateralAction {
+  i: Int,
+}
+
 pub type CollateralDatum {
   amount: Int,
   timestamp: PosixTime,

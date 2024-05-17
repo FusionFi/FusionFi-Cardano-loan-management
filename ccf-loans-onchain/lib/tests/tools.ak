@@ -9,6 +9,18 @@ use aiken/transaction/credential.{
 }
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
 
+pub const merkelCollateralBalance =
+  #"79bb35a6ac49e24289d3cb07c6258bb41b315cb2341fa71bfb43c9ab"
+
+pub const merkelCollateralSpend =
+  #"43024cb7526901f7ff2de25361a13980cf0e468e19603559fa10307d"
+
+pub const merkelCollateralLiquidate =
+  #"b57379e419301de61c5c8c61691f201f3e4f6046b3f84d0fc017d923"
+
+pub const merkelCollateralClose =
+  #"fa49216105e73d332940a48fc193649569a00e336966973a41f2654d"
+
 pub const merkelLoanBalance =
   #"af19877e58beb387a1d385fa8b7179cf01372760af9b0478a01de4bf"
 

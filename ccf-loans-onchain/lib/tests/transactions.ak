@@ -1,9 +1,10 @@
 use aiken/time.{PosixTime}
 use ccfl/types.{
   AMint, CollateralAction, CollateralDatum, ConUpdate, ConfigAction, ConfigDatum,
-  LoanAction, LoanDatum, LoanMintAction, MerkelConfigDatum, MerkelLoanAction,
-  OMint, OracleAction, OracleDatum, OracleMintAction, OracleUpdate, RewardMint,
-  RewardsAction, SCBalance, SLBalance, SLClose, SLLiquidate, ScriptHash,
+  LoanAction, LoanDatum, LoanMintAction, MerkelCollateralAction,
+  MerkelConfigDatum, MerkelLoanAction, OMint, OracleAction, OracleDatum,
+  OracleMintAction, OracleUpdate, RewardMint, RewardsAction, SCBalance, SCClose,
+  SCLiquidate, SLBalance, SLClose, SLLiquidate, ScriptHash,
 }
 
 //                             //
@@ -12,6 +13,11 @@ use ccfl/types.{
 
 pub fn merkelLoanAction(i: Int) -> MerkelLoanAction {
   let redeemer = MerkelLoanAction { i }
+  redeemer
+}
+
+pub fn merkelCollateralAction(i: Int) -> MerkelCollateralAction {
+  let redeemer = MerkelCollateralAction { i }
   redeemer
 }
 
@@ -105,15 +111,15 @@ pub fn collateralActionBalance() -> CollateralAction {
   redeemer
 }
 
-// fn collateralActionLiquidate() -> CollateralAction {
-//   let redeemer = SCLiquidate
-//   redeemer
-// }
+pub fn collateralActionLiquidate() -> CollateralAction {
+  let redeemer = SCLiquidate
+  redeemer
+}
 
-// fn collateralActionClose() -> CollateralAction {
-//   let redeemer = SCClose
-//   redeemer
-// }
+pub fn collateralActionClose() -> CollateralAction {
+  let redeemer = SCClose
+  redeemer
+}
 
 pub fn collateralDatum(a: Int, t: PosixTime) -> CollateralDatum {
   let datum = CollateralDatum { amount: a, timestamp: t }

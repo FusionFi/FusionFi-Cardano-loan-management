@@ -8,19 +8,18 @@ use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
 use ccfl/helpers.{withBurn, withdraw4}
 use ccfl/types.{
-  CollateralDatum, LoanDatum, MerkelConfigDatum, MerkelLoanAction, OracleDatum,
-  ScriptHash,
+  CollateralDatum, LoanDatum, MerkelCollateralAction, MerkelConfigDatum,
+  OracleDatum, ScriptHash,
 }
 use tests/tools as t
 use tests/transactions as tx
 
-//                   //
-// Merkel Loan Vault //
-//                   //
+//                         //
+// Merkel Collateral Vault //
+//                         //
 
 validator(cp: PolicyId) {
-  // this should be in the config datum instead
-  fn spend(_d: LoanDatum, r: MerkelLoanAction, c: ScriptContext) {
+  fn spend(_d: CollateralDatum, r: MerkelCollateralAction, c: ScriptContext) {
     let ScriptContext { transaction, .. } = c
     let Transaction { reference_inputs, withdrawals, .. } = transaction
 
@@ -34,86 +33,15 @@ validator(cp: PolicyId) {
     expect cDatum: MerkelConfigDatum = datum
 
     expect Some(stakeVal) =
-      cDatum.loanRedeemers
+      cDatum.collateralRedeemers
         |> list.at(r.i)
 
     dict.has_key(withdrawals, Inline(ScriptCredential(stakeVal)))
   }
 }
 
-validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
-  fn loanBalance(r: List<(Int, Int)>, c: ScriptContext) {
-    expect ScriptContext { transaction, purpose: WithdrawFrom(stake_cred) } = c
-
-    let Transaction { outputs, reference_inputs, .. } = transaction
-
-    expect Inline(ScriptCredential(own_validator)) = stake_cred
-
-    expect Some(oracleOut) =
-      list.find(
-        outputs,
-        fn(output) { list.has(value.policies(output.value), op) },
-      )
-
-    expect InlineDatum(datum) = oracleOut.datum
-    expect rDatum: OracleDatum = datum
-
-    let exchangeRate = rDatum.usdAda
-
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
-
-    withdraw4(
-      fn(input, output) {
-        expect InlineDatum(datum) = input.datum
-        expect d: LoanDatum = datum
-
-        expect Some(loanToken) =
-          list.head(value.flatten(value.without_lovelace(input.value)))
-
-        expect Some(colOut) =
-          list.find(
-            outputs,
-            fn(output) {
-              expect Some(colToken) =
-                list.head(value.flatten(value.without_lovelace(output.value)))
-
-              output.address.payment_credential == ScriptCredential(
-                cDatum.colVal,
-              ) && loanToken == colToken
-            },
-          )
-
-        expect InlineDatum(datum) = colOut.datum
-        expect colDatum: CollateralDatum = datum
-
-        let adaOut = value.lovelace_of(colOut.value) / 1000000
-
-        // let newCollateralValue = adaOut / exchangeRate
-        let minCollateralValue = d.amount * exchangeRate * ( 50 / 100 )
-
-        expect list.has(value.policies(output.value), lp)
-
-        expect InlineDatum(datum) = output.datum
-        expect datum: LoanDatum = datum
-
-        input.address.payment_credential == output.address.payment_credential && datum.amount == d.amount && datum.interest == d.interest && datum.term == d.term && adaOut >= minCollateralValue
-      },
-      loanVal,
-      r,
-      transaction,
-    )
-  }
-}
-
-validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
-  fn loanLiquidate(r: List<(Int, Int)>, c: ScriptContext) {
+validator(colVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
+  fn colBalance(r: List<(Int, Int)>, c: ScriptContext) {
     expect ScriptContext { transaction, purpose: WithdrawFrom(stake_cred) } = c
 
     let Transaction { outputs, reference_inputs, .. } = transaction
@@ -142,49 +70,118 @@ validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
 
     withdraw4(
       fn(input, output) {
-        // input here is already an input.output
-        expect InlineDatum(datum) = input.datum
-        expect d: LoanDatum = datum
-
-        expect Some(loanToken) =
+        expect Some(collateralToken) =
           list.head(value.flatten(value.without_lovelace(input.value)))
 
-        expect Some(colOut) =
+        expect Some(loanOut) =
           list.find(
             outputs,
             fn(output) {
-              expect Some(colToken) =
+              expect Some(loanToken) =
                 list.head(value.flatten(value.without_lovelace(output.value)))
 
               output.address.payment_credential == ScriptCredential(
-                cDatum.colVal,
-              ) && loanToken == colToken
+                cDatum.loanVal,
+              ) && loanToken == collateralToken
             },
           )
 
-        expect InlineDatum(datum) = colOut.datum
-        expect colDatum: CollateralDatum = datum
+        expect InlineDatum(datum) = loanOut.datum
+        expect lDatum: LoanDatum = datum
 
-        let adaOut = value.lovelace_of(colOut.value) / 1000000
+        let adaOut = value.lovelace_of(output.value) / 1000000
+
+        let minCollateralValue = lDatum.amount * exchangeRate * ( 50 / 100 )
 
         expect list.has(value.policies(output.value), lp)
 
         expect InlineDatum(datum) = output.datum
-        expect datum: LoanDatum = datum
+        expect outDatum: CollateralDatum = datum
 
-        let minCollateralValue = datum.amount * exchangeRate * ( 85 / 100 )
-
-        input.address.payment_credential == output.address.payment_credential && datum.interest == d.interest && datum.term == d.term && adaOut >= minCollateralValue
+        input.address.payment_credential == output.address.payment_credential && adaOut >= minCollateralValue && outDatum.amount == value.lovelace_of(
+          output.value,
+        ) / exchangeRate / 1000000 && list.has(
+          value.flatten(output.value),
+          collateralToken,
+        )
       },
-      loanVal,
+      colVal,
       r,
       transaction,
     )
   }
 }
 
-validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId) {
-  fn loanClose(r: List<Int>, c: ScriptContext) {
+validator(colVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
+  fn colLiquidate(r: List<(Int, Int)>, c: ScriptContext) {
+    expect ScriptContext { transaction, purpose: WithdrawFrom(stake_cred) } = c
+
+    let Transaction { outputs, reference_inputs, .. } = transaction
+
+    expect Inline(ScriptCredential(_own_validator)) = stake_cred
+
+    expect Some(oracleOut) =
+      list.find(
+        outputs,
+        fn(output) { list.has(value.policies(output.value), op) },
+      )
+
+    expect InlineDatum(datum) = oracleOut.datum
+    expect rDatum: OracleDatum = datum
+
+    let exchangeRate = rDatum.usdAda
+
+    expect Some(configIn) =
+      list.find(
+        reference_inputs,
+        fn(input) { list.has(value.policies(input.output.value), cp) },
+      )
+
+    expect InlineDatum(datum) = configIn.output.datum
+    expect cDatum: MerkelConfigDatum = datum
+
+    withdraw4(
+      fn(input, output) {
+        expect Some(collateralToken) =
+          list.head(value.flatten(value.without_lovelace(input.value)))
+
+        expect Some(loanOut) =
+          list.find(
+            outputs,
+            fn(output) {
+              expect Some(loanToken) =
+                list.head(value.flatten(value.without_lovelace(output.value)))
+
+              output.address.payment_credential == ScriptCredential(
+                cDatum.loanVal,
+              ) && loanToken == collateralToken
+            },
+          )
+
+        expect InlineDatum(datum) = loanOut.datum
+        expect lDatum: LoanDatum = datum
+
+        let adaOut = value.lovelace_of(output.value) / 1000000
+
+        let minCollateralValue = lDatum.amount * exchangeRate * ( 85 / 100 )
+
+        expect InlineDatum(datum) = output.datum
+        expect outDatum: CollateralDatum = datum
+
+        input.address.payment_credential == output.address.payment_credential && adaOut >= minCollateralValue && outDatum.amount == lDatum.amount && list.has(
+          value.flatten(output.value),
+          collateralToken,
+        )
+      },
+      colVal,
+      r,
+      transaction,
+    )
+  }
+}
+
+validator(colVal: ScriptHash, lp: PolicyId, op: PolicyId) {
+  fn collateralClose(r: List<Int>, c: ScriptContext) {
     expect ScriptContext { transaction, purpose: WithdrawFrom(stake_cred) } = c
 
     let Transaction { outputs, mint, .. } = transaction
@@ -200,7 +197,7 @@ validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId) {
     withBurn(
       fn(input) {
         expect InlineDatum(datum) = input.datum
-        expect d: LoanDatum = datum
+        expect d: CollateralDatum = datum
 
         let loanTokenVal = value.without_lovelace(input.value)
         expect [(loanTn, 1)] =
@@ -222,7 +219,7 @@ validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId) {
         expect list.has(burns, burnVal)
         d.amount == 0
       },
-      loanVal,
+      colVal,
       r,
       transaction,
     )
@@ -243,15 +240,15 @@ test balance_single() {
   let uref1 = t.test_oref(#"beef", 4)
   let href1 = t.test_oref(#"feed", 3)
 
-  // let loanAction = tx.merkelLoanAction(0)
+  // let collateralAction = tx.merkelCollateralAction(0)
   let configDatum =
     tx.mConfigDatum(
       t.merkelLoanSpend,
-      t.collateralValHash,
+      t.merkelCollateralSpend,
       t.rewardsMintHash,
       t.oracleValHash,
       [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
-      [],
+      [t.merkelCollateralBalance],
     )
   let configInDatum = InlineDatum(configDatum)
 
@@ -263,13 +260,13 @@ test balance_single() {
   let loanOutDatum = InlineDatum(loanDatum2)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum1 = tx.collateralDatum(2000, 12)
+  let collateralDatum1 = tx.collateralDatum(1000, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
   let collateralDatum2 = tx.collateralDatum(1000, 12)
   let colOutDatum = InlineDatum(collateralDatum2)
-  let colOutValue = value.merge(t.makeAdaValue(1000), t.loanTokenValue())
+  let colOutValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
   let oracleInDatum = tx.oracleDatum(2, 11111112, 15, 2)
   let oracleOutDatum = tx.oracleDatum(2, 11111114, 15, 2)
@@ -281,7 +278,7 @@ test balance_single() {
 
   let withdraw0 =
     dict.from_ascending_list(
-      [(t.create_stake_credential(t.merkelLoanBalance), 0)],
+      [(t.create_stake_credential(t.merkelCollateralBalance), 0)],
       t.stakeCompare,
     )
 
@@ -302,7 +299,7 @@ test balance_single() {
     t.test_input(
       href1,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -350,7 +347,7 @@ test balance_single() {
 
   let colOut1 =
     t.test_output(
-      t.test_script_address(t.collateralValHash),
+      t.test_script_address(t.merkelCollateralSpend),
       colOutValue,
       colOutDatum,
     )
@@ -360,19 +357,19 @@ test balance_single() {
       ..placeholder(),
       reference_inputs: [configIn],
       extra_signatories: [test_owner],
-      inputs: [loanIn1, oracleIn, userIn1, colIn1],
-      outputs: [loanOut1, oracleOut, colOut1],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut],
       withdrawals: withdraw0,
     }
 
   let ctx5 =
     ScriptContext {
-      purpose: t.withPurpose(t.merkelLoanBalance),
+      purpose: t.withPurpose(t.merkelCollateralBalance),
       transaction: tx,
     }
 
-  loanBalance(
-    t.merkelLoanSpend,
+  colBalance(
+    t.merkelCollateralSpend,
     t.loanMintHash,
     t.oracleMintHash,
     t.configMintHash,
@@ -395,15 +392,15 @@ test balance_multi() {
   let href2 = t.test_oref(#"feed", 2)
   let href3 = t.test_oref(#"feed", 1)
 
-  // let loanAction = tx.merkelLoanAction(0)
+  // let collateralAction = tx.merkelCollateralAction(0)
   let configDatum =
     tx.mConfigDatum(
       t.merkelLoanSpend,
-      t.collateralValHash,
+      t.merkelCollateralSpend,
       t.rewardsMintHash,
       t.oracleValHash,
       [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
-      [],
+      [t.merkelCollateralBalance],
     )
   let configInDatum = InlineDatum(configDatum)
 
@@ -415,13 +412,13 @@ test balance_multi() {
   let loanOutDatum = InlineDatum(loanDatum2)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum1 = tx.collateralDatum(2000, 12)
+  let collateralDatum1 = tx.collateralDatum(1000, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
   let collateralDatum2 = tx.collateralDatum(1000, 12)
   let colOutDatum = InlineDatum(collateralDatum2)
-  let colOutValue = value.merge(t.makeAdaValue(1000), t.loanTokenValue())
+  let colOutValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
   let oracleInDatum = tx.oracleDatum(2, 11111112, 15, 2)
   let oracleOutDatum = tx.oracleDatum(2, 11111114, 15, 2)
@@ -433,12 +430,12 @@ test balance_multi() {
 
   let withdraw0 =
     dict.from_ascending_list(
-      [(t.create_stake_credential(t.merkelLoanBalance), 0)],
+      [(t.create_stake_credential(t.merkelCollateralBalance), 0)],
       t.stakeCompare,
     )
 
   let redeemerList =
-    [(0, 0), (1, 1), (2, 2)]
+    [(5, 4), (6, 5), (7, 6)]
 
   let loanIn1 =
     t.test_input(
@@ -449,7 +446,6 @@ test balance_multi() {
         loanInDatum,
       ),
     )
-
   let loanIn2 =
     t.test_input(
       oref2,
@@ -474,7 +470,7 @@ test balance_multi() {
     t.test_input(
       href1,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -484,7 +480,7 @@ test balance_multi() {
     t.test_input(
       href2,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -494,7 +490,7 @@ test balance_multi() {
     t.test_input(
       href3,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -539,7 +535,6 @@ test balance_multi() {
       loanOutValue,
       loanOutDatum,
     )
-
   let loanOut2 =
     t.test_output(
       t.test_script_address(t.merkelLoanSpend),
@@ -556,20 +551,21 @@ test balance_multi() {
 
   let colOut1 =
     t.test_output(
-      t.test_script_address(t.collateralValHash),
+      t.test_script_address(t.merkelCollateralSpend),
       colOutValue,
       colOutDatum,
     )
 
   let colOut2 =
     t.test_output(
-      t.test_script_address(t.collateralValHash),
+      t.test_script_address(t.merkelCollateralSpend),
       colOutValue,
       colOutDatum,
     )
+
   let colOut3 =
     t.test_output(
-      t.test_script_address(t.collateralValHash),
+      t.test_script_address(t.merkelCollateralSpend),
       colOutValue,
       colOutDatum,
     )
@@ -603,12 +599,12 @@ test balance_multi() {
 
   let ctx5 =
     ScriptContext {
-      purpose: t.withPurpose(t.merkelLoanBalance),
+      purpose: t.withPurpose(t.merkelCollateralBalance),
       transaction: tx,
     }
 
-  loanBalance(
-    t.merkelLoanSpend,
+  colBalance(
+    t.merkelCollateralSpend,
     t.loanMintHash,
     t.oracleMintHash,
     t.configMintHash,
@@ -635,7 +631,7 @@ test liquidate_single() {
       t.rewardsMintHash,
       t.oracleValHash,
       [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
-      [],
+      [t.merkelCollateralBalance, t.merkelCollateralLiquidate],
     )
   let configInDatum = InlineDatum(configDatum)
 
@@ -647,7 +643,7 @@ test liquidate_single() {
   let loanOutDatum = InlineDatum(loanDatum2)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum1 = tx.collateralDatum(2000, 12)
+  let collateralDatum1 = tx.collateralDatum(1000, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
@@ -665,12 +661,12 @@ test liquidate_single() {
 
   let withdraw0 =
     dict.from_ascending_list(
-      [(t.create_stake_credential(t.merkelLoanLiquidate), 0)],
+      [(t.create_stake_credential(t.merkelCollateralLiquidate), 0)],
       t.stakeCompare,
     )
 
   let redeemerList =
-    [(0, 0)]
+    [(3, 2)]
 
   let loanIn1 =
     t.test_input(
@@ -686,7 +682,7 @@ test liquidate_single() {
     t.test_input(
       href1,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -734,7 +730,7 @@ test liquidate_single() {
 
   let colOut1 =
     t.test_output(
-      t.test_script_address(t.collateralValHash),
+      t.test_script_address(t.merkelCollateralSpend),
       colOutValue,
       colOutDatum,
     )
@@ -751,12 +747,12 @@ test liquidate_single() {
 
   let ctx5 =
     ScriptContext {
-      purpose: t.withPurpose(t.merkelLoanLiquidate),
+      purpose: t.withPurpose(t.merkelCollateralLiquidate),
       transaction: tx,
     }
 
-  loanLiquidate(
-    t.merkelLoanSpend,
+  colLiquidate(
+    t.merkelCollateralSpend,
     t.loanMintHash,
     t.oracleMintHash,
     t.configMintHash,
@@ -787,7 +783,7 @@ test liquidate_multi() {
       t.rewardsMintHash,
       t.oracleValHash,
       [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
-      [],
+      [t.merkelCollateralBalance, t.merkelCollateralLiquidate],
     )
   let configInDatum = InlineDatum(configDatum)
 
@@ -799,7 +795,7 @@ test liquidate_multi() {
   let loanOutDatum = InlineDatum(loanDatum2)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum1 = tx.collateralDatum(2000, 12)
+  let collateralDatum1 = tx.collateralDatum(1000, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
@@ -817,12 +813,12 @@ test liquidate_multi() {
 
   let withdraw0 =
     dict.from_ascending_list(
-      [(t.create_stake_credential(t.merkelLoanLiquidate), 0)],
+      [(t.create_stake_credential(t.merkelCollateralLiquidate), 0)],
       t.stakeCompare,
     )
 
   let redeemerList =
-    [(0, 0), (1, 1), (2, 2)]
+    [(5, 4), (6, 5), (7, 6)]
 
   let loanIn1 =
     t.test_input(
@@ -833,7 +829,6 @@ test liquidate_multi() {
         loanInDatum,
       ),
     )
-
   let loanIn2 =
     t.test_input(
       oref2,
@@ -858,7 +853,7 @@ test liquidate_multi() {
     t.test_input(
       href1,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -868,7 +863,7 @@ test liquidate_multi() {
     t.test_input(
       href2,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -878,7 +873,7 @@ test liquidate_multi() {
     t.test_input(
       href3,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -923,7 +918,6 @@ test liquidate_multi() {
       loanOutValue,
       loanOutDatum,
     )
-
   let loanOut2 =
     t.test_output(
       t.test_script_address(t.merkelLoanSpend),
@@ -940,20 +934,21 @@ test liquidate_multi() {
 
   let colOut1 =
     t.test_output(
-      t.test_script_address(t.collateralValHash),
+      t.test_script_address(t.merkelCollateralSpend),
       colOutValue,
       colOutDatum,
     )
 
   let colOut2 =
     t.test_output(
-      t.test_script_address(t.collateralValHash),
+      t.test_script_address(t.merkelCollateralSpend),
       colOutValue,
       colOutDatum,
     )
+
   let colOut3 =
     t.test_output(
-      t.test_script_address(t.collateralValHash),
+      t.test_script_address(t.merkelCollateralSpend),
       colOutValue,
       colOutDatum,
     )
@@ -987,12 +982,12 @@ test liquidate_multi() {
 
   let ctx5 =
     ScriptContext {
-      purpose: t.withPurpose(t.merkelLoanLiquidate),
+      purpose: t.withPurpose(t.merkelCollateralLiquidate),
       transaction: tx,
     }
 
-  loanLiquidate(
-    t.merkelLoanSpend,
+  colLiquidate(
+    t.merkelCollateralSpend,
     t.loanMintHash,
     t.oracleMintHash,
     t.configMintHash,
@@ -1019,7 +1014,11 @@ test close_single() {
       t.rewardsMintHash,
       t.oracleValHash,
       [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
-      [],
+      [
+        t.merkelCollateralBalance,
+        t.merkelCollateralLiquidate,
+        t.merkelCollateralClose,
+      ],
     )
   let configInDatum = InlineDatum(configDatum)
 
@@ -1031,7 +1030,7 @@ test close_single() {
 
   // let loanOutDatum = InlineDatum(loanDatum2)
   // let loanOutValue = t.loanTokenValue()
-  let collateralDatum1 = tx.collateralDatum(2000, 12)
+  let collateralDatum1 = tx.collateralDatum(0, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
@@ -1049,12 +1048,12 @@ test close_single() {
 
   let withdraw0 =
     dict.from_ascending_list(
-      [(t.create_stake_credential(t.merkelLoanClose), 0)],
+      [(t.create_stake_credential(t.merkelCollateralClose), 0)],
       t.stakeCompare,
     )
 
   let redeemerList =
-    [0]
+    [3]
 
   let loanIn1 =
     t.test_input(
@@ -1070,7 +1069,7 @@ test close_single() {
     t.test_input(
       href1,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -1121,10 +1120,13 @@ test close_single() {
     }
 
   let ctx5 =
-    ScriptContext { purpose: t.withPurpose(t.merkelLoanClose), transaction: tx }
+    ScriptContext {
+      purpose: t.withPurpose(t.merkelCollateralClose),
+      transaction: tx,
+    }
 
-  loanClose(
-    t.merkelLoanSpend,
+  collateralClose(
+    t.merkelCollateralSpend,
     t.loanMintHash,
     t.oracleMintHash,
     redeemerList,
@@ -1154,7 +1156,11 @@ test close_multi() {
       t.rewardsMintHash,
       t.oracleValHash,
       [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
-      [],
+      [
+        t.merkelCollateralBalance,
+        t.merkelCollateralLiquidate,
+        t.merkelCollateralClose,
+      ],
     )
   let configInDatum = InlineDatum(configDatum)
 
@@ -1166,7 +1172,7 @@ test close_multi() {
 
   // let loanOutDatum = InlineDatum(loanDatum2)
   // let loanOutValue = t.loanTokenValue()
-  let collateralDatum1 = tx.collateralDatum(2000, 12)
+  let collateralDatum1 = tx.collateralDatum(0, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
@@ -1184,12 +1190,12 @@ test close_multi() {
 
   let withdraw0 =
     dict.from_ascending_list(
-      [(t.create_stake_credential(t.merkelLoanClose), 0)],
+      [(t.create_stake_credential(t.merkelCollateralClose), 0)],
       t.stakeCompare,
     )
 
   let redeemerList =
-    [0, 1, 2]
+    [5, 6, 7]
 
   let loanIn1 =
     t.test_input(
@@ -1200,7 +1206,6 @@ test close_multi() {
         loanInDatum,
       ),
     )
-
   let loanIn2 =
     t.test_input(
       oref2,
@@ -1225,7 +1230,7 @@ test close_multi() {
     t.test_input(
       href1,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -1235,7 +1240,7 @@ test close_multi() {
     t.test_input(
       href2,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -1245,7 +1250,7 @@ test close_multi() {
     t.test_input(
       href3,
       t.test_output(
-        t.test_script_address(t.collateralValHash),
+        t.test_script_address(t.merkelCollateralSpend),
         colInValue,
         colInDatum,
       ),
@@ -1305,10 +1310,13 @@ test close_multi() {
     }
 
   let ctx5 =
-    ScriptContext { purpose: t.withPurpose(t.merkelLoanClose), transaction: tx }
+    ScriptContext {
+      purpose: t.withPurpose(t.merkelCollateralClose),
+      transaction: tx,
+    }
 
-  loanClose(
-    t.merkelLoanSpend,
+  collateralClose(
+    t.merkelCollateralSpend,
     t.loanMintHash,
     t.oracleMintHash,
     redeemerList,
