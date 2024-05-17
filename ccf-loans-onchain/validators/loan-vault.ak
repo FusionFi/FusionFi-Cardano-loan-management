@@ -1,3 +1,4 @@
+use aiken/dict
 use aiken/list.{filter, find, has, head}
 use aiken/transaction.{
   InlineDatum, Input, NoDatum, Output, ScriptContext, Spend, Transaction,
@@ -153,7 +154,29 @@ validator(op: PolicyId, lp: PolicyId, cp: PolicyId) {
         datum.amount == cDatum.amount && datum.interest == d.interest && datum.term == d.term && adaOut >= minCollateralValue
       }
       // close
-      SLClose -> d.amount == 0
+      SLClose -> {
+        expect Some(input) = find_input(inputs, oref)
+
+        let loanTokenVal = value.without_lovelace(input.output.value)
+        expect [(loanTn, 1)] =
+          loanTokenVal
+            |> value.tokens(lp)
+            |> dict.to_list()
+
+        expect Some(burnVal) =
+          value.zero()
+            |> value.add(lp, loanTn, -2)
+            |> value.flatten()
+            |> list.head()
+
+        let burns =
+          transaction.mint
+            |> value.from_minted_value()
+            |> value.flatten()
+
+        expect list.has(burns, burnVal)
+        d.amount == 0
+      }
     }
   }
 }

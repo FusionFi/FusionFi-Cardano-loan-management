@@ -43,7 +43,7 @@ pub const withLoanHash =
   #"4ec845bbc68fb454403c577635e5d934ead056c206f1e5b351f2d9ee"
 
 pub const collateralValHash =
-  #"c87cb59525bbb34ecaa261fa002ef290748317e1cbb0300aeeec62d7"
+  #"b0269971c5f1cf4585d4eba416735cdc1d61007fef83c7efd5a3be8f"
 
 pub const configMintHash =
   #"0371cc59b8c81f47bb02a76b227f6ea74e7dfdf2b9e3270337637b01"
@@ -55,7 +55,7 @@ pub const loanMintHash =
   #"13467ada0ce604c286b879e969231e206dbb95a41eca4722c963085b"
 
 pub const loanValHash =
-  #"981f2bd75713db8f52855fa5d48bca04d08fde65a2bb8b486a300621"
+  #"b99df998781a5ad58093daca046840f09754e67f69f5c19e2bc2a1b3"
 
 pub const oracleMintHash =
   #"d07d942ea4581f003c2daa0e14799a2ab10063eea81bcf0ea90d1841"

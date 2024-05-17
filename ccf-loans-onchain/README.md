@@ -30,6 +30,8 @@ For scope of contracts and documentation please refer to `notes`
     ├── init # initial validators w/ tests
     ├── merkel # merkelised validators
     │   # current optimisation w/ tests
+    ├── collateral-vault.ak # Init CollateralVault w/ tests
+    ├── merkel-collateral-vault.ak # Merkel CollateralVault w/ tests
     ├── loan-vault.ak # Init LoanVault w/ tests
     └── merkel-loan-vault.ak # Merkel LoanVault w/ tests
 ```
@@ -49,7 +51,9 @@ needing to build, so that we can have test functions to generate dynamic data.
 aiken check
 ```
 
-The current tests compare `loan-vault.ak` to `merkel-loan-vault.ak`.
+The current tests compare:
+- `loan-vault.ak` to `merkel-loan-vault.ak`
+- `collateral-vault.ak` to `merkel-collateral-vault.ak`
 
 The merkel design pattern is about reducing script bloat to increase throughput. We can 
 have several loans being manipulated each tx, without having to attach the whole script 
@@ -67,17 +71,59 @@ Single Transaction
 - 1 `LoanInputs` interacting per test
 - 1 Test for each `LoanAction`
 
+*The same goes for the `collateral` tests*
+
 Here were my results:
 
-![image](./CCFLMerkelLoanValTests.png)
+![image](./CCFLMerkelValPassTests.png)
 
 ## Validator Architecture
 
-Oracle - Onchain price feed (`mint` / `spend`)
-Config - ValidatorState reference_input (`mint` / `spend`)
-Rewards - Rewards Tokens (`mint`)
-Loans - Holds loanData (`mint` / `spend`)
-Collateral - Holds collateral w/loanToken (`spend`)
+### Oracle - Onchain price feed (`mint` / `spend`)
+
+Oracle Minting Policy:
+  - onChain price token
+  - mints, burns
+  - sets initial tokenDatum
+
+Oracle Validator:
+  - onChain price feed
+  - updates & closes feed
+  - enforces tokenDatum
+
+### Config - ValidatorState reference_input (`mint` / `spend`)
+
+Config Minting Policy:
+  - onChain script feed
+  - mints, burns
+  - sets initial configDatum
+
+Config Validator:
+  - onChain script lookup
+  - updates & closes feed
+  - enforces configDatum
+
+### Rewards - Rewards Tokens (`mint`)
+
+Rewards Minting Policy:
+  - Mints Rewards Tokens
+
+### Loans - Holds loanData (`mint` / `spend`)
+
+Loan Minting Policy:
+  - onChain Loan identifiers
+  - mints, burns tokenPair
+  - enforces datums & initial values
+
+Loan Validator:
+  - onChain loan state
+  - updates, liquidates & closes loan
+  - enforces loanDatum & collateralValue
+
+Collateral Validator:
+  - onChain collateral
+  - updates, liquidates & closes loan
+  - enforces collateralDatum & collateralValue
 
 ## Merkel Validator Design Pattern
 
@@ -142,8 +188,8 @@ fn loanBalance(r: List<(Int, Int)>, c: ScriptContext) {
 
 ## Further Optimisation
 
-I need to complete this optimisation benchmark for `init/collateral-validator` which is 
-really the only one that needs the same level of treatment as the others dont
+I have completed the optimisation benchmark for `collateral-validator` and have written a 
+passing test based on the ones set for `merkel-collateral-validator`
 
 I need to do validator level optimisations after this transaction level phase has been 
 done.
