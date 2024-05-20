@@ -79,6 +79,8 @@ Here were my results:
 
 ## Validator Architecture
 
+Here is a brief description of the validators and their roles.
+
 ### Oracle - Onchain price feed (`mint` / `spend`)
 
 Oracle Minting Policy:
