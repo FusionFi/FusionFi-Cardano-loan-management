@@ -91,6 +91,10 @@ Oracle Validator:
   - updates & closes feed
   - enforces tokenDatum
 
+The Oracle is a token / validator pair which identify the correct data onchain.
+
+This is checked in every loan transaction to guarantee we are always using the most up-to-date price for validation (by checking the oracle output)
+
 ### Config - ValidatorState reference_input (`mint` / `spend`)
 
 Config Minting Policy:
@@ -103,10 +107,22 @@ Config Validator:
   - updates & closes feed
   - enforces configDatum
 
+The Config is a token / validator pair which identifies the dapp state onchain by providing all of the script hashes of the other validators.
+
+*Why not use parameters?*
+
+Using parameters locks the validator to those parameters - if the parameters change, you are using a different vaildator.
+
+Making them dynamic in this way adds bloat to the transactions, but it means we can update the other validators and it wont affect the rest of the dapp ( or even the users/loans ).
+
 ### Rewards - Rewards Tokens (`mint`)
 
 Rewards Minting Policy:
   - Mints Rewards Tokens
+
+The Rewards Token is earned by maintaining a loan position, you accrue rewards periodicalyy and can mint them when you close out your loan - meaning it has been returned.
+
+If you are liquidated you will lose your rewards.
 
 ### Loans - Holds loanData (`mint` / `spend`)
 
@@ -124,6 +140,14 @@ Collateral Validator:
   - onChain collateral
   - updates, liquidates & closes loan
   - enforces collateralDatum & collateralValue
+
+The Loans validators are the main logic of the dapp.
+
+We have a minting policy which mints a loan token pair, one is sent to Loan Vault with 
+the loan datum, the other goes to the collateral vault with the collateral.
+
+We separate these values so they can be updated individually whilst maintaining the 
+onchain connection with their loan token.
 
 ## Merkel Validator Design Pattern
 
@@ -189,7 +213,14 @@ fn loanBalance(r: List<(Int, Int)>, c: ScriptContext) {
 ## Further Optimisation
 
 I have completed the optimisation benchmark for `collateral-validator` and have written a 
-passing test based on the ones set for `merkel-collateral-validator`
+passing test based on the ones set for `merkel-collateral-validator`.
+
+I had an epiphany Friday night, so the next level of validation will be to check both 
+Loan and collateral validators together.
+
+If i can save costs in this way it will mean i can validate the whole transaction state 
+in a staking validator instead of a single spend.redeemer case which is what the merkel 
+validators do right now
 
 I need to do validator level optimisations after this transaction level phase has been 
 done.
