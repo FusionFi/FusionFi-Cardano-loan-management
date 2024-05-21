@@ -46,5 +46,5 @@ requirements = []
 source = "github"
 
 [etags]
-"aiken-extra/tx_util@main" = [{ secs_since_epoch = 1716195599, nanos_since_epoch = 302715902 }, "c812ef894a8cfccca9a8d687831475cd67c9fe097e99b75af50a10fbeb72a400"]
-"aiken-lang/fuzz@main" = [{ secs_since_epoch = 1716195598, nanos_since_epoch = 918958963 }, "d7aadd4a9b25589bd6d5e3bbedcd809cdf97fe3eddb365cf89cd6ac6bc829643"]
+"aiken-extra/tx_util@main" = [{ secs_since_epoch = 1716285499, nanos_since_epoch = 272341489 }, "c812ef894a8cfccca9a8d687831475cd67c9fe097e99b75af50a10fbeb72a400"]
+"aiken-lang/fuzz@main" = [{ secs_since_epoch = 1716285498, nanos_since_epoch = 851535788 }, "d7aadd4a9b25589bd6d5e3bbedcd809cdf97fe3eddb365cf89cd6ac6bc829643"]

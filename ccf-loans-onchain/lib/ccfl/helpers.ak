@@ -88,6 +88,31 @@ pub fn merkel0(
   validation_logic(in_utxo, out_utxo)
 }
 
+pub fn merkelTx(
+  validate: fn(Output, Output) -> Bool,
+  redeemer: List<(Int, Int)>,
+  outputs: List<Output>,
+) -> Bool {
+  let txList =
+    list.map(
+      redeemer,
+      fn(index) {
+        expect (l, c) = index
+        expect Some(loan) = list.at(outputs, l)
+        expect Some(col) = list.at(outputs, c)
+        (loan, col)
+      },
+    )
+
+  list.all(
+    txList,
+    fn(pair) {
+      expect (loan, col) = pair
+      validate(loan, col)
+    },
+  )
+}
+
 pub fn withdraw1(
   validation_logic: fn(Output, Output, LoanAction) -> Bool,
   redeemer: List<(Int, Int, Int)>,
