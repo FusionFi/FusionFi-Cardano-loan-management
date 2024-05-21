@@ -113,6 +113,31 @@ pub fn merkelTx(
   )
 }
 
+pub fn merkelBurn(
+  validate: fn(Output, Output) -> Bool,
+  redeemer: List<(Int, Int)>,
+  inputs: List<Input>,
+) -> Bool {
+  let txList =
+    list.map(
+      redeemer,
+      fn(index) {
+        expect (l, c) = index
+        expect Some(loan) = list.at(inputs, l)
+        expect Some(col) = list.at(inputs, c)
+        (loan.output, col.output)
+      },
+    )
+
+  list.all(
+    txList,
+    fn(pair) {
+      expect (loan, col) = pair
+      validate(loan, col)
+    },
+  )
+}
+
 pub fn withdraw1(
   validation_logic: fn(Output, Output, LoanAction) -> Bool,
   redeemer: List<(Int, Int, Int)>,

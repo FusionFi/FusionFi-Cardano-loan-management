@@ -6,10 +6,9 @@ use aiken/transaction.{
 }
 use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkelTx, withBurn, withdraw4}
+use ccfl/helpers.{merkelTx, withdraw4}
 use ccfl/types.{
-  CollateralDatum, LoanDatum, MerkelCollateralAction, MerkelConfigDatum,
-  MerkelLoanAction, OracleDatum, ScriptHash,
+  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, ScriptHash,
 }
 use tests/tools as t
 use tests/transactions as tx
@@ -706,7 +705,7 @@ test merkel_liquidate_multi() {
   liquidate(t.oracleMintHash, t.configMintHash, redeemerList, ctx5)?
 }
 
-test liquidate_multi() {
+test separate_liquidate_multi() {
   let test_owner = #"face"
 
   // let test_user = #"cafe"
@@ -932,13 +931,13 @@ test liquidate_multi() {
       withdrawals: withdraw0,
     }
 
-  let ctx5 =
+  let ctx1 =
     ScriptContext {
       purpose: t.withPurpose(t.merkelLoanLiquidate),
       transaction: tx,
     }
 
-  let ctx5 =
+  let ctx2 =
     ScriptContext {
       purpose: t.withPurpose(t.merkelCollateralLiquidate),
       transaction: tx,
@@ -950,13 +949,13 @@ test liquidate_multi() {
     t.oracleMintHash,
     t.configMintHash,
     colRedeemer,
-    ctx5,
+    ctx2,
   )? && loanLiquidate(
     t.merkelLoanSpend,
     t.loanMintHash,
     t.oracleMintHash,
     t.configMintHash,
     loanRedeemer,
-    ctx5,
+    ctx1,
   )?
 }

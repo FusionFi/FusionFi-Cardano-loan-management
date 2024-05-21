@@ -112,7 +112,7 @@ validator(colVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
   }
 }
 
-validator(colVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
+validator(colVal: ScriptHash, _lp: PolicyId, op: PolicyId, cp: PolicyId) {
   fn colLiquidate(r: List<(Int, Int)>, c: ScriptContext) {
     expect ScriptContext { transaction, purpose: WithdrawFrom(stake_cred) } = c
 
@@ -1026,16 +1026,14 @@ test close_single() {
   let loanInDatum = InlineDatum(loanDatum1)
   let loanInValue = t.loanTokenValue()
 
-  let loanDatum2 = tx.loanDatum(0, 15, 1000, 0, 1111111115)
-
+  // let loanDatum2 = tx.loanDatum(0, 15, 1000, 0, 1111111115)
   // let loanOutDatum = InlineDatum(loanDatum2)
   // let loanOutValue = t.loanTokenValue()
   let collateralDatum1 = tx.collateralDatum(0, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
-  let collateralDatum2 = tx.collateralDatum(1000, 12)
-
+  // let collateralDatum2 = tx.collateralDatum(1000, 12)
   // let colOutDatum = InlineDatum(collateralDatum2)
   // let colOutValue = value.merge(t.makeAdaValue(1000), t.loanTokenValue())
   let oracleInDatum = tx.oracleDatum(2, 11111112, 15, 2)
@@ -1168,16 +1166,14 @@ test close_multi() {
   let loanInDatum = InlineDatum(loanDatum1)
   let loanInValue = t.loanTokenValue()
 
-  let loanDatum2 = tx.loanDatum(0, 15, 1000, 0, 1111111115)
-
+  // let loanDatum2 = tx.loanDatum(0, 15, 1000, 0, 1111111115)
   // let loanOutDatum = InlineDatum(loanDatum2)
   // let loanOutValue = t.loanTokenValue()
   let collateralDatum1 = tx.collateralDatum(0, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
-  let collateralDatum2 = tx.collateralDatum(1000, 12)
-
+  // let collateralDatum2 = tx.collateralDatum(1000, 12)
   // let colOutDatum = InlineDatum(collateralDatum2)
   // let colOutValue = value.merge(t.makeAdaValue(1000), t.loanTokenValue())
   let oracleInDatum = tx.oracleDatum(2, 11111112, 15, 2)
