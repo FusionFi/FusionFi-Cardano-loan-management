@@ -66,7 +66,6 @@ validator(cp: PolicyId) {
 
 validator(p: PolicyId, cp: PolicyId) {
   fn balance(r: List<(Int, Int)>, c: ScriptContext) {
-    // r is index of loanOutput only -> we can compare tokens to id collateral outputs
     expect ScriptContext {
       transaction,
       purpose: WithdrawFrom(stake_credential),
@@ -153,27 +152,9 @@ validator(p: PolicyId, cp: PolicyId) {
   }
 }
 
-validator(cp: PolicyId) {
-  fn colSpend(_d: CollateralDatum, r: MerkelCollateralAction, c: ScriptContext) {
-    let ScriptContext { transaction, .. } = c
-    let Transaction { reference_inputs, withdrawals, .. } = transaction
-
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
-
-    expect Some(stakeVal) =
-      cDatum.collateralRedeemers
-        |> list.at(r.i)
-
-    dict.has_key(withdrawals, Inline(ScriptCredential(stakeVal)))
-  }
-}
+//                 //
+// Validator Tests //
+//                 //
 
 validator(colVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
   fn colBalance(r: List<(Int, Int)>, c: ScriptContext) {
@@ -247,29 +228,6 @@ validator(colVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
   }
 }
 
-validator(cp: PolicyId) {
-  // this should be in the config datum instead
-  fn loanSpend(_d: LoanDatum, r: MerkelLoanAction, c: ScriptContext) {
-    let ScriptContext { transaction, .. } = c
-    let Transaction { reference_inputs, withdrawals, .. } = transaction
-
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
-
-    expect Some(stakeVal) =
-      cDatum.loanRedeemers
-        |> list.at(r.i)
-
-    dict.has_key(withdrawals, Inline(ScriptCredential(stakeVal)))
-  }
-}
-
 validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
   fn loanBalance(r: List<(Int, Int)>, c: ScriptContext) {
     expect ScriptContext { transaction, purpose: WithdrawFrom(stake_cred) } = c
@@ -340,10 +298,6 @@ validator(loanVal: ScriptHash, lp: PolicyId, op: PolicyId, cp: PolicyId) {
     )
   }
 }
-
-//                 //
-// Validator Tests //
-//                 //
 
 test merkel_balance_single() {
   let test_owner = #"face"

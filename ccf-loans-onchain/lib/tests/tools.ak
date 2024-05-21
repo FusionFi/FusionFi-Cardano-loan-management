@@ -9,6 +9,9 @@ use aiken/transaction/credential.{
 }
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
 
+pub const merkelLiquidate =
+  #"0d96565e8061af897f5bcccc037cac25d0d580cebeaa811945c361c5"
+
 pub const merkelBalance =
   #"4331f18eebb70d3a5db9ca4596947d774da483298c1904138a582a2f"
 
