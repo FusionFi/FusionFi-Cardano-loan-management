@@ -8,7 +8,6 @@ use aiken/transaction/credential.{ScriptCredential}
 use aiken/transaction/value.{
   PolicyId, flatten, lovelace_of, policies, without_lovelace,
 }
-use ccfl/helpers.{get_own_singleton_output}
 use ccfl/types.{
   CollateralAction, CollateralDatum, ConfigDatum, LoanDatum, OracleDatum,
   SCBalance, SCClose, SCLiquidate,
@@ -931,18 +930,10 @@ test close_single() {
   let loanInDatum = InlineDatum(loanDatum1)
   let loanInValue = t.loanTokenValue()
 
-  let loanDatum2 = tx.loanDatum(0, 15, 1000, 0, 1111111115)
-
-  // let loanOutDatum = InlineDatum(loanDatum2)
-  // let loanOutValue = t.loanTokenValue()
   let collateralDatum1 = tx.collateralDatum(0, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2), t.loanTokenValue())
 
-  let collateralDatum2 = tx.collateralDatum(1000, 12)
-
-  // let colOutDatum = InlineDatum(collateralDatum2)
-  // let colOutValue = value.merge(t.makeAdaValue(1000), t.loanTokenValue())
   let oracleInDatum = tx.oracleDatum(2, 11111112, 15, 2)
   let oracleOutDatum = tx.oracleDatum(2, 11111114, 15, 2)
 
@@ -1029,22 +1020,16 @@ test close_single() {
 test close_multi() {
   let test_owner = #"face"
 
-  // let test_user = #"cafe"
   let oref1 = t.test_oref(#"face", 1)
   let oref2 = t.test_oref(#"face", 2)
   let oref3 = t.test_oref(#"face", 3)
-  // let oref4 = t.test_oref(#"face", 4)
   let cref1 = t.test_oref(#"cafe", 2)
   let rref = t.test_oref(#"dead", 6)
   let uref1 = t.test_oref(#"beef", 4)
-  // let uref2 = t.test_oref(#"beef", 5)
-  // let uref3 = t.test_oref(#"beef", 1)
-  // let uref4 = t.test_oref(#"beef", 2)
   let href1 = t.test_oref(#"feed", 3)
   let href2 = t.test_oref(#"feed", 2)
   let href3 = t.test_oref(#"feed", 1)
 
-  // let href4 = t.test_oref(#"feed", 4)
   let loanAction = tx.collateralActionClose()
 
   let configDatum =
@@ -1055,18 +1040,10 @@ test close_multi() {
   let loanInDatum = InlineDatum(loanDatum1)
   let loanInValue = t.loanTokenValue()
 
-  let loanDatum2 = tx.loanDatum(0, 15, 1000, 0, 1111111115)
-
-  // let loanOutDatum = InlineDatum(loanDatum2)
-  // let loanOutValue = t.loanTokenValue()
   let collateralDatum1 = tx.collateralDatum(0, 12)
   let colInDatum = InlineDatum(collateralDatum1)
   let colInValue = value.merge(t.makeAdaValue(2), t.loanTokenValue())
 
-  let collateralDatum2 = tx.collateralDatum(1000, 12)
-
-  // let colOutDatum = InlineDatum(collateralDatum2)
-  // let colOutValue = value.merge(t.makeAdaValue(1000), t.loanTokenValue())
   let oracleInDatum = tx.oracleDatum(2, 11111112, 15, 2)
   let oracleOutDatum = tx.oracleDatum(2, 11111114, 15, 2)
 

@@ -51,7 +51,92 @@ needing to build, so that we can have test functions to generate dynamic data.
 aiken check
 ```
 
-The current tests compare:
+I have refactored the tests to make them more readable and easier to adapt.
+
+Now all of the test variables are easy to find and adjust to make it easy to test
+different values, without haveng to search through 100+ lines of code to find the
+appropriate value.
+
+```rust
+test merkel_balance_single() {
+  let inRatio = 2
+  let outRatio = 2
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 1000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 1000
+  let outCollateralAmount = 1000
+  let outCollateralValue = 2000
+
+  ...
+}
+```
+
+Changing these values will adjust the test data in different ways:
+
+### Oracle Data (exchange rate)
+
+This is the in/out exchange rate for the oracle, so the below example makes ADA $2
+
+```rust
+  let inRatio = 2
+  let outRatio = 2
+```
+
+If you want to tests validators for different exchange rates you can change the `outRatio` as that is what is always used by the validators.
+
+### Loan Amount (loanDatum.amount)
+
+This is the recorded loan amount at the `loanDatum`
+
+```rust
+  let inLoanAmount = 1000
+
+  ...
+
+  let outLoanAmount = 1000
+```
+
+If you want to adjust this for your own testing, the validation logic always checks the
+`outLoanAmount` against the `outRatio` above & `outCollateralValue` below.
+
+### Collateral Value (loan collateral)
+
+The amount of ADA or other tokens in the collateral UTxO
+
+```rust
+  let inCollateralValue = 2000
+
+  ...
+
+  let outCollateralValue = 2000
+```
+
+All of these validation tests are done on a single user input to make the tests smaller 
+and easier to read/edit.
+
+The larger (3 i/o) tests are done for throughput and benchmarking to understand the 
+impact of different optimisations.
+
+>NOTE: Currently theses tests only make it easy to adjust basic values, I have 
+>implemented token checks but I havent made it easier to make token adjustments or output 
+>address adjustments. This will be done at end of week.
+
+We currently have 2 types of tests running with `aiken check`
+
+1 - Validator proof tests -> verify logic to ensure expected behaviour
+2 - Optimisation comparison tests -> see the improvements of the optimisations
+
+Validator Tests:
+- `balance` `liquidate` & `close` tests for expected behaviour
+- failing tests for each element of Tx validation to prove things fail if incorrect
+
+These are pretty standard tests with slight discrepencies in validation to check fail
+cases e.g. Collateral output doesnt match Loan value & Oracle exchange rate
+
+The current Optimisation Tests compare:
 - combined redeemer cases for `merkel` validators
 - `merkel-balance` combines `Balance` logic
 - `merkel-close` combines `Close` logic
@@ -73,12 +158,11 @@ Single Transaction
 - 1 `LoanInputs` && `CollateralInputs` interacting per Test
 - 1 Test for each `LoanAction` && `CollateralAction`
 
-Here were my results:
+Here were my latest test results:
 
-![image](./CCFLMerkelRedeemerTests.png)
+![image](./CCFLMerkelBalanceTests.png)
 
-I included the original `merkel-loan-` && `merkel-collateral-` to compare the results
-of them vs the new combined versions.
+This only shows one validator but the full scope of updated tests.
 
 ## Validator Architecture
 

@@ -71,7 +71,7 @@ pub fn withdraw0(
 pub fn merkel0(
   validation_logic: fn(Output, Output) -> Bool,
   redeemer: List<(Int, Int)>,
-  loanVal: ScriptHash,
+  _loanVal: ScriptHash,
   ctx: ScriptContext,
 ) -> Bool {
   let ScriptContext { transaction: tx, .. } = ctx
@@ -97,7 +97,7 @@ pub fn merkelTx(
     list.map(
       redeemer,
       fn(index) {
-        expect (l, c) = index
+        let (l, c) = index
         expect Some(loan) = list.at(outputs, l)
         expect Some(col) = list.at(outputs, c)
         (loan, col)
@@ -107,7 +107,7 @@ pub fn merkelTx(
   list.all(
     txList,
     fn(pair) {
-      expect (loan, col) = pair
+      let (loan, col) = pair
       validate(loan, col)
     },
   )
@@ -122,7 +122,7 @@ pub fn merkelBurn(
     list.map(
       redeemer,
       fn(index) {
-        expect (l, c) = index
+        let (l, c) = index
         expect Some(loan) = list.at(inputs, l)
         expect Some(col) = list.at(inputs, c)
         (loan.output, col.output)
@@ -132,7 +132,7 @@ pub fn merkelBurn(
   list.all(
     txList,
     fn(pair) {
-      expect (loan, col) = pair
+      let (loan, col) = pair
       validate(loan, col)
     },
   )
@@ -310,7 +310,7 @@ pub fn withdraw4(
     list.map(
       redeemer,
       fn(index) {
-        expect (in, out) = index
+        let (in, out) = index
         expect Some(input) = list.at(inputs, in)
         expect Some(output) = list.at(outputs, out)
         (input, output)
@@ -320,7 +320,7 @@ pub fn withdraw4(
   list.all(
     txList,
     fn(io) {
-      expect (input, output) = io
+      let (input, output) = io
       validation_logic(input.output, output)
     },
   )
