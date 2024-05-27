@@ -1,4 +1,3 @@
-use aiken/dict.{Dict}
 use aiken/time.{PosixTime}
 use aiken/transaction.{
   Datum, InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext,
@@ -229,7 +228,7 @@ pub fn configInput() -> Input {
   configIn
 }
 
-pub fn loanInput(n: Int, amount: Int) -> Input {
+pub fn loanInput(_n: Int, amount: Int) -> Input {
   let loanIn =
     t.test_input(
       oref(#"face", 1),
@@ -242,7 +241,7 @@ pub fn loanInput(n: Int, amount: Int) -> Input {
   loanIn
 }
 
-pub fn collateralInput(n: Int, amount: Int, value: Int) -> Input {
+pub fn collateralInput(_n: Int, amount: Int, value: Int) -> Input {
   let colIn =
     t.test_input(
       oref(#"cafe", 1),
