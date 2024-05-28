@@ -1,3 +1,4 @@
+use aiken/dict
 use aiken/time.{PosixTime}
 use aiken/transaction.{
   Datum, InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext,

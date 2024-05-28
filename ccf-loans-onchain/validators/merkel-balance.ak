@@ -19,51 +19,6 @@ use tests/transactions as tx
 // Merkel Balance validates the whole transaction for the Balance redeemer case
 // it combines both the merkel-loan && merkel-collateral cases together
 
-validator(cp: PolicyId) {
-  fn mCol(_d: CollateralDatum, r: MerkelCollateralAction, c: ScriptContext) {
-    let ScriptContext { transaction, .. } = c
-    let Transaction { reference_inputs, withdrawals, .. } = transaction
-
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
-
-    expect Some(stakeVal) =
-      cDatum.collateralRedeemers // I am putting the merkelBalance Hash in loan Redeemers so i dont nede to write another config to test
-        |> list.at(r.i)
-
-    dict.has_key(withdrawals, Inline(ScriptCredential(stakeVal)))
-  }
-}
-
-validator(cp: PolicyId) {
-  // this should be in the config datum instead
-  fn mLoan(_d: LoanDatum, r: MerkelLoanAction, c: ScriptContext) {
-    let ScriptContext { transaction, .. } = c
-    let Transaction { reference_inputs, withdrawals, .. } = transaction
-
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
-
-    expect Some(stakeVal) =
-      cDatum.collateralRedeemers
-        |> list.at(r.i)
-
-    dict.has_key(withdrawals, Inline(ScriptCredential(stakeVal)))
-  }
-}
-
 validator(p: PolicyId, cp: PolicyId) {
   fn balance(r: List<(Int, Int)>, c: ScriptContext) {
     expect ScriptContext {
