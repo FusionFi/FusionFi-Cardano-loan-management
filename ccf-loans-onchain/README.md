@@ -27,13 +27,16 @@ For scope of contracts and documentation please refer to `notes`
 ├── plutus.json # validator blueprint
 ├── README.md # You Are Here
 └── validators
-    ├── draft # first complete design
-    ├── init # initial validators w/ tests
-    ├── merkel # merkelised validators
-    │   # current optimisation w/ tests
+    ├── collateral-vault.ak # Collateral Spend
+    ├── config-mint.ak # initial validators w/ tests
+    ├── loan-vault.ak # Loan Spend
     ├── merkel-balance.ak # Loan & Collateral w/ tests
+    ├── merkel-config-vault.ak # Config Ref Input w/ tests
     ├── merkel-close.ak # Loan & Collateral w/ tests
-    └── merkel-liquidate.ak # Loan & Collateral w/ tests
+    ├── merkel-liquidate.ak # Loan & Collateral w/ tests
+    ├── oracle-mint.ak # w/ tests
+    ├── oracle-validator.ak # TODO Optimisations w/ tests
+    └── rewards-mint.ak # TODO Optimisations w/ tests
 ```
 
 ## Building
@@ -52,6 +55,8 @@ aiken check
 ```
 
 I have refactored the tests to make them more readable and easier to adapt.
+
+*This only applies to `merkel-liqudate`, `merkel-liquidate` & `merkel-close`*
 
 Now all of the test variables are easy to find and adjust to make it easy to test
 different values, without haveng to search through 100+ lines of code to find the
@@ -163,6 +168,14 @@ Here were my latest test results:
 ![image](./CCFLMerkelBalanceTests.png)
 
 This only shows one validator but the full scope of updated tests.
+
+## Periferal Validators
+
+I have single user tests for the utility validators like `oracle-val` because throughput 
+isn't an issue here.
+
+The tests verify several levels of validation, i have 2 fails here and comments in the 
+test explaining why
 
 ## Validator Architecture
 
@@ -315,9 +328,9 @@ fn balance(r: List<(Int, Int)>, c: ScriptContext) {
 
 ## Further Optimisation
 
-I need to do validator level optimisations after this transaction level phase has been 
-done.
+I have some work to do on the periferal utility validators like `oracle` and `rewards`
 
-This will alow us to find ways of removing redundant checks in validation whilst 
-guaranteeing all checks are sufficient on the lowest level.
+There are some validation checks i need to address - as highlighted in the tests
+
+I also need to refactore the tests in those validators
 
