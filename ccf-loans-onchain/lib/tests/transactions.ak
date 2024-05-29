@@ -4,7 +4,7 @@ use aiken/transaction.{
   Datum, InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext,
   Transaction,
 }
-use aiken/transaction/value
+use aiken/transaction/value.{PolicyId}
 use ccfl/types.{
   AMint, CollateralAction, CollateralDatum, ConUpdate, ConfigAction, ConfigDatum,
   LoanAction, LoanDatum, LoanMintAction, MerkelCollateralAction,
@@ -37,6 +37,7 @@ pub fn mConfigDatum(
   c: ScriptHash,
   r: ScriptHash,
   o: ScriptHash,
+  op: PolicyId,
   lR: List<ScriptHash>,
   cR: List<ScriptHash>,
 ) -> MerkelConfigDatum {
@@ -46,6 +47,7 @@ pub fn mConfigDatum(
       colVal: c,
       rewardsVal: r,
       oracleVal: o,
+      oraclePolicy: op,
       loanRedeemers: lR,
       collateralRedeemers: cR,
     }
@@ -168,6 +170,7 @@ pub fn configDatumIn() -> Datum {
       t.merkelCollateralSpend,
       t.rewardsMintHash,
       t.oracleValHash,
+      t.oracleMintHash,
       [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
       [
         t.merkelCollateralBalance,

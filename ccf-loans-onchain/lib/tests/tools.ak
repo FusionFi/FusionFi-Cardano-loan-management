@@ -71,7 +71,7 @@ pub const loanValHash =
   #"b99df998781a5ad58093daca046840f09754e67f69f5c19e2bc2a1b3"
 
 pub const oracleMintHash =
-  #"d07d942ea4581f003c2daa0e14799a2ab10063eea81bcf0ea90d1841"
+  #"2a930e2d7339e0501e36c6e5f0bb6166c1b5c0e71110039b3104cb9c"
 
 pub const oracleValHash =
   #"c3b2b1b43f51c93bd1e32f264c94f12bd118692aad403ed0454a3102"

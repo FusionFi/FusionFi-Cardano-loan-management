@@ -1,6 +1,7 @@
 use aiken/hash.{Blake2b_224, Hash}
 use aiken/time.{PosixTime}
 use aiken/transaction/credential.{Script, VerificationKey}
+use aiken/transaction/value.{PolicyId}
 
 pub type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>
@@ -23,6 +24,7 @@ pub type MerkelConfigDatum {
   colVal: ScriptHash,
   rewardsVal: ScriptHash,
   oracleVal: ScriptHash,
+  oraclePolicy: PolicyId,
   loanRedeemers: List<ScriptHash>,
   collateralRedeemers: List<ScriptHash>,
 }

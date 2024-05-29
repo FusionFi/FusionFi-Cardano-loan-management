@@ -3,14 +3,16 @@ use aiken/list
 use aiken/transaction.{
   InlineDatum, Mint, NoDatum, ScriptContext, Transaction, placeholder,
 }
-use aiken/transaction/credential
+use aiken/transaction/credential.{ScriptCredential}
 use aiken/transaction/value.{PolicyId, from_minted_value, tokens}
 use ccfl/types.{
   MerkelConfigDatum, OBurn, OMint, OracleDatum, OracleMintAction,
   VerificationKeyHash,
 }
 use tests/tools as t
-use tests/transactions.{collateralDatum, oracleDatum, oracleMintActionMint}
+use tests/transactions.{
+  collateralDatum, configInput, oracleDatum, oracleMintActionMint,
+}
 
 //             //
 // Oracle Mint //
@@ -29,6 +31,7 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
 
     when r is {
       // checks signed by owner and No. of tokens
+      // TODO: verify output datum
       OMint -> {
         expect Some(configIn) =
           list.find(
@@ -43,14 +46,18 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
           list.find(
             transaction.outputs,
             fn(output) {
-              list.has(value.policies(output.value), cDatum.oraclePolicy)
+              expect [(oName, oAmt)] =
+                output.value
+                  |> value.without_lovelace()
+                  |> value.tokens(policyId)
+                  |> dict.to_list()
+              output.address.payment_credential == ScriptCredential(
+                cDatum.oracleVal,
+              )
             },
           )
 
-        // I need to update the configDatum to include the policyId
-        list.has(transaction.extra_signatories, o) && oAmt == 1 && out.address.payment_credential == ScriptCredential(
-          cDatum.oracleVault,
-        )
+        list.has(transaction.extra_signatories, o) && oAmt == 1
       }
       OBurn -> list.has(transaction.extra_signatories, o) && oAmt == -1
     }
@@ -68,6 +75,7 @@ test oracle_mint() {
 
   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
   let outDatum = InlineDatum(oracleDatum1)
+  let configIn = configInput()
 
   let ownerInput =
     t.test_input(
@@ -85,6 +93,7 @@ test oracle_mint() {
   let tx =
     Transaction {
       ..placeholder(),
+      reference_inputs: [configIn],
       mint: t.oracleMintedValue(),
       extra_signatories: [test_owner],
       inputs: [ownerInput],
@@ -93,7 +102,7 @@ test oracle_mint() {
 
   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-  oracleMint(test_owner, oracleMintActionMint(), ctx)?
+  oracleMint(test_owner, t.configMintHash, oracleMintActionMint(), ctx)?
 }
 
 test oracle_mint_qty_fail() fail {
@@ -103,6 +112,8 @@ test oracle_mint_qty_fail() fail {
 
   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
   let outDatum = InlineDatum(oracleDatum1)
+
+  let configIn = configInput()
 
   let mintValue =
     value.to_minted_value(
@@ -125,6 +136,7 @@ test oracle_mint_qty_fail() fail {
   let tx =
     Transaction {
       ..placeholder(),
+      reference_inputs: [configIn],
       mint: mintValue,
       extra_signatories: [test_owner],
       inputs: [ownerInput],
@@ -133,7 +145,7 @@ test oracle_mint_qty_fail() fail {
 
   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-  oracleMint(test_owner, oracleMintActionMint(), ctx)?
+  oracleMint(test_owner, t.configMintHash, oracleMintActionMint(), ctx)?
 }
 
 test oracle_mint_datum_fail() fail {
@@ -145,6 +157,8 @@ test oracle_mint_datum_fail() fail {
   let oracleDatum1 = collateralDatum(1, 11111111)
   let outDatum = InlineDatum(oracleDatum1)
 
+  let configIn = configInput()
+
   let ownerInput =
     t.test_input(
       oref,
@@ -161,6 +175,7 @@ test oracle_mint_datum_fail() fail {
   let tx =
     Transaction {
       ..placeholder(),
+      reference_inputs: [configIn],
       mint: t.oracleMintedValue(),
       extra_signatories: [test_owner],
       inputs: [ownerInput],
@@ -169,7 +184,7 @@ test oracle_mint_datum_fail() fail {
 
   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-  oracleMint(test_owner, oracleMintActionMint(), ctx)?
+  oracleMint(test_owner, t.configMintHash, oracleMintActionMint(), ctx)?
 }
 
 test oracle_mint_sig_fail() fail {
@@ -180,6 +195,8 @@ test oracle_mint_sig_fail() fail {
   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
   let outDatum = InlineDatum(oracleDatum1)
 
+  let configIn = configInput()
+
   let ownerInput =
     t.test_input(
       oref,
@@ -196,6 +213,7 @@ test oracle_mint_sig_fail() fail {
   let tx =
     Transaction {
       ..placeholder(),
+      reference_inputs: [configIn],
       mint: t.oracleMintedValue(),
       extra_signatories: [#"cafe"],
       inputs: [ownerInput],
@@ -204,5 +222,5 @@ test oracle_mint_sig_fail() fail {
 
   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-  oracleMint(test_owner, oracleMintActionMint(), ctx)?
+  oracleMint(test_owner, t.configMintHash, oracleMintActionMint(), ctx)?
 }
