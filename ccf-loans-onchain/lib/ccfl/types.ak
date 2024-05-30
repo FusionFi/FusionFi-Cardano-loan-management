@@ -24,7 +24,6 @@ pub type MerkelConfigDatum {
   colVal: ScriptHash,
   rewardsVal: ScriptHash,
   oracleVal: ScriptHash,
-  oraclePolicy: PolicyId,
   loanRedeemers: List<ScriptHash>,
   collateralRedeemers: List<ScriptHash>,
 }

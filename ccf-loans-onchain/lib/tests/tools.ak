@@ -82,6 +82,18 @@ pub const rewardsMintHash =
 pub type ScriptHash =
   Hash<Blake2b_224, Script>
 
+pub fn loanRedeemers() -> List<ScriptHash> {
+  let list =
+    [merkelLoanBalance, merkelLoanLiquidate, merkelLoanClose]
+  list
+}
+
+pub fn collateralRedeemers() -> List<ScriptHash> {
+  let list =
+    [mCol, mLoan, merkelBalance, merkelLiquidate, merkelClose]
+  list
+}
+
 //            //
 // UTxO Tools //
 //            //

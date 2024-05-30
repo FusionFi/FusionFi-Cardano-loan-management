@@ -7,10 +7,10 @@ use aiken/transaction.{
 use aiken/transaction/value.{PolicyId}
 use ccfl/types.{
   AMint, CollateralAction, CollateralDatum, ConUpdate, ConfigAction, ConfigDatum,
-  LoanAction, LoanDatum, LoanMintAction, MerkelCollateralAction,
-  MerkelConfigDatum, MerkelLoanAction, OMint, OracleAction, OracleDatum,
-  OracleMintAction, OracleUpdate, RewardMint, RewardsAction, SCBalance, SCClose,
-  SCLiquidate, SLBalance, SLClose, SLLiquidate, ScriptHash,
+  LoanAction, LoanDatum, LoanMintAction, MConUpdate, MerkelCollateralAction,
+  MerkelConfigAction, MerkelConfigDatum, MerkelLoanAction, OMint, OracleAction,
+  OracleDatum, OracleMintAction, OracleUpdate, RewardMint, RewardsAction,
+  SCBalance, SCClose, SCLiquidate, SLBalance, SLClose, SLLiquidate, ScriptHash,
 }
 use tests/tools as t
 
@@ -37,7 +37,6 @@ pub fn mConfigDatum(
   c: ScriptHash,
   r: ScriptHash,
   o: ScriptHash,
-  op: PolicyId,
   lR: List<ScriptHash>,
   cR: List<ScriptHash>,
 ) -> MerkelConfigDatum {
@@ -47,11 +46,30 @@ pub fn mConfigDatum(
       colVal: c,
       rewardsVal: r,
       oracleVal: o,
-      oraclePolicy: op,
       loanRedeemers: lR,
       collateralRedeemers: cR,
     }
   datum
+}
+
+pub fn mConUpdate(
+  loan: ScriptHash,
+  collateral: ScriptHash,
+  rewards: ScriptHash,
+  oracle: ScriptHash,
+  loanRedeemers: List<ScriptHash>,
+  collateralRedeemers: List<ScriptHash>,
+) -> MerkelConfigAction {
+  let redeemer =
+    MConUpdate {
+      loanVal: loan,
+      colVal: collateral,
+      rewardsVal: rewards,
+      oracleVal: oracle,
+      loanRedeemers,
+      collateralRedeemers,
+    }
+  redeemer
 }
 
 pub fn oracleDatum(x: Int, t: PosixTime, r: Int, f: Int) -> OracleDatum {
@@ -170,7 +188,6 @@ pub fn configDatumIn() -> Datum {
       t.merkelCollateralSpend,
       t.rewardsMintHash,
       t.oracleValHash,
-      t.oracleMintHash,
       [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
       [
         t.merkelCollateralBalance,
@@ -224,7 +241,7 @@ pub fn configInput() -> Input {
     t.test_input(
       oref(#"cece", 1),
       t.test_output(
-        t.test_script_address(t.configValHash),
+        t.test_script_address(t.merkelConfigHash),
         t.configValue(),
         configDatumIn(),
       ),
@@ -270,6 +287,17 @@ pub fn userInput(value: Int) -> Input {
 //                   //
 // Validator Outputs //
 //                   //
+
+pub fn configOutput(datum: MerkelConfigDatum) -> Output {
+  let configIn =
+    t.test_output(
+      t.test_script_address(t.merkelConfigHash),
+      t.configValue(),
+      InlineDatum(datum),
+    )
+
+  configIn
+}
 
 pub fn oracleOutDatum(ratio: Int) -> Datum {
   let oracleOutDatum = oracleDatum(ratio, 11111112, 15, 2)
