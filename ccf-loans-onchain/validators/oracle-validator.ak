@@ -5,7 +5,7 @@ use aiken/transaction.{
   placeholder,
 }
 use aiken/transaction/value.{PolicyId, tokens, without_lovelace}
-use ccfl/helpers.{get_own_singleton_output}
+use ccfl/helpers.{get_own_singleton_output, has_singleton_input}
 use ccfl/types.{
   OracleAction, OracleClose, OracleDatum, OracleUpdate, VerificationKeyHash,
 }
@@ -20,6 +20,8 @@ validator(o: VerificationKeyHash, p: PolicyId) {
   fn oracleVault(d: OracleDatum, r: OracleAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Spend(ownRef) = purpose
+
+    expect has_singleton_input(transaction, ownRef)
 
     when r is {
       OracleUpdate { usdAda, timestamp, rate, fee } -> {

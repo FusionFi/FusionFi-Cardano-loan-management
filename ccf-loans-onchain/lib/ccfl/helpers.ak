@@ -13,6 +13,23 @@ use ccfl/types.{LoanAction, ScriptHash}
 // Helpers //
 //         //
 
+pub fn has_singleton_input(tx: Transaction, oref: OutputReference) -> Bool {
+  expect Some(input) =
+    tx.inputs
+      |> find_input(oref)
+
+  expect ScriptCredential(script_hash) = input.output.address.payment_credential
+
+  list.length(
+    list.filter(
+      tx.inputs,
+      fn(input) {
+        input.output.address.payment_credential == ScriptCredential(script_hash)
+      },
+    ),
+  ) == 1
+}
+
 pub fn get_own_singleton_output(
   tx: Transaction,
   oref: OutputReference,

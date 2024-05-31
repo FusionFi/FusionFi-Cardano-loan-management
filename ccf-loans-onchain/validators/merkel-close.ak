@@ -15,7 +15,7 @@ use tests/transactions as tx
 // Merkel Liquidation Validator //
 //                              //
 
-validator(lp: PolicyId, op: PolicyId) {
+validator(lp: PolicyId, op: PolicyId, rp: PolicyId) {
   fn close(r: List<(Int, Int)>, c: ScriptContext) {
     expect ScriptContext {
       transaction,
