@@ -97,9 +97,6 @@ test rewards_mint() {
 
   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
 }
-// not a test but a thought for improvement:
-// We should enforce an empty token name so we cant mint tokens with different ones
-
 // test rewards_mint_qty_fail() fail {
 //   let test_owner = #"face"
 
