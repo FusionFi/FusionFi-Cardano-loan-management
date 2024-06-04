@@ -34,7 +34,7 @@ validator(p: PolicyId, cp: PolicyId) {
     expect InlineDatum(datum) = oracleOut.datum
     expect rDatum: OracleDatum = datum
 
-    let exchangeRate = rDatum.usdAda
+    let exchangeRate = rDatum.exchange
 
     expect Some(configIn) =
       list.find(
@@ -88,9 +88,9 @@ validator(p: PolicyId, cp: PolicyId) {
 
         let minCollateralValue = loanDatum.amount * exchangeRate * ( 85 / 100 )
 
-        loanDatum.interest == lin.interest && loanDatum.term == lin.term && adaOut >= minCollateralValue && colDatum.amount == loanDatum.amount && value.flatten(
+        loanDatum.term == lin.term && adaOut >= minCollateralValue && colDatum.amount == loanDatum.amount && value.flatten(
           value.without_lovelace(loan.value),
-        ) == value.flatten(value.without_lovelace(collateral.value)) && without_lovelace(
+        ) == value.flatten(value.without_lovelace(collateral.value)) && value.without_lovelace(
           oracleOut.value,
         ) == expectedOracle
       },

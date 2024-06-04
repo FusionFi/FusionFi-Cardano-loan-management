@@ -1,7 +1,7 @@
 use aiken/hash.{Blake2b_224, Hash}
 use aiken/time.{PosixTime}
 use aiken/transaction/credential.{Script, VerificationKey}
-use aiken/transaction/value.{PolicyId}
+use aiken/transaction/value.{AssetName, PolicyId}
 
 pub type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>

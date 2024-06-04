@@ -4,7 +4,7 @@ use aiken/transaction.{
   Datum, InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext,
   Transaction,
 }
-use aiken/transaction/value.{PolicyId}
+use aiken/transaction/value.{AssetName, PolicyId}
 use ccfl/types.{
   AMint, CollateralAction, CollateralDatum, ConUpdate, ConfigAction, ConfigDatum,
   LoanAction, LoanDatum, LoanMintAction, MConUpdate, MerkelCollateralAction,
@@ -72,13 +72,20 @@ pub fn mConUpdate(
   redeemer
 }
 
-pub fn oracleDatum(x: Int, t: PosixTime, r: Int, f: Int) -> OracleDatum {
-  let datum = OracleDatum { usdAda: x, timestamp: t, rate: r, fee: f }
+pub fn oracleDatum(
+  x: Int,
+  t: PosixTime,
+  r: Int,
+  f: Int,
+  c: ByteArray,
+) -> OracleDatum {
+  let datum =
+    OracleDatum { exchange: x, timestamp: t, interest: r, fee: f, currency: c }
   datum
 }
 
 pub fn oracleAction(x: Int, t: PosixTime, r: Int, f: Int) -> OracleAction {
-  let redeemer = OracleUpdate { usdAda: x, timestamp: t, rate: r, fee: f }
+  let redeemer = OracleUpdate { exchange: x, timestamp: t, interest: r, fee: f }
   redeemer
 }
 
@@ -121,8 +128,8 @@ pub fn loanActionClose() -> LoanAction {
   redeemer
 }
 
-pub fn loanMintActionMint(c: ByteArray, v: Int, t: PosixTime) -> LoanMintAction {
-  let redeemer = AMint { loanCurrency: c, loanValue: v, timestamp: t }
+pub fn loanMintActionMint(a: Int, d: Int, t: PosixTime) -> LoanMintAction {
+  let redeemer = AMint { amount: a, rewards: 0, term: d, timestamp: t }
   redeemer
 }
 
@@ -131,9 +138,15 @@ pub fn loanMintActionMint(c: ByteArray, v: Int, t: PosixTime) -> LoanMintAction 
 //   redeemer
 // }
 
-pub fn loanDatum(a: Int, i: Int, r: Int, t: Int, ti: PosixTime) -> LoanDatum {
+pub fn loanDatum(
+  a: Int,
+  r: Int,
+  t: Int,
+  ti: PosixTime,
+  o: AssetName,
+) -> LoanDatum {
   let datum =
-    LoanDatum { amount: a, interest: i, rewards: r, term: t, timestamp: ti }
+    LoanDatum { amount: a, rewards: r, term: t, timestamp: ti, oracle: o }
   datum
 }
 
@@ -202,18 +215,18 @@ pub fn configDatumIn() -> Datum {
 }
 
 pub fn oracleDatumIn(ratio: Int) -> Datum {
-  let oracleInDatum = oracleDatum(ratio, 11111111, 15, 2)
+  let oracleInDatum = oracleDatum(ratio, 11111111, 15, 2, "USD")
 
   InlineDatum(oracleInDatum)
 }
 
 pub fn loanDatumIn(value: Int) -> Datum {
-  let loanDatum1 = loanDatum(value, 15, value, 0, 1111111111)
+  let loanDatum1 = loanDatum(value, value, 0, 1111111111, #"beef")
   InlineDatum(loanDatum1)
 }
 
 pub fn loanDatumIn0() -> Datum {
-  let loanDatum1 = loanDatum(0, 15, 1000, 0, 1111111111)
+  let loanDatum1 = loanDatum(0, 1000, 0, 1111111111, #"beef")
 
   InlineDatum(loanDatum1)
 }
@@ -300,7 +313,7 @@ pub fn configOutput(datum: MerkelConfigDatum) -> Output {
 }
 
 pub fn oracleOutDatum(ratio: Int) -> Datum {
-  let oracleOutDatum = oracleDatum(ratio, 11111112, 15, 2)
+  let oracleOutDatum = oracleDatum(ratio, 11111112, 15, 2, "USD")
   InlineDatum(oracleOutDatum)
 }
 
@@ -315,7 +328,7 @@ pub fn oracleOutput(ratio) -> Output {
 }
 
 pub fn loanOutDatum(value: Int) -> Datum {
-  let loanDatum1 = loanDatum(value, 15, value, 0, 1111111111)
+  let loanDatum1 = loanDatum(value, value, 0, 1111111111, #"beef")
   InlineDatum(loanDatum1)
 }
 

@@ -91,14 +91,14 @@ validator(p: PolicyId, cp: PolicyId) {
 
         let minCollateralValue = loanDatum.amount * exchangeRate * ( 50 / 100 )
 
-        loanDatum.amount == lin.amount && loanDatum.interest == lin.interest && loanDatum.term == lin.term && adaOut >= minCollateralValue && colDatum.amount == value.lovelace_of(
+        loanDatum.amount == lin.amount && loanDatum.term == lin.term && adaOut >= minCollateralValue && colDatum.amount == value.lovelace_of(
           collateral.value,
         ) / exchangeRate / 1000000 && list.has(
           value.flatten(collateral.value),
           loanToken,
         ) && value.flatten(value.without_lovelace(loan.value)) == value.flatten(
           value.without_lovelace(collateral.value),
-        ) && without_lovelace(oracleOut.value) == expectedOracle
+        ) && value.without_lovelace(oracleOut.value) == expectedOracle
       },
       r,
       outputs,
