@@ -209,11 +209,14 @@ const oracleAddr = lucid.utils.validatorToAddress(oracleVal)
 const loanAddr = lucid.utils.validatorToAddress(loanVal)
 const collateralAddr = lucid.utils.validatorToAddress(collateralVal)
 const configAddr = lucid.utils.validatorToAddress(configVal)
+const balanceAddr = lucid.utils.validatorToAddress(balance)
+const liquidateAddr = lucid.utils.validatorToAddress(liquidate)
+const closeAddr = lucid.utils.validatorToAddress(close)
 
-const oracleHash = await lucid.getAddressDetails(oAddr).paymentCredential.hash
-const loanHash = await lucid.getAddressDetails(lAddr).paymentCredential.hash
-const configHash = await lucid.getAddressDetails(conAddr).paymentCredential.hash
-const collateralHash = await lucid.getAddressDetails(cAddr).paymentCredential.hash
+const oracleHash = await lucid.getAddressDetails(oracleAddr).paymentCredential.hash
+const loanHash = await lucid.getAddressDetails(loanAddr).paymentCredential.hash
+const configHash = await lucid.getAddressDetails(configAddr).paymentCredential.hash
+const collateralHash = await lucid.getAddressDetails(collateralAddr).paymentCredential.hash
 const balanceHash = await lucid.validatorToScriptHash(balance)
 const liquidateHash = await lucid.validatorToScriptHash(liquidate)
 const closeHash = await lucid.validatorToScriptHash(close)
@@ -301,6 +304,9 @@ const oracleBurnAction = Data.to(new Constr(1, []))
 
 // The Config Token/Validator Pair holds all of the relevant validator Hashes for the dapp
 
+const configTN = fromHex("")
+const configUnit = toUnit(configCS, configTN)
+
 async function mintConfig() {
   const utxos: [UTxO] = await lucid.getUtxos()
   const utxo: UTxO = utxos[0]
@@ -347,6 +353,8 @@ async function burnConfig() {
   return txSigned.submit()
 }
 
+// Oracle Minting Transactions //
+
 // The oracle needs to work like a one-shot minting policy where it takes
 // The spending utxo to create the token name
 // This ensures that even if someone manages to bypass the signature they could
@@ -354,23 +362,14 @@ async function burnConfig() {
 // When testing these transactions you will need to record the token name when you mint,
 // and use it as a constant in the subsequent transactions
 
-// Oracle Minting Transactions //
-
-// async function makeOracle() {
-//   const utxos: [UTxO] = await lucid.getUtxos()
-//   const utxo: UTxO = utxos[0]
-  
-//   return utxo.txHash.toString() + utxo.outputIndex.toString()
-// }
-
-// const oracleTN = await makeOracle()
-
 const oracleTN = fromText("oracleTN") // add TN here after minted oracle
 const oracleUnit = "" // input after Mint 
 
 async function mintOracle() {
   const utxos: UTxO[] = await lucid.utxosAt()
   const utxo: UTxO = utxos[0]
+  const configUtxos = await lucid.utxosAtWithUnit(configAddr, configUnit)
+  const configIn = configUtxos[0]
   const oracleTN = fromHex(utxo.txHash.concat(toHex(utxo.outputIndex)))
   console.log("Oracle Token Name: ", oracleTN)
   const oracleUnit = toUnit(oracleCS, oracleTN)
@@ -379,6 +378,7 @@ async function mintOracle() {
   const tx = await Lucid
     .newTx()
     .collectFrom([utxo])
+    .readFrom(configIn)
     .mintAssets({
       [oracleUnit]: 1,
     }, oracleMintAction)
@@ -442,7 +442,7 @@ async function oManualUpdate() {
 }
 
 async function oracleClose() {
-  const utxos: [UTxO] = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
+  const utxos: UTxO[] = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
   const utxo: UTxO = utxos[0]
 
   const tx = await Lucid
@@ -468,23 +468,16 @@ async function oracleClose() {
 // this will enable users to have multiple loans and not require their pkh 
 // or other as token names
 
-// async function makeLoan() {
-//   const utxos: [UTxO] = await lucid.getUtxos()
-//   const utxo: UTxO = utxos[0]
-//   const loanTN = fromText(utxo.txHash.toString() + utxo.outputIndex.toString())
-  
-//   return loanTN
-// }
-
-// const loanTN = await makeLoan()
 const loanTN = fromText("loanTN")
 const loanUnit = toUnit(loanCS, loanTN)
 
 async function mintLoan() {
-  const utxos: [UTxO] = await lucid.getUtxos()
+  const utxos: UTxO[] = await lucid.getUtxos()
   const utxo: UTxO = utxos[0]
   const loanTn = fromHex(utxo.txHash.concat(toHex(utxo.outputIndex)))
-  const oracleUtxos: UTxO = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
+  const configUtxos = await lucid.utxosAtWithUnit(configAddr, configUnit)
+  const configIn = configUtxos[0]
+  const oracleUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
   const oracleUtxo: UTxO = oracleUtxos[0]
   const oracleDatum = Data.from(oracleUtxo.datum)
   const deposit = oracleDatum[0] * loanAmt * 1000000n
@@ -493,20 +486,27 @@ async function mintLoan() {
     .newTx()
     .collectFrom([utxo])
     .collectFrom(oracleUtxo)
+    .readFrom(configIn)
     .mintAssets({
-      [toUnit(loanTn)]: 2,
+      [loanUnit]: 2,
     }, mintLoanAction)
     .attachMintingPolicy(loanMint)
     .payToContract(
       loanAddr, 
       { inline: loanDatum }, 
-      { loanTn: 1 }
+      { loanUnit: 1 }
     )
     .payToContract(
       collateralAddr,
       { inline: collateralDatum },
-      { lovelace: deposit }
+      { lovelace: deposit, loanUnit: 1 }
     )
+    .payToContract(
+      oracleAddr,
+      { inline: oracleDatum },
+      { oracleUnit: 1 }
+    )
+    .attachSpendingValidator(oracleVal)
     .addSignerKey(userPKH)
     .complete()
 
@@ -517,22 +517,32 @@ async function mintLoan() {
 }
 
 async function burnLoan() {
-  const utxos: UTxO[] = await lucid.getUtxosAtWithUnit(loanAddr, loanUnit)
-  const utxo: UTxO = utxos[0]
+  const lUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(loanAddr, loanUnit)
+  const lUtxo: UTxO = lUtxos[0]
+  const cUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(collateralAddr, loanUnit)
+  const cUtxo: UTxO = cUtxos[0]
   const oracleUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
   const oracleUtxo: UTxO = oracleUtxos[0]
   const oracleDatum = Data.from(oracleUtxo.datum)
   const exchange = oracleDatum[0]
-  const inDatum = Data.from(utxo.datum)
+  const inDatum = Data.from(lUtxo.datum)
 
   const tx = await Lucid
     .newTx()
-    .collectFrom([utxo], loanCloseAction)
-    .readFrom(oracleUtxo)
+    .collectFrom([lUtxo], loanCloseAction)
+    .collectFrom([cUtxo], loanCloseAction)
+    .collectFrom([oracleUtxo], oracleUpdateAction)
     .mintAssets({
-      [loanUnit]: -1,
+      [loanUnit]: -2,
     }, burnLoanAction)
     .attachMintingPolicy(loanMint)
+    .payToContract(oracleAddr, 
+      { inline: oracleDatum }, 
+      { oracleUnit: 1 } 
+    )
+    .attachSpendingValidator(loanVal)
+    .attachSpendingValidator(collateralVal)
+    .attachSpendingValidator(oracleVal)
     .addSignerKey(userPKH)
     .complete()
 
@@ -545,13 +555,23 @@ async function burnLoan() {
 // Loan Validator Transactions //
 
 async function balanceLoan() {
-  const utxos: [UTxO] = await lucid.getUtxosAtWithUnit(loanAddr, loanUnit)
-  const utxo: UTxO = utxos[0]
-  const inDatum = Data.from(utxo.datum)
-  const oracleUtxos: UTxO = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
+  const lUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(loanAddr, loanUnit)
+  const lUtxo: UTxO = lUtxos[0]
+  const cUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(collateralAddr, loanUnit)
+  const cUtxo: UTxO = cUtxos[0]
+  const inDatum = Data.from(lUtxo.datum)
+  const configUtxos = await lucid.utxosAtWithUnit(configAddr, configUnit)
+  const configIn = configUtxos[0]
+  const oracleUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
   const oracleUtxo: UTxO = oracleUtxos[0]
   const oracleDatum = Data.from(oracleUtxo.datum)
   const oracleExchangeRate = oracleDatum[0]
+  const deposit = oracleDatum[0] * loanAmt * 1000000n
+  const withdrawRedeemer = Data.to(
+    new Constr(0, [
+      [(0, 1)]
+    ])
+  )
 
   const collateralValue = (inDatum.loanAmt * oracleExchangeRate) * 1000000
   const balanceValue = loanAmt
@@ -567,19 +587,32 @@ async function balanceLoan() {
 
   const tx = await Lucid
     .newTx()
-    .collectFrom([utxo], loanBalanceAction)
-    .readFrom(oracleUtxo)
+    .collectFrom([lUtxo], loanBalanceAction)
+    .collectFrom([cUtxo], loanBalanceAction)
+    .collectFrom([oracleUtxo], oracleUpdateAction)
+    .readFrom(configIn)
+    .withdraw(balanceAddr, 0, withdrawRedeemer)
     .payToContract(
       loanAddr, 
       { inline: loanDatum }, 
-      { loanTn: 1 }
+      { loanUnit: 1 }
     )
     .payToContract(
       collateralAddr,
       { inline: collateralDatum },
-      { lovelace: deposit }
+      { lovelace: deposit,
+        loanUnit: 1,
+      }
+    )
+    .payToContract(
+      oracleAddr,
+      { inline: oracleDatum },
+      { oracleUnit: 1 }
     )
     .attachSpendingValidator(loanVal)
+    .attachSpendingValidator(collateralVal)
+    .attachSpendingValidator(oracleVal)
+    .attachWithdrawalValidator(balance)
     .addSignerKey(userPKH)
     .complete()
 
@@ -589,20 +622,30 @@ async function balanceLoan() {
 }
 
 async function liquidateLoan() {
-  const utxos: [UTxO] = await lucid.getUtxosAtWithUnit(loanAddr, loanUnit)
-  const utxo: UTxO = utxos[0]
-  const inDatum = Data.from(utxo.datum)
-  const oracleUtxos: UTxO = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
+  const newLoanValue = 0
+  const lUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(loanAddr, loanUnit)
+  const lUtxo: UTxO = lUtxos[0]
+  const inDatum = Data.from(lUtxo.datum)
+  const cUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(collateralAddr, loanUnit)
+  const cUtxo: UTxO = cUtxos[0]
+  const configUtxos = await lucid.utxosAtWithUnit(configAddr, configUnit)
+  const configIn = configUtxos[0]
+  const oracleUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
   const oracleUtxo: UTxO = oracleUtxos[0]
   const oracleDatum = Data.from(oracleUtxo.datum)
   const exchange = oracleDatum[0]
   const collateralValue = inDatum.loanValue * exchange
   const liquidateValue = collateralValue * 1000000
+  const withdrawRedeemer = Data.to(
+    new Constr(0, [
+      [(0, 1)]
+    ])
+  )
 
   const liquidateDatum = Data.to(
     new Constr(0, [
         inDatum.collateral, 
-        0, 
+        newLoanValue, 
         inDatum.loanCurrency, 
         0, 
         timestamp
@@ -610,19 +653,25 @@ async function liquidateLoan() {
 
   const tx = await Lucid
     .newTx()
-    .collectFrom([utxo], loanLiquidateAction)
-    .readFrom(oracleUtxo)
+    .collectFrom([lUtxo], loanLiquidateAction)
+    .collectFrom([lUtxo], loanLiquidateAction)
+    .collectFrom([oracleUtxo], oracleUpdateAction)
+    .readFrom(configIn)
     .payToContract(
       loanAddr, 
       { inline: loanDatum }, 
-      { loanTn: 1 }
+      { loanUnit: 1 }
     )
     .payToContract(
       collateralAddr,
       { inline: collateralDatum },
-      { lovelace: deposit }
+      { loanUnit: 1 }
     )
+    .attachSpendingValidator(oracleVal)
     .attachSpendingValidator(loanVal)
+    .attachSpendingValidator(collateralVal)
+    .withdrawFrom(liquidateAddr, 0, withdrawRedeemer)
+    .attachWithdrawalValidator(liquidate)
     .addSignerKey(userPKH)
     .complete()
 
@@ -632,15 +681,24 @@ async function liquidateLoan() {
 }
 
 async function repayLoan() {
-  const utxos: [UTxO] = await lucid.getUtxosAtWithUnit(loanAddr, loanUnit)
-  const utxo: UTxO = utxos[0]
-  const inDatum = Data.from(utxo.datum)
-  const oracleUtxos: UTxO = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
+  const lUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(loanAddr, loanUnit)
+  const lUtxo: UTxO = lUtxos[0]
+  const inDatum = Data.from(lUtxo.datum)
+  const cUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(collateralAddr, loanUnit)
+  const cUtxo: UTxO = cUtxos[0]
+  const configUtxos = await lucid.utxosAtWithUnit(configAddr, configUnit)
+  const configIn = configUtxos[0]
+  const oracleUtxos: UTxO[] = await lucid.getUtxosAtWithUnit(oracleAddr, oracleUnit)
   const oracleUtxo: UTxO = oracleUtxos[0]
   const oracleDatum = Data.from(oracleUtxo.datum)
   const exchange = oracleDatum[0]
-  const collateralValue = inDatum.loanValue * exchange
+  const collateralValue = loanDatum.loanValue * exchange
   const remainingValue = 0
+  const withdrawRedeemer = Data.to(
+    new Constr(0, [
+      [(0, 1)]
+    ])
+  )
 
   const repayDatum = Data.to(
     new Constr(0, [
@@ -653,19 +711,29 @@ async function repayLoan() {
 
   const tx = await Lucid
     .newTx()
-    .collectFrom([utxo], loanBalanceAction)
-    .readFrom(oracleUtxo)
+    .collectFrom([lUtxo], loanBalanceAction)
+    .collectFrom([cUtxo], loanBalanceAction)
+    .collectFrom([oracleUtxo], oracleUpdateAction)
+    .readFrom(configIn)
     .payToContract(
       loanAddr, 
       { inline: loanDatum }, 
-      { loanTn: 1 }
+      { loanUnit: 1 }
     )
     .payToContract(
       collateralAddr,
       { inline: collateralDatum },
-      { lovelace: deposit }
+      { loanUnit: 1 }
     )
+    .payToContract(
+      oracleAddr,
+      { inline: oracleDatum },
+      { oracleUnit: 1 }
+    )
+    .withdrawFrom(balanceAddr, 0, withdrawRedeemer)
     .attachSpendingValidator(loanVal)
+    .attachSpendingValidator(collateralVal)
+    .attachSpendingValidator(oracleVal)
     .addSignerKey(userPKH)
     .complete()
 
@@ -703,7 +771,7 @@ async function mintRewards() {
 }
 
 async function burnRewards() {
-  const utxos: [UTxO] = await lucid.getUtxosAtWithUnit(ownerAddress, rewardsUnit)
+  const utxos: UTxO[] = await lucid.getUtxosAtWithUnit(ownerAddress, rewardsUnit)
   const utxo: UTxO = utxos[0]
 
   const tx = await Lucid
