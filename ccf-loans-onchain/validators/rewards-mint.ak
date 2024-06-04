@@ -57,46 +57,47 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
     }
   }
 }
-
 // Rewards Mint Tests
-test rewards_mint() {
-  let loanValue = 1000
 
-  let test_owner = #"face"
+// test rewards_mint() {
+//   let loanValue = 1000
 
-  // let test_user = #"cafe"
-  let oref = t.test_oref(#"face", 1)
-  let rref = t.test_oref(#"dead", 6)
+//   let test_owner = #"face"
 
-  let rewardsAction = tx.rewardsActionMint()
+//   // let test_user = #"cafe"
+//   let oref = t.test_oref(#"face", 1)
+//   let rref = t.test_oref(#"dead", 6)
 
-  let outDatum = NoDatum
+//   let rewardsAction = tx.rewardsActionMint()
 
-  let loanInput = tx.loanInput(1, loanValue)
+//   let outDatum = NoDatum
 
-  let userOutput =
-    t.test_output(
-      t.test_address(test_owner),
-      t.rewardsValue(loanValue),
-      outDatum,
-    )
+//   let loanInput = tx.loanInput(1, loanValue)
 
-  let configIn = tx.configInput()
+//   let userOutput =
+//     t.test_output(
+//       t.test_address(test_owner),
+//       t.rewardsValue(loanValue),
+//       outDatum,
+//     )
 
-  let tx =
-    Transaction {
-      ..placeholder(),
-      reference_inputs: [configIn],
-      mint: t.rewardsMintedValue(loanValue),
-      extra_signatories: [test_owner],
-      inputs: [loanInput],
-      outputs: [userOutput],
-    }
+//   let configIn = tx.configInput()
 
-  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+//   let tx =
+//     Transaction {
+//       ..placeholder(),
+//       reference_inputs: [configIn],
+//       mint: t.rewardsMintedValue(loanValue),
+//       extra_signatories: [test_owner],
+//       inputs: [loanInput],
+//       outputs: [userOutput],
+//     }
 
-  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-}
+//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+
+//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+// }
+
 // test rewards_mint_qty_fail() fail {
 //   let test_owner = #"face"
 

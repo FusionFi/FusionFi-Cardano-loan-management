@@ -52,16 +52,16 @@ pub type LoanAction {
 }
 
 pub type LoanMintAction {
-  AMint { loanCurrency: ByteArray, loanValue: Int, timestamp: PosixTime }
+  AMint { amount: Int, rewards: Int, term: Int, timestamp: PosixTime }
   ABurn
 }
 
 pub type LoanDatum {
   amount: Int,
-  interest: Int,
   rewards: Int,
   term: Int,
   timestamp: PosixTime,
+  oracle: AssetName,
 }
 
 pub type MerkelLoanAction {
@@ -91,14 +91,15 @@ pub type RewardsAction {
 }
 
 pub type OracleDatum {
-  usdAda: Int,
+  exchange: Int,
   timestamp: PosixTime,
-  rate: Int,
+  interest: Int,
   fee: Int,
+  currency: ByteArray,
 }
 
 pub type OracleAction {
-  OracleUpdate { usdAda: Int, timestamp: PosixTime, rate: Int, fee: Int }
+  OracleUpdate { exchange: Int, timestamp: PosixTime, interest: Int, fee: Int }
   OracleClose
 }
 

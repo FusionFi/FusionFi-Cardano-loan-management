@@ -37,15 +37,19 @@ validator(op: PolicyId, cp: PolicyId) {
         |> dict.to_list()
 
     when r is {
-      AMint { loanCurrency, loanValue, timestamp } -> {
+      AMint { amount, rewards, term, timestamp } -> {
         // checks for Oracle ref in
         expect Some(oracleOut) =
           find(outputs, fn(output) { has(policies(output.value), op) })
+        expect [(oraclTn, 1)] =
+          oracleOut.value
+            |> value.tokens(p)
+            |> dict.to_list()
         // checks oracle datum
         expect InlineDatum(datum) = oracleOut.datum
         expect rDatum: OracleDatum = datum
         // pulls exchange rate
-        let exchangeRate = rDatum.usdAda
+        let exchangeRate = rDatum.exchange
         // checks for config input
         expect Some(configIn) =
           head(
@@ -86,7 +90,7 @@ validator(op: PolicyId, cp: PolicyId) {
         // checks loan values against redeemer && collateral && 2 tokens minted
         lDatum.amount == loanValue && lDatum.interest == 15 && lDatum.term == 0 && colDatum.amount == loanValue * 2 && lovelace_of(
           colOut.value,
-        ) >= lDatum.amount * exchangeRate * 1000000 && tAmt == 2
+        ) >= lDatum.amount * exchangeRate * 1000000 && tAmt == 2 && lDatum.oracle == oracleTn
       }
       // always allows Burn -> This needs to be changed to only allow burning when the loan is 
       // closed or there is no more loan value (ie liquidated)
