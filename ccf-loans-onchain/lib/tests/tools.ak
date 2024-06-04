@@ -10,17 +10,17 @@ use aiken/transaction/credential.{
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
 
 pub const merkelClose =
-  #"bb67514df81f77be239d616ce53af8cccf6a559dd1bb438748b103c8"
+  #"93fb1f13c199bdb5ec24cc6b171a7f57448c9cab20c5de7068619d4c"
 
 pub const merkelLiquidate =
-  #"0d96565e8061af897f5bcccc037cac25d0d580cebeaa811945c361c5"
+  #"98d51e724cde8f5a8469eade0c945db6be1a286318a5746987f5f116"
 
 pub const merkelBalance =
-  #"4331f18eebb70d3a5db9ca4596947d774da483298c1904138a582a2f"
+  #"5a865ee240f36e9bbbadc6f7a6c11496635e194ec7e844d8b3fa8b13"
 
-pub const mCol = #"f59dc6b45b4edc06beac8930d5169c9dcd32f1d2fd5a9cf94f372794"
+pub const mCol = #"da4485829d7239913cb82a2153b96f241eb1a0949b2675acfe156c32"
 
-pub const mLoan = #"8ed9b99679a54c1bf93924cc0dc79768d93fd2d450943294a27c9c67"
+pub const mLoan = #"2a702bed15ddca531904e15f445074bcb2c766f90bfe65848e636227"
 
 pub const merkelCollateralBalance =
   #"79bb35a6ac49e24289d3cb07c6258bb41b315cb2341fa71bfb43c9ab"
@@ -47,7 +47,7 @@ pub const merkelLoanSpend =
   #"8ed9b99679a54c1bf93924cc0dc79768d93fd2d450943294a27c9c67"
 
 pub const merkelConfigHash =
-  #"1fc6b1b8c65de579cd59e5d8a844c0820eeb24d877c4ea201156d291"
+  #"d77f5ddbed7a4414fe8e67ec425ee535622ebcf3d4b13ba714665254"
 
 pub const with2Hash =
   #"9c27818fc34b7a088a395cc09028359358810d1659a7379a7c8fd647"
@@ -59,25 +59,25 @@ pub const collateralValHash =
   #"b0269971c5f1cf4585d4eba416735cdc1d61007fef83c7efd5a3be8f"
 
 pub const configMintHash =
-  #"0371cc59b8c81f47bb02a76b227f6ea74e7dfdf2b9e3270337637b01"
+  #"465b6d5e13a08408883d4d25989763b81225e651122e28c652fb21a3"
 
 pub const configValHash =
   #"dfd0433a8e973bcb26919d59bd0afa094f49eaeb81931022b67f64a1"
 
 pub const loanMintHash =
-  #"13467ada0ce604c286b879e969231e206dbb95a41eca4722c963085b"
+  #"72665d1296a02de7a60c8c644aec48a14bb558b9507923f1b7641572"
 
 pub const loanValHash =
   #"b99df998781a5ad58093daca046840f09754e67f69f5c19e2bc2a1b3"
 
 pub const oracleMintHash =
-  #"2a930e2d7339e0501e36c6e5f0bb6166c1b5c0e71110039b3104cb9c"
+  #"4c81c3e1ab80ad6798a91aff70859fdadf8cf624ea9203539904e479"
 
 pub const oracleValHash =
-  #"c3b2b1b43f51c93bd1e32f264c94f12bd118692aad403ed0454a3102"
+  #"61916fdcbf8e96ac8c9a144c0f98475d65d3b5ed3aa8f8ada8750b2b"
 
 pub const rewardsMintHash =
-  #"a3d0ea91754e4b26492533f94545a25e7e2d71af53058a166bc77786"
+  #"769a73b2bc482bf87d1482597ef7826ad5bb9f80010a8013a2d98300"
 
 pub type ScriptHash =
   Hash<Blake2b_224, Script>
