@@ -1,77 +1,74 @@
 # ccf-loans
 
-Currently working on `validators/merkel-close.ak` 
+Currently finalising `validators/merkel-close.ak` 
 
-I have written and tested the offchain code in `draft.ts`
+I have refactored the offchain code into `offchain`
 
-Currently it is one long script, I will refactor and organise it in the morning.
+Variables for loans and oracle can be set in `offchain/variables.ts`
 
-For this reason testing can be a bit cumbersome.
+When you mint an oracle or a loan, you will need to record the tokens (Units) in 
+`offchain/variables.ts` to be used for later transactions.
 
 ## Running Your Own Tests
 
-Once you have built the validators, you can run the command at the top of `draft` to. 
+Once you have built the validators, you can run the command at the top of `config.ts` to
 execute these transactions on the preview testnet.
 
-```
-// deno run --allow-net --allow-read --allow-env draft.ts
-```
+You need to first mint a `config` token, then an `oracle`, then you can mint `loans`.
 
-This will run whichever transaction you choose at the bottom of the file, but there are
-a few set-up steps
+In `config.ts` comment out all of the transactions except `mintConfigTx`
 
 ```
-// ---------------------------------------- //
-
-// Transaction Execution //
-
-// ---------------------------------------- //
-
-// // Make Wallet UTxOs ...
-```
-
-The set up process is simple, you first need to set up your configuration token which 
-holds all of the validator scripts the other validators need to access.
-
-```
-// // mintConfig
-// const mintConfigTx = await mintConfig()
-// console.log(`Mint Config Tx: 
-//   `, mintConfigTx, `
-// `)
-```
-
-Un-comment this transaction and run the script in your terminal, some data will print to
-the terminal including the Datum of the configToken.
-
-You will also get one or more optional next steps you can take:
-
-```
-...
-console.log(`Mint Config Tx:
+// mintConfig
+const mintConfigTx = await mintConfig()
+console.log(`Mint Config Tx: 
   `, mintConfigTx, `
 
 NEXT RUN THE ORACLE MINTING TRANSACTION
-...
-```
-
-Comment the previous transaction and un-comment the next one
-
-```
-// mintOracle 
-const mintOracleTx = await mintOracle()
-console.log(`Mint Oracle Tx: 
- `, mintOracleTx, `
-
-SAVE THE ORACLE UNIT AT LINE 338
-  Or the other transactions will not work!
 `)
 ```
+
+Then you can run the script in the terminal:
+
+```
+deno run --allow-net --allow-read --allow-env config.ts
+```
+
+The terminal will povide some transaction data so you can review what is going on.
+
+Before you mint any loans or oracles, start by registering the script addresses for the 
+withdrawal validators.
+
+If you dont do this, none of your loan transactions will work because you cannot 
+`WithdrawFrom` the script.
+
+Change the validator script in `offchain/transactions/helpers.ts`:
+
+```
+export async function registerStake() {
+  const tx = await lucid
+    .newTx()
+    .registerStake(closeAddr) // balanceAddr | liquidateAddr | closeAddr
+    .complete()
+  
+  const txSigned = await tx.sign().complete()
+
+  return txSigned.submit()
+}
+```
+
+And run the `helpers.ts` script:
+
+```
+deno run --allow-net --allow-read --allow-env helpers.ts
+```
+
+You are then able to do withdrawal transactions with those scripts, so you can go ahead and mint an `oracle` and `loan`
 
 As shown above, some of the transactions come with instructions. This is important or the
 other transactions will fail because they dont have the oracle token.
 
-You will need to save the `Oracle Unit` at `const oracleUnit` on line 338
+You will need to save the `Oracle Unit` at `const oracleUnit` in `offchain/variables.ts`
 
 The same goes with your `Loan Unit`, you will be prompted in this way so you dont forget.
 
