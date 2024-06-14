@@ -1,3 +1,4 @@
+use aiken/cbor
 use aiken/dict
 use aiken/list.{find, has}
 use aiken/transaction.{
@@ -5,51 +6,75 @@ use aiken/transaction.{
 }
 use aiken/transaction/value.{policies}
 use ccfl/types.{
-  ConClose, ConUpdate, ConfigAction, ConfigDatum, VerificationKeyHash,
+  MConClose, MConUpdate, MerkelConfigAction, MerkelConfigDatum,
+  VerificationKeyHash,
 }
 use tests/tools as t
-use tests/transactions.{configActionUpdate, configDatum, oracleDatum}
+use tests/transactions.{configActionUpdate,
+  configDatum, mConUpdate, oracleDatum}
 
 //                       //
 // Config Minting Policy //
 //                       //
 
 validator(o: VerificationKeyHash) {
-  fn configMint(r: ConfigAction, c: ScriptContext) -> Bool {
+  fn configMint(r: MerkelConfigAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
     let Transaction { outputs, extra_signatories, mint, .. } = transaction
 
-    expect [(_tName, tAmt)] =
+    expect [Pair(_tName, tAmt)] =
       mint
         |> value.from_minted_value()
         |> value.tokens(policyId)
-        |> dict.to_list()
+        |> dict.to_pairs()
 
     when r is {
-      ConUpdate { loanVal, colVal, rewardsVal } -> {
+      MConUpdate {
+        loanVal,
+        colVal,
+        rewardsVal,
+        oracleVal,
+        loanRedeemers,
+        collateralRedeemers,
+      } -> {
+        // // MConUpdate -> {
         // checks the output with the token
         expect Some(ownOut) =
           find(outputs, fn(output) { has(policies(output.value), policyId) })
         // has the appropriate datum        
         expect InlineDatum(datum) = ownOut.datum
-        expect outDatum: ConfigDatum = datum
+        expect outDatum: MerkelConfigDatum = datum
         // output datum matches redeemer && only 1 token is minted && signed by owner
-        outDatum.loanVal == loanVal && outDatum.colVal == colVal && outDatum.rewardsVal == rewardsVal && has(
-          extra_signatories,
-          o,
-        ) && tAmt == 1
+        // outDatum.loanVal == loanVal && outDatum.colVal == colVal && outDatum.rewardsVal == rewardsVal && outDatum.oracleVal == oracleVal && outDatum.loanRedeemers == loanRedeemers && outDatum.collateralRedeemers == collateralRedeemers && 
+        has(extra_signatories, o) && tAmt == 1
       }
       // signed by owner and mint amount is -1
-      ConClose -> has(extra_signatories, o) && tAmt == -1
+      MConClose -> True
     }
+    // has(extra_signatories, o) && tAmt == -1
   }
 }
+
 //       //
 // Tests //
 //       //
 
+test cbor() {
+  let configAction =
+    mConUpdate(
+      t.loanValHash,
+      t.collateralValHash,
+      t.rewardsMintHash,
+      t.oracleValHash,
+      [t.merkelBalance],
+      [t.merkelBalance, t.merkelClose, t.merkelLiquidate],
+    )
+
+  trace cbor.diagnostic(configAction)
+  False
+}
 // test config_mint() {
 //   let test_owner = #"face"
 

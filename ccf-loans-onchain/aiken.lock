@@ -3,17 +3,7 @@
 
 [[requirements]]
 name = "aiken-lang/stdlib"
-version = "1.8.0"
-source = "github"
-
-[[requirements]]
-name = "aiken-lang/fuzz"
-version = "main"
-source = "github"
-
-[[requirements]]
-name = "aiken-extra/tx_util"
-version = "main"
+version = "1.9.0"
 source = "github"
 
 [[requirements]]
@@ -23,19 +13,7 @@ source = "github"
 
 [[packages]]
 name = "aiken-lang/stdlib"
-version = "1.8.0"
-requirements = []
-source = "github"
-
-[[packages]]
-name = "aiken-lang/fuzz"
-version = "main"
-requirements = []
-source = "github"
-
-[[packages]]
-name = "aiken-extra/tx_util"
-version = "main"
+version = "1.9.0"
 requirements = []
 source = "github"
 
@@ -46,5 +24,3 @@ requirements = []
 source = "github"
 
 [etags]
-"aiken-extra/tx_util@main" = [{ secs_since_epoch = 1717512868, nanos_since_epoch = 425832866 }, "1d65ebe0105a40d43a5ee6d1f4624e3007c1536f62742de5142bb9084c8ad09c"]
-"aiken-lang/fuzz@main" = [{ secs_since_epoch = 1717512868, nanos_since_epoch = 29322580 }, "98cf81aa68f9ccf68bc5aba9be06d06cb1db6e8eff60b668ed5e8ddf3588206b"]

@@ -13,6 +13,10 @@ pub type ScriptHash =
 // Datums & Redeemers //
 //                    //
 
+pub type WithdrawRedeemer {
+  Withdraw { a: List<Int> }
+}
+
 pub type ConfigDatum {
   loanVal: ScriptHash,
   colVal: ScriptHash,

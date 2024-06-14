@@ -358,14 +358,14 @@ pub fn collateralOutput(amount: Int, value: Int) -> Output {
   colOut
 }
 
-pub fn withdrawal(script: ScriptHash) {
-  let withdraw0 =
-    dict.from_ascending_list(
-      [(t.create_stake_credential(script), 0)],
-      t.stakeCompare,
-    )
-  withdraw0
-}
+// pub fn withdrawal(script: ScriptHash) {
+//   let withdraw0 =
+//     dict.from_ascending_pairs(
+//       [Pair(t.create_stake_credential(script), 0)],
+//       t.stakeCompare,
+//     )
+//   withdraw0
+// }
 
 //                        //
 // Merkel Combined Inputs //

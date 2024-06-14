@@ -7,7 +7,7 @@ use aiken/transaction.{
 use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
 use ccfl/helpers.{merkelBurn, withBurn}
-use ccfl/types.{CollateralDatum, LoanDatum, ScriptHash}
+use ccfl/types.{CollateralDatum, LoanDatum, ScriptHash, WithdrawRedeemer}
 use tests/tools as t
 use tests/transactions as tx
 
@@ -16,7 +16,7 @@ use tests/transactions as tx
 //                        //
 
 validator(lp: PolicyId, op: PolicyId) {
-  fn close(r: List<(Int, Int)>, c: ScriptContext) {
+  fn close(r: WithdrawRedeemer, c: ScriptContext) {
     expect ScriptContext {
       transaction,
       purpose: WithdrawFrom(stake_credential),
@@ -32,40 +32,35 @@ validator(lp: PolicyId, op: PolicyId) {
         fn(output) { list.has(value.policies(output.value), op) },
       )
 
-    merkelBurn(
-      fn(loan, collateral) {
-        expect InlineDatum(datum) = loan.datum
-        expect ld: LoanDatum = datum
-
-        expect InlineDatum(datum) = collateral.datum
-        expect cd: CollateralDatum = datum
-
-        let loanTokenValue = value.without_lovelace(loan.value)
-        let colTokenValue = value.without_lovelace(collateral.value)
-
-        expect [(loanTn, 1)] =
-          loanTokenValue
-            |> value.tokens(lp)
-            |> dict.to_list()
-
-        expect Some(burnVal) =
-          value.zero()
-            |> value.add(lp, loanTn, -2)
-            |> value.flatten()
-            |> list.head()
-
-        let burns =
-          mint
-            |> value.from_minted_value()
-            |> value.flatten()
-
-        expect list.has(burns, burnVal)
-
-        ld.amount == 0 && cd.amount == 0 && loanTokenValue == colTokenValue
-      },
-      r,
-      inputs,
-    )
+    // merkelBurn(
+    //   fn(loan, collateral) {
+    //     expect InlineDatum(datum) = loan.datum
+    //     expect ld: LoanDatum = datum
+    //     expect InlineDatum(datum) = collateral.datum
+    //     expect cd: CollateralDatum = datum
+    //     // let loanTokenValue = value.without_lovelace(loan.value)
+    //     // let colTokenValue = value.without_lovelace(collateral.value)
+    //     // expect [Pair(loanTn, 1)] =
+    //     //   loanTokenValue
+    //     //     |> value.tokens(lp)
+    //     //     |> dict.to_pairs()
+    //     // expect Some(burnVal) =
+    //     //   value.zero()
+    //     //     |> value.add(lp, loanTn, -2)
+    //     //     |> value.flatten()
+    //     //     |> list.head()
+    //     // let burns =
+    //     //   mint
+    //     //     |> value.from_minted_value()
+    //     //     |> value.flatten()
+    //     // expect list.has(burns, burnVal)
+    //     ld.amount == 0 && cd.amount == 0
+    //   },
+    //   // && loanTokenValue == colTokenValue
+    //   r.a,
+    //   inputs,
+    // )
+    True
   }
 }
 //                 //

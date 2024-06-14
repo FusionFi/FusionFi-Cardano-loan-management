@@ -1,9 +1,81 @@
 # ccf-loans
 
-Currently working on optimising `validators/merkel` I have created a set of validators to
-combine checks for `loan` and `collateral` validators
+Currently working on `validators/merkel-close.ak` 
 
-The root `validators` dir has the current optimisation set,
+I have written and tested the offchain code in `draft.ts`
+
+Currently it is one long script, I will refactor and organise it in the morning.
+
+For this reason testing can be a bit cumbersome.
+
+## Running Your Own Tests
+
+Once you have built the validators, you can run the command at the top of `draft` to. 
+execute these transactions on the preview testnet.
+
+```
+// deno run --allow-net --allow-read --allow-env draft.ts
+```
+
+This will run whichever transaction you choose at the bottom of the file, but there are
+a few set-up steps
+
+```
+// ---------------------------------------- //
+
+// Transaction Execution //
+
+// ---------------------------------------- //
+
+// // Make Wallet UTxOs ...
+```
+
+The set up process is simple, you first need to set up your configuration token which 
+holds all of the validator scripts the other validators need to access.
+
+```
+// // mintConfig
+// const mintConfigTx = await mintConfig()
+// console.log(`Mint Config Tx: 
+//   `, mintConfigTx, `
+// `)
+```
+
+Un-comment this transaction and run the script in your terminal, some data will print to
+the terminal including the Datum of the configToken.
+
+You will also get one or more optional next steps you can take:
+
+```
+...
+console.log(`Mint Config Tx:
+  `, mintConfigTx, `
+
+NEXT RUN THE ORACLE MINTING TRANSACTION
+...
+```
+
+Comment the previous transaction and un-comment the next one
+
+```
+// mintOracle 
+const mintOracleTx = await mintOracle()
+console.log(`Mint Oracle Tx: 
+ `, mintOracleTx, `
+
+SAVE THE ORACLE UNIT AT LINE 338
+  Or the other transactions will not work!
+`)
+```
+
+As shown above, some of the transactions come with instructions. This is important or the
+other transactions will fail because they dont have the oracle token.
+
+You will need to save the `Oracle Unit` at `const oracleUnit` on line 338
+
+The same goes with your `Loan Unit`, you will be prompted in this way so you dont forget.
+
+---
 
 For scope of contracts and documentation please refer to `notes` 
 
@@ -30,13 +102,13 @@ For scope of contracts and documentation please refer to `notes`
     ├── collateral-vault.ak # Collateral Spend
     ├── config-mint.ak # initial validators w/ tests
     ├── loan-vault.ak # Loan Spend
-    ├── merkel-balance.ak # Loan & Collateral w/ tests
+    ├── merkel-balance.ak # w/ tests
     ├── merkel-config-vault.ak # Config Ref Input w/ tests
-    ├── merkel-close.ak # Loan & Collateral w/ tests
-    ├── merkel-liquidate.ak # Loan & Collateral w/ tests
+    ├── merkel-close.ak # w/ tests
+    ├── merkel-liquidate.ak # w/ tests
     ├── oracle-mint.ak # w/ tests
-    ├── oracle-validator.ak # TODO Optimisations w/ tests
-    └── rewards-mint.ak # TODO Optimisations w/ tests
+    ├── oracle-validator.ak # w/ tests
+    └── rewards-mint.ak # TODO Test Transactions
 ```
 
 ## Building

@@ -1,4 +1,4 @@
-use aiken/dict.{to_list}
+use aiken/dict.{to_pairs}
 use aiken/list.{has}
 use aiken/transaction.{
   InlineDatum, Input, Output, ScriptContext, Spend, Transaction, find_input,
@@ -22,15 +22,14 @@ validator(o: VerificationKeyHash, p: PolicyId) {
     expect Spend(ownRef) = purpose
 
     expect has_singleton_input(transaction, ownRef)
-
     when r is {
       OracleUpdate { exchange, timestamp, interest, fee } -> {
         let out = get_own_singleton_output(transaction, ownRef)
 
-        expect [(_, 1)] =
+        expect [Pair(_, 1)] =
           without_lovelace(out.value)
             |> tokens(p)
-            |> to_list()
+            |> to_pairs()
 
         expect InlineDatum(datum) = out.datum
         expect datum: OracleDatum = datum
@@ -40,17 +39,17 @@ validator(o: VerificationKeyHash, p: PolicyId) {
       OracleClose -> {
         expect Some(input) = find_input(transaction.inputs, ownRef)
 
-        expect [(inName, 1)] =
+        expect [Pair(inName, 1)] =
           // get singleton name
           without_lovelace(input.output.value)
             |> tokens(p)
-            |> to_list()
+            |> to_pairs()
 
-        expect [(burnName, -1)] =
+        expect [Pair(burnName, -1)] =
           transaction.mint
             |> value.from_minted_value()
             |> value.tokens(p)
-            |> dict.to_list()
+            |> dict.to_pairs()
 
         has(transaction.extra_signatories, o) && inName == burnName
       }
@@ -249,7 +248,7 @@ test oracle_vault() {
 //       ),
 //     )
 
-//   let oracleOutput =
+//  let oracleOutput =
 //     t.test_output(
 //       t.test_script_address(t.oracleValHash),
 //       t.makeAdaValue(2),

@@ -7,7 +7,7 @@ use aiken/transaction.{
 use aiken/transaction/credential.{ScriptCredential}
 use aiken/transaction/value.{PolicyId, lovelace_of, policies}
 use ccfl/types.{
-  ABurn, AMint, CollateralDatum, ConfigDatum, LoanDatum, LoanMintAction,
+  ABurn, AMint, CollateralDatum, LoanDatum, LoanMintAction, MerkelConfigDatum,
   OracleDatum,
 }
 use tests/tools as t
@@ -30,21 +30,21 @@ validator(op: PolicyId, cp: PolicyId) {
 
     let Transaction { mint, outputs, reference_inputs, .. } = transaction
 
-    expect [(_tName, tAmt)] =
+    expect [Pair(_tName, tAmt)] =
       mint
         |> value.from_minted_value()
         |> value.tokens(policyId)
-        |> dict.to_list()
+        |> dict.to_pairs()
 
     when r is {
       AMint { amount, rewards, term, timestamp } -> {
         // checks for Oracle ref in
         expect Some(oracleOut) =
           find(outputs, fn(output) { has(policies(output.value), op) })
-        expect [(oracleTn, 1)] =
+        expect [Pair(oracleTn, 1)] =
           oracleOut.value
             |> value.tokens(op)
-            |> dict.to_list()
+            |> dict.to_pairs()
         // checks oracle datum
         expect InlineDatum(datum) = oracleOut.datum
         expect rDatum: OracleDatum = datum
@@ -60,7 +60,8 @@ validator(op: PolicyId, cp: PolicyId) {
           )
         // checks config datum
         expect InlineDatum(datum) = configIn.output.datum
-        expect cDatum: ConfigDatum = datum
+        expect cDatum: MerkelConfigDatum = datum
+
         // sends to loan validator in config
         expect Some(loanOut) =
           find(
@@ -87,11 +88,14 @@ validator(op: PolicyId, cp: PolicyId) {
         // checks collateral output datum
         expect InlineDatum(datum) = colOut.datum
         expect colDatum: CollateralDatum = datum
+        let decimalComp = lDatum.amount * 1000
+        let exchangeValue = decimalComp / exchangeRate
         // checks loan values against redeemer && collateral && 2 tokens minted
         lDatum.amount == amount && lDatum.term == 0 && colDatum.amount == amount * 2 && lovelace_of(
           colOut.value,
-        ) >= lDatum.amount * exchangeRate * 1000000 && tAmt == 2 && lDatum.oracle == oracleTn
+        ) >= exchangeValue * 1000000 && tAmt == 2 && lDatum.oracle == oracleTn
       }
+      // True
       // always allows Burn -> This needs to be changed to only allow burning when the loan is 
       // closed or there is no more loan value (ie liquidated)
       ABurn -> True

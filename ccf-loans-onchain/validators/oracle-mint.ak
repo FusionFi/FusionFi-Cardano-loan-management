@@ -1,4 +1,4 @@
-use aiken/dict.{to_list}
+use aiken/dict.{to_pairs}
 use aiken/list
 use aiken/transaction.{
   InlineDatum, Mint, NoDatum, ScriptContext, Transaction, placeholder,
@@ -23,11 +23,11 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
-    expect [(oName, oAmt)] =
+    expect [Pair(oName, oAmt)] =
       transaction.mint
         |> from_minted_value()
         |> tokens(policyId)
-        |> to_list()
+        |> to_pairs()
 
     when r is {
       // checks signed by owner and No. of tokens
@@ -46,11 +46,11 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
           list.find(
             transaction.outputs,
             fn(output) {
-              expect [(oName, oAmt)] =
+              expect [Pair(oName, oAmt)] =
                 output.value
                   |> value.without_lovelace()
                   |> value.tokens(policyId)
-                  |> dict.to_list()
+                  |> dict.to_pairs()
               output.address.payment_credential == ScriptCredential(
                 cDatum.oracleVal,
               )

@@ -7,6 +7,7 @@ use aiken/transaction.{
   WithdrawFrom, find_input, find_script_outputs,
 }
 use aiken/transaction/credential.{Address, Inline, Script, ScriptCredential}
+use aiken/transaction/value
 use ccfl/types.{LoanAction, ScriptHash}
 
 //         //
@@ -107,16 +108,24 @@ pub fn merkel0(
 
 pub fn merkelTx(
   validate: fn(Output, Output) -> Bool,
-  redeemer: List<(Int, Int)>,
+  redeemer: List<Int>,
   outputs: List<Output>,
 ) -> Bool {
   let txList =
     list.map(
       redeemer,
       fn(index) {
-        let (l, c) = index
+        let l = index
         expect Some(loan) = list.at(outputs, l)
-        expect Some(col) = list.at(outputs, c)
+        expect Some(col) =
+          list.find(
+            outputs,
+            fn(output) {
+              value.without_lovelace(output.value) == value.without_lovelace(
+                loan.value,
+              )
+            },
+          )
         (loan, col)
       },
     )
@@ -132,16 +141,24 @@ pub fn merkelTx(
 
 pub fn merkelBurn(
   validate: fn(Output, Output) -> Bool,
-  redeemer: List<(Int, Int)>,
+  redeemer: List<Int>,
   inputs: List<Input>,
 ) -> Bool {
   let txList =
     list.map(
       redeemer,
       fn(index) {
-        let (l, c) = index
+        let l = index
         expect Some(loan) = list.at(inputs, l)
-        expect Some(col) = list.at(inputs, c)
+        expect Some(col) =
+          list.find(
+            inputs,
+            fn(input) {
+              value.without_lovelace(input.output.value) == value.without_lovelace(
+                loan.output.value,
+              )
+            },
+          )
         (loan.output, col.output)
       },
     )
@@ -155,70 +172,70 @@ pub fn merkelBurn(
   )
 }
 
-pub fn withdraw1(
-  validation_logic: fn(Output, Output, LoanAction) -> Bool,
-  redeemer: List<(Int, Int, Int)>,
-  ctx: ScriptContext,
-) -> Bool {
-  withdraw0(
-    fn(indicesData, own_validator, tx) {
-      let Transaction { inputs, outputs, redeemers, .. } = tx
-      let (script_inputs, script_input_count) =
-        list.foldr(
-          inputs,
-          ([], 0),
-          fn(i, acc_tuple) {
-            expect Input {
-              output: Output {
-                address: Address {
-                  payment_credential: ScriptCredential(script),
-                  ..
-                },
-                ..
-              } as o,
-              ..
-            } = i
-            if script == own_validator {
-              let (acc, count) = acc_tuple
-              ([o, ..acc], count + 1)
-            } else {
-              acc_tuple
-            }
-          },
-        )
+// pub fn withdraw1(
+//   validation_logic: fn(Output, Output, LoanAction) -> Bool,
+//   redeemer: List<(Int, Int, Int)>,
+//   ctx: ScriptContext,
+// ) -> Bool {
+//   withdraw0(
+//     fn(indicesData, own_validator, tx) {
+//       let Transaction { inputs, outputs, redeemers, .. } = tx
+//       let (script_inputs, script_input_count) =
+//         list.foldr(
+//           inputs,
+//           ([], 0),
+//           fn(i, acc_tuple) {
+//             expect Input {
+//               output: Output {
+//                 address: Address {
+//                   payment_credential: ScriptCredential(script),
+//                   ..
+//                 },
+//                 ..
+//               } as o,
+//               ..
+//             } = i
+//             if script == own_validator {
+//               let (acc, count) = acc_tuple
+//               ([o, ..acc], count + 1)
+//             } else {
+//               acc_tuple
+//             }
+//           },
+//         )
 
-      expect indices: List<(Int, Int, Int)> = indicesData
-      let (_, _, _, input_index_count) =
-        list.foldl(
-          indices,
-          (-1, -1, -1, 0),
-          fn(curr, acc) {
-            let (in0, out0, red0, count) = acc
-            let (in1, out1, red1) = curr
-            if in1 > in0 && out1 > out0 && red1 > red0 {
-              expect Some(in_utxo) = script_inputs |> list.at(in1)
-              expect Some(out_utxo) = outputs |> list.at(out1)
-              expect Some((_purpose, rdmr)) =
-                redeemers |> dict.to_list |> list.at(red1)
-              expect red: LoanAction = rdmr
-              if validation_logic(in_utxo, out_utxo, red) {
-                (in1, out1, red1, count + 1)
-              } else {
-                fail @"Validation failed"
-              }
-            } else {
-              // Input and output indices must be ordered to disallow
-              // duplicates.
-              fail @"Input and output indices must be in ascending orders"
-            }
-          },
-        )
-      (script_input_count == input_index_count)?
-    },
-    redeemer,
-    ctx,
-  )
-}
+//       expect indices: List<(Int, Int, Int)> = indicesData
+//       let (_, _, _, input_index_count) =
+//         list.foldl(
+//           indices,
+//           (-1, -1, -1, 0),
+//           fn(curr, acc) {
+//             let (in0, out0, red0, count) = acc
+//             let (in1, out1, red1) = curr
+//             if in1 > in0 && out1 > out0 && red1 > red0 {
+//               expect Some(in_utxo) = script_inputs |> list.at(in1)
+//               expect Some(out_utxo) = outputs |> list.at(out1)
+//               expect Some((_purpose, rdmr)) = redeemers |> list.at(red1)
+//               //|> dict.to_pairs
+//               expect red: LoanAction = rdmr
+//               if validation_logic(in_utxo, out_utxo, red) {
+//                 (in1, out1, red1, count + 1)
+//               } else {
+//                 fail @"Validation failed"
+//               }
+//             } else {
+//               // Input and output indices must be ordered to disallow
+//               // duplicates.
+//               fail @"Input and output indices must be in ascending orders"
+//             }
+//           },
+//         )
+//       (script_input_count == input_index_count)?
+//     },
+//     redeemer,
+//     ctx,
+//   )
+// }
 
 pub fn withdraw3(
   input_validator: fn(Input) -> Bool,

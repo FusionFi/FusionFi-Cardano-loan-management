@@ -31,11 +31,11 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
     expect InlineDatum(datum) = refIn.output.datum
     expect cDatum: MerkelConfigDatum = datum
 
-    expect [(tName, tAmt)] =
+    expect [Pair(tName, tAmt)] =
       mint
         |> value.from_minted_value()
         |> value.tokens(policyId)
-        |> dict.to_list()
+        |> dict.to_pairs()
 
     when r is {
       RewardMint -> {

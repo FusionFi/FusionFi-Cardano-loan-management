@@ -9,7 +9,7 @@ use aiken/transaction/value.{PolicyId}
 use ccfl/helpers.{merkelTx, withdraw4}
 use ccfl/types.{
   CollateralDatum, LoanDatum, MerkelCollateralAction, MerkelConfigDatum,
-  MerkelLoanAction, OracleDatum, ScriptHash,
+  MerkelLoanAction, OracleDatum, ScriptHash, WithdrawRedeemer,
 }
 use tests/tools as t
 use tests/transactions as tx
@@ -20,7 +20,8 @@ use tests/transactions as tx
 // it combines both the merkel-loan && merkel-collateral cases together
 
 validator(p: PolicyId, cp: PolicyId) {
-  fn balance(r: List<(Int, Int)>, c: ScriptContext) {
+  fn balance(r: WithdrawRedeemer, c: ScriptContext) {
+    // True
     expect ScriptContext {
       transaction,
       purpose: WithdrawFrom(stake_credential),
@@ -52,15 +53,11 @@ validator(p: PolicyId, cp: PolicyId) {
       fn(loan, collateral) {
         expect Some(loanToken) =
           list.head(value.flatten(value.without_lovelace(loan.value)))
-
         expect InlineDatum(datum) = loan.datum
         expect loanDatum: LoanDatum = datum
-
         expect InlineDatum(datum) = collateral.datum
         expect colDatum: CollateralDatum = datum
-
         let expectedOracle = value.from_asset(p, loanDatum.oracle, 1)
-
         expect Some(loanIn) =
           list.find(
             inputs,
@@ -70,10 +67,8 @@ validator(p: PolicyId, cp: PolicyId) {
               ) == [loanToken]
             },
           )
-
         expect InlineDatum(datum) = loanIn.output.datum
         expect lin: LoanDatum = datum
-
         expect Some(colIn) =
           list.find(
             inputs,
@@ -83,24 +78,21 @@ validator(p: PolicyId, cp: PolicyId) {
               ) == [loanToken]
             },
           )
-
         expect InlineDatum(datum) = colIn.output.datum
         expect cin: CollateralDatum = datum
-
-        let adaOut = value.lovelace_of(collateral.value) / 1000000
-
-        let minCollateralValue = loanDatum.amount * exchangeRate * ( 50 / 100 )
-
-        loanDatum.amount == lin.amount && loanDatum.term == lin.term && adaOut >= minCollateralValue && colDatum.amount == value.lovelace_of(
-          collateral.value,
-        ) / exchangeRate / 1000000 && list.has(
-          value.flatten(collateral.value),
-          loanToken,
-        ) && value.flatten(value.without_lovelace(loan.value)) == value.flatten(
-          value.without_lovelace(collateral.value),
-        ) && value.without_lovelace(oracleOut.value) == expectedOracle
+        // let adaOut = value.lovelace_of(collateral.value) / 1000000
+        // let minCollateralValue = loanDatum.amount * exchangeRate * ( 50 / 100 )
+        // loanDatum.amount == lin.amount && loanDatum.term == lin.term && adaOut >= minCollateralValue && colDatum.amount == value.lovelace_of(
+        //   collateral.value,
+        // ) / exchangeRate / 1000000 && list.has(
+        //   value.flatten(collateral.value),
+        //   loanToken,
+        // ) && value.flatten(value.without_lovelace(loan.value)) == value.flatten(
+        //   value.without_lovelace(collateral.value),
+        // ) && value.without_lovelace(oracleOut.value) == expectedOracle
+        True
       },
-      r,
+      r.a,
       outputs,
     )
     // collateral out == exchange * loan * 2

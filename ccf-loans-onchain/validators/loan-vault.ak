@@ -1,5 +1,6 @@
 use aiken/dict
 use aiken/list
+use aiken/pairs
 use aiken/transaction.{InlineDatum, ScriptContext, Transaction}
 use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
@@ -8,6 +9,7 @@ use ccfl/types.{LoanDatum, MerkelConfigDatum, MerkelLoanAction}
 validator(cp: PolicyId) {
   // this should be in the config datum instead
   fn mLoan(_d: LoanDatum, r: MerkelLoanAction, c: ScriptContext) {
+    // True
     let ScriptContext { transaction, .. } = c
     let Transaction { reference_inputs, withdrawals, .. } = transaction
 
@@ -24,6 +26,6 @@ validator(cp: PolicyId) {
       cDatum.collateralRedeemers
         |> list.at(r.i)
 
-    dict.has_key(withdrawals, Inline(ScriptCredential(stakeVal)))
+    pairs.has_key(withdrawals, Inline(ScriptCredential(stakeVal)))
   }
 }
