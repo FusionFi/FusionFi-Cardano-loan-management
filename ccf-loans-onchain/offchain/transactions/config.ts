@@ -14,9 +14,6 @@ export async function mintConfig() {
 `)
   const utxos: [UTxO] = await lucid.utxosAt(ownerAddress)
   const utxo: UTxO = utxos[0]
-  console.log(`User Input UTxO: 
-    `, utxo.txHash, `
-    `)
 
   const tx = await lucid
     .newTx()
@@ -43,11 +40,9 @@ export async function updateConfig() {
 `)
   const utxos: [UTxO] = await lucid.utxosAtWithUnit(configAddr, configUnit)
   const utxo: UTxO = utxos[0]
-  console.log(`Config Utxo: 
-    `, utxo, `
-  `)
+
   console.log(`Config Datum: 
-    `,Data.from(configDatum), `
+    `, Data.from(configDatum).fields, `
   `)
 
   const tx = await lucid
@@ -72,7 +67,6 @@ export async function burnConfig() {
 `)
   const utxos: [UTxO] = await lucid.utxosAtWithUnit(configAddr, configUnit)
   const utxo: UTxO = utxos[0]
-  console.log(utxo)
 
   const tx = await lucid
     .newTx()

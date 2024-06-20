@@ -5,29 +5,37 @@ import { mintOracle, oracleClose, oAutoUpdate, oManualUpdate, oracleDatum1, orac
 // mintOracle 
 const mintOracleTx = await mintOracle()
 console.log(`Mint Oracle Tx: 
- `, mintOracleTx, `
+ https://preview.cardanoscan.io/`, mintOracleTx, `
 
-SAVE THE ORACLE UNIT AT LINE 338
+SAVE THE ORACLE UNIT IN variables.ts
   Or the other transactions will not work!
+
+NOW YOU HAVE A PRICE FEED HERE ARE YOUR OPTIONS:
+  -> Update The Oracle with oracle.ts
+  -> Mint A Loan with loan.ts
 `)
 
 // closeOracle
 const closeOracleTx = await oracleClose()
-console.log(`Burned Oracle Tx: `, closeOracleTx, `
+console.log(`Burned Oracle Tx: 
+  https://preview.cardanoscan.io/`, closeOracleTx, `
+
+YOU'VE CLOSED YOUR ORACLE!
+  -> Mint a new one
+  -> burn your ConfigToken and close the Dapp
 `)
 
 // updateOracle
 const updateOracleTX = await oAutoUpdate()
-console.log("Update Oracle Tx: ", updateOracleTX,`
-  new Oracle Datum: `, oracleDatum2, `
-  `
-)
+console.log(`Update Oracle Tx: 
+  https://preview.cardanoscan.io/`, updateOracleTX,`
+  
+THE ORACLE HAS UPDATED!
+  -> You can update a loan in loan.ts
+  `)
 
 // updateOracleManual
 const updateOracleManualTx = await oManualUpdate()
 console.log(`Update Oracle Manual Tx: 
-  `, updateOracleManualTx, `
-
-New Oracle Datum: 
-  `, oracleDatum3
-)
+  https://preview.cardanoscan.io/`, updateOracleManualTx, `
+`)

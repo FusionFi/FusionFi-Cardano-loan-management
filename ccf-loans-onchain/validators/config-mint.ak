@@ -75,162 +75,163 @@ test cbor() {
   trace cbor.diagnostic(configAction)
   False
 }
-// test config_mint() {
-//   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+test config_mint() {
+  let test_owner = #"face"
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let oref = t.test_oref(#"face", 1)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let outDatum = InlineDatum(configDatum1)
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let outDatum = InlineDatum(configDatum1)
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: t.configMintedValue(),
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [configOutput],
-//     }
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
 
-//   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.configMintedValue(),
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [configOutput],
+    }
 
-//   configMint(test_owner, configAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
 
-// test config_mint_qty_fail() fail {
-//   let test_owner = #"face"
+  configMint(test_owner, configAction, ctx)?
+}
 
-//   let mintValue =
-//     value.to_minted_value(
-//       value.merge(t.configTokenValue(), t.configTokenValue()),
-//     )
+test config_mint_qty_fail() fail {
+  let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+  let mintValue =
+    value.to_minted_value(
+      value.merge(t.configTokenValue(), t.configTokenValue()),
+    )
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let oref = t.test_oref(#"face", 1)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let outDatum = InlineDatum(configDatum1)
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let outDatum = InlineDatum(configDatum1)
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: mintValue,
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [configOutput],
-//     }
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
 
-//   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: mintValue,
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [configOutput],
+    }
 
-//   configMint(test_owner, configAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
 
-// test config_mint_datum_fail() fail {
-//   let test_owner = #"face"
+  configMint(test_owner, configAction, ctx)?
+}
 
-//   let oref = t.test_oref(#"face", 1)
+test config_mint_datum_fail() fail {
+  let test_owner = #"face"
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let oref = t.test_oref(#"face", 1)
 
-//   let configDatum1 = oracleDatum(1, 1111111111, 15, 2)
-//   let outDatum = InlineDatum(configDatum1)
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+  let configDatum1 = oracleDatum(1, 1111111111, 15, 2)
+  let outDatum = InlineDatum(configDatum1)
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: t.configMintedValue(),
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [configOutput],
-//     }
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
 
-//   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.configMintedValue(),
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [configOutput],
+    }
 
-//   configMint(test_owner, configAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
 
-// test config_mint_sigs_fail() fail {
-//   let test_owner = #"face"
+  configMint(test_owner, configAction, ctx)?
+}
 
-//   let oref = t.test_oref(#"face", 1)
+test config_mint_sigs_fail() fail {
+  let test_owner = #"face"
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let oref = t.test_oref(#"face", 1)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let outDatum = InlineDatum(configDatum1)
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let outDatum = InlineDatum(configDatum1)
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       mint: t.configMintedValue(),
-//       extra_signatories: [#"cafe"],
-//       inputs: [ownerInput],
-//       outputs: [configOutput],
-//     }
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
 
-//   let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      mint: t.configMintedValue(),
+      extra_signatories: [#"cafe"],
+      inputs: [ownerInput],
+      outputs: [configOutput],
+    }
 
-//   configMint(test_owner, configAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Mint(t.configMintHash), transaction: tx }
+
+  configMint(test_owner, configAction, ctx)?
+}

@@ -102,96 +102,97 @@ validator(op: PolicyId, cp: PolicyId) {
     }
   }
 }
-// // Loan Mint Tests
-// test loan_mint() {
-//   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
-//   let cref = t.test_oref(#"cafe", 2)
-//   let rref = t.test_oref(#"dead", 6)
+// Loan Mint Tests
+test loan_mint() {
+  let test_owner = #"face"
 
-//   let mintAction = loanMintActionMint("USD", 1000, 1111111113)
+  let oref = t.test_oref(#"face", 1)
+  let cref = t.test_oref(#"cafe", 2)
+  let rref = t.test_oref(#"dead", 6)
 
-//   let loanMintedValue =
-//     value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
+  let mintAction = loanMintActionMint("USD", 1000, 1111111113)
 
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
+  let loanMintedValue =
+    value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
 
-//   let loanDatum = loanDatum(1000, 15, 1000, 0, 1111111114)
-//   let loanOutDatum = InlineDatum(loanDatum)
-//   let loanOutValue = t.loanTokenValue()
+  let configDatum =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let configInDatum = InlineDatum(configDatum)
 
-//   let collateralDatum = collateralDatum(2000, 12)
-//   let colOutDatum = InlineDatum(collateralDatum)
-//   let colOutValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
+  let loanDatum = loanDatum(1000, 15, 1000, 0, 1111111114)
+  let loanOutDatum = InlineDatum(loanDatum)
+  let loanOutValue = t.loanTokenValue()
 
-//   let oracleInDatum = oracleDatum(2, 11111112, 15, 2)
-//   let oracleOutDatum = oracleDatum(1, 11111114, 15, 2)
-//   let oInDatum = InlineDatum(oracleInDatum)
-//   let oOutDatum = InlineDatum(oracleOutDatum)
+  let collateralDatum = collateralDatum(2000, 12)
+  let colOutDatum = InlineDatum(collateralDatum)
+  let colOutValue = value.merge(t.makeAdaValue(2000), t.loanTokenValue())
 
-//   let noDatum = NoDatum
+  let oracleInDatum = oracleDatum(2, 11111112, 15, 2)
+  let oracleOutDatum = oracleDatum(1, 11111114, 15, 2)
+  let oInDatum = InlineDatum(oracleInDatum)
+  let oOutDatum = InlineDatum(oracleOutDatum)
 
-//   let userIn =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(#"cafe"), t.makeAdaValue(2010), noDatum),
-//     )
+  let noDatum = NoDatum
 
-//   let configIn =
-//     t.test_input(
-//       cref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         configInDatum,
-//       ),
-//     )
+  let userIn =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(#"cafe"), t.makeAdaValue(2010), noDatum),
+    )
 
-//   let oracleIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         oInDatum,
-//       ),
-//     )
+  let configIn =
+    t.test_input(
+      cref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        configInDatum,
+      ),
+    )
 
-//   let oracleOut =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       oOutDatum,
-//     )
+  let oracleIn =
+    t.test_input(
+      rref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        oInDatum,
+      ),
+    )
 
-//   let loanOut =
-//     t.test_output(
-//       t.test_script_address(t.loanValHash),
-//       loanOutValue,
-//       loanOutDatum,
-//     )
+  let oracleOut =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      oOutDatum,
+    )
 
-//   let colOut =
-//     t.test_output(
-//       t.test_script_address(t.collateralValHash),
-//       colOutValue,
-//       colOutDatum,
-//     )
+  let loanOut =
+    t.test_output(
+      t.test_script_address(t.loanValHash),
+      loanOutValue,
+      loanOutDatum,
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: loanMintedValue,
-//       extra_signatories: [test_owner],
-//       inputs: [userIn, oracleIn],
-//       outputs: [loanOut, colOut, oracleOut],
-//     }
+  let colOut =
+    t.test_output(
+      t.test_script_address(t.collateralValHash),
+      colOutValue,
+      colOutDatum,
+    )
 
-//   let ctx = ScriptContext { purpose: Mint(t.loanMintHash), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: loanMintedValue,
+      extra_signatories: [test_owner],
+      inputs: [userIn, oracleIn],
+      outputs: [loanOut, colOut, oracleOut],
+    }
 
-//   loanMint(t.oracleMintHash, t.configMintHash, mintAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Mint(t.loanMintHash), transaction: tx }
+
+  loanMint(t.oracleMintHash, t.configMintHash, mintAction, ctx)?
+}

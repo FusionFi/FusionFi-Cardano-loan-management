@@ -97,136 +97,137 @@ test config_val() {
 
   configVal(test_owner, t.configMintHash, configDatum, configAction, ctx)?
 }
-// test config_val_token_fail() fail {
-//   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+test config_val_token_fail() fail {
+  let test_owner = #"face"
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let oref = t.test_oref(#"face", 1)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(configDatum1)
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.makeAdaValue(10),
-//         // we dont check for a token input
-//         inDatum,
-//       ),
-//     )
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let inDatum = InlineDatum(configDatum1)
+  let outDatum = InlineDatum(configDatum1)
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.makeAdaValue(10),
-//       // this only fails because there is no token output
-//       outDatum,
-//     )
+  let configInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.makeAdaValue(10),
+        // we dont check for a token input
+        inDatum,
+      ),
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.makeAdaValue(10),
+      // this only fails because there is no token output
+      outDatum,
+    )
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
 
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-// test config_val_datum_fail() fail {
-//   let test_owner = #"face"
+  configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+}
 
-//   let oref = t.test_oref(#"face", 1)
+test config_val_datum_fail() fail {
+  let test_owner = #"face"
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let oref = t.test_oref(#"face", 1)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let oracleDatum = oracleDatum(1, 1111111111, 1, 1)
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(oracleDatum)
+  let oracleDatum = oracleDatum(1, 1111111111, 1, 1)
 
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         inDatum,
-//       ),
-//     )
+  let inDatum = InlineDatum(configDatum1)
+  let outDatum = InlineDatum(oracleDatum)
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+  let configInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        inDatum,
+      ),
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
 
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-// test config_val_sig_fail() fail {
-//   let test_owner = #"face"
+  configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+}
 
-//   let oref = t.test_oref(#"face", 1)
+test config_val_sig_fail() fail {
+  let test_owner = #"face"
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let oref = t.test_oref(#"face", 1)
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(configDatum1)
+  let configAction =
+    configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
 
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         inDatum,
-//       ),
-//     )
+  let configDatum1 =
+    configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let inDatum = InlineDatum(configDatum1)
+  let outDatum = InlineDatum(configDatum1)
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+  let configInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.configValHash),
+        t.configValue(),
+        inDatum,
+      ),
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [#"cafe"],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.configValHash),
+      t.configValue(),
+      outDatum,
+    )
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [#"cafe"],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
 
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
+}

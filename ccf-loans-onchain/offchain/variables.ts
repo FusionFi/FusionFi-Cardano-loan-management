@@ -18,11 +18,11 @@ export const fee = 2n
 export const term = 0n
 export const rewards = 5n
 
-export const oracleUnit = "e75c32da3aad61874dcc7f3a47a8c534fa60eebdccd974f19763f622ea2ccf3a3bb63238e9f4d4e03c82a6"
+export const oracleUnit = "e75c32da3aad61874dcc7f3a47a8c534fa60eebdccd974f19763f6221d44314e9af788196f468071823b69"
 
 export const oracleTn = fromUnit(oracleUnit).assetName
 
-export const configTN = fromText("") //"227c1b757b4b17515244f1614b402900"
+export const configTN = fromText("") 
 export const configUnit = toUnit(configCS, configTN)
 
-export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cfdddbc457de675964a37f0fc52dd3b0"
+export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cfba55fa9a4c6166d0d52d40dd4989e1"

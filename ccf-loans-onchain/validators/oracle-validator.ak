@@ -102,170 +102,171 @@ test oracle_vault() {
 
   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
 }
-// test oracle_vault_datum_fail() fail {
-//   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+test oracle_vault_datum_fail() fail {
+  let test_owner = #"face"
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let oracleDatum2 = oracleDatum(1, 11111112, 15, 2)
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+  let oref = t.test_oref(#"face", 1)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(1, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
 
-//   let oracleAction = oracleAction(2, 11111112, 15, 2)
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+  let oracleAction = oracleAction(2, 11111112, 15, 2)
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-// test oracle_vault_redeemer_fail() fail {
-//   let test_owner = #"face"
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
 
-//   let oref = t.test_oref(#"face", 1)
+test oracle_vault_redeemer_fail() fail {
+  let test_owner = #"face"
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+  let oref = t.test_oref(#"face", 1)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
 
-//   let oracleAction = oracleAction(1, 11111112, 15, 2)
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+  let oracleAction = oracleAction(1, 11111112, 15, 2)
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-// test oracle_vault_sig_fail() fail {
-//   let test_owner = #"face"
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
 
-//   let oref = t.test_oref(#"face", 1)
+test oracle_vault_sig_fail() fail {
+  let test_owner = #"face"
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+  let oref = t.test_oref(#"face", 1)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
 
-//   let oracleAction = oracleAction(2, 11111112, 15, 2)
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [#"dead"],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+  let oracleAction = oracleAction(2, 11111112, 15, 2)
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [#"dead"],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-// test oracle_vault_token_fail() fail {
-//   let test_owner = #"face"
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
 
-//   let oref = t.test_oref(#"face", 1)
+test oracle_vault_token_fail() fail {
+  let test_owner = #"face"
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
-//   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+  let oref = t.test_oref(#"face", 1)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+  let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+  let oracleDatum2 = oracleDatum(2, 11111112, 15, 2)
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
 
-//  let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.makeAdaValue(2),
-//       outDatum,
-//     )
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
 
-//   let oracleAction = oracleAction(2, 11111112, 15, 2)
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.makeAdaValue(2),
+      outDatum,
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+  let oracleAction = oracleAction(2, 11111112, 15, 2)
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}

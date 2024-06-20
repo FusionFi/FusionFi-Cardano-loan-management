@@ -5,10 +5,18 @@ import { splitUtxos, registerStake } from "./offchain/mod.ts"
 // Make Wallet UTxOs
 const splitUtxosTx = await splitUtxos()
 console.log(`Split Tx: 
-  `, splitUtxosTx, `
-`)
+  https://preview.cardanoscan.io/`, splitUtxosTx, `
+
+You will now have several ADA-Only UTXOs to use for testing
+  `)
 
 // register stake address
 const registerAddTx = await registerStake()
-console.log("Register Stake Address: ", registerAddTx)
+console.log(`Register Stake Address: 
+  https://preview.cardanoscan.io/`, registerAddTx, `
+
+Now your merkel validators are ready you can continue with your tests
+  -> Mint a Loan
+  -> Update your Oracle
+  `)
 
