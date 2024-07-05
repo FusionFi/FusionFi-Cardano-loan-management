@@ -1,6 +1,6 @@
 import { Constr, Data, } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { loanHashz, collateralHashz, loanHash, collateralHash, rewardsCS, rewardsMint, oracleHash, balanceHash, liquidateHash, closeHash } from "./validators.ts"
-import { loanAmt, rewards, term, timestamp, price1, interest, fee, loanCurrency, oracleTn, collateralAmt } from "./variables.ts"
+import { loanAmt, rewards, term, timestamp, price1, price2, price3, price4, price5, price6, interest, fee, loanCurrency, oracleTn, collateralAmt } from "./variables.ts"
 
 export const mintLoanAction = Data.to(new Constr(0, [loanAmt, rewards, term, timestamp]))
 export const burnLoanAction = Data.to(new Constr(1, []))

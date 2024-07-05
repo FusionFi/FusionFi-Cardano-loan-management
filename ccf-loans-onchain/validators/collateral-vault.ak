@@ -7,7 +7,7 @@ use aiken/transaction/value.{PolicyId}
 use ccfl/types.{CollateralDatum, MerkelCollateralAction, MerkelConfigDatum}
 
 validator(cp: PolicyId) {
-  fn mCol(_d: CollateralDatum, r: MerkelCollateralAction, c: ScriptContext) {
+  fn mCol(d: CollateralDatum, r: MerkelCollateralAction, c: ScriptContext) {
     // True
     let ScriptContext { transaction, .. } = c
     let Transaction { reference_inputs, withdrawals, .. } = transaction

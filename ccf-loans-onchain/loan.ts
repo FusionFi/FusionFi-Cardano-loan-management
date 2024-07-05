@@ -2,24 +2,24 @@ import { mintLoan, balanceLoan, liquidateLoan, repayLoan, burnLoan, loanAmt, rew
 
 // deno run --allow-net --allow-read --allow-env loan.ts
 
-// mintLoan
-const mintLoanTx = await mintLoan()
-console.log(`Mint Loan Tx: 
-  https://preview.cardanoscan.io/${mintLoanTx}
+// // mintLoan
+// const mintLoanTx = await mintLoan()
+// console.log(`Mint Loan Tx: 
+//   https://preview.cardanoscan.io/transaction/${mintLoanTx}
 
-Loan Datum: 
-  Amt: `, loanAmt, `
-  Rewards: `, rewards, `
-  Term: `, term, `
-  Timestamp: `, timestamp, `
-  Oracle: `, oracleTn, `
+// Loan Datum: 
+//   Amt: `, loanAmt, `
+//   Rewards: `, rewards, `
+//   Term: `, term, `
+//   Timestamp: `, timestamp, `
+//   Oracle: `, oracleTn, `
 
-SAVE YOUR LOAN UNIT IN "./offchain/variables.ts"
-  or you will not be able to run the other transactions!
+// SAVE YOUR LOAN UNIT IN "./offchain/variables.ts"
+//   or you will not be able to run the other transactions!
 
-NOW YOU CAN BALANCE, LIQUIDATE AND CLOSE THE LOAN
+// NOW YOU CAN BALANCE, LIQUIDATE AND CLOSE THE LOAN
 
-`)
+// `)
 
 // // balanceLoan -> Done
 // const balanceLoanTx = await balanceLoan()
@@ -51,12 +51,12 @@ NOW YOU CAN BALANCE, LIQUIDATE AND CLOSE THE LOAN
 //   -> burnLoanTx()
 //   `)
 
-// // burnLoan
-// const burnLoanTx = await burnLoan()
-// console.log(`Burn Loan Tx: 
-//   https://preview.cardanoscan.io/transaction/${burnLoanTx}
+// burnLoan
+const burnLoanTx = await burnLoan()
+console.log(`Burn Loan Tx: 
+  https://preview.cardanoscan.io/transaction/${burnLoanTx}
 
-// YOU HAVE CLOSED YOUR LOAN!
-//   -> Close Oracles and Config
-//   -> Mint new Loans and Oracles
-//   `)
+YOU HAVE CLOSED YOUR LOAN!
+  -> Close Oracles and Config
+  -> Mint new Loans and Oracles
+  `)

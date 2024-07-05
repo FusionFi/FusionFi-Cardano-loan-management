@@ -7,8 +7,7 @@ use aiken/transaction/value.{PolicyId}
 use ccfl/types.{LoanDatum, MerkelConfigDatum, MerkelLoanAction}
 
 validator(cp: PolicyId) {
-  // this should be in the config datum instead
-  fn mLoan(_d: LoanDatum, r: MerkelLoanAction, c: ScriptContext) {
+  fn mLoan(d: LoanDatum, r: MerkelLoanAction, c: ScriptContext) {
     // True
     let ScriptContext { transaction, .. } = c
     let Transaction { reference_inputs, withdrawals, .. } = transaction

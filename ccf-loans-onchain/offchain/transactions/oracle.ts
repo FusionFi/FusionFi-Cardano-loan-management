@@ -54,6 +54,9 @@ export async function oAutoUpdate() {
     `)
   const utxos: UTxO[] = await lucid.utxosAtWithUnit(oracleAddr, oracleUnit)
   const utxo: UTxO = utxos[0]
+
+  console.log(utxo)
+  
   const oracleDatum = oracleDatum6
 
   const tx = await lucid
@@ -81,7 +84,7 @@ export async function oManualUpdate() {
     `)
   const utxos: [UTxO] = await lucid.utxosAtWithUnit(oracleAddr, oracleUnit)
   const utxo: UTxO = utxos[0]
-  const oracleDatum = oracleDatum3
+  const oracleDatum = oracleDatum1
 
   const tx = await lucid
     .newTx()

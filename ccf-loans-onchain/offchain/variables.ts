@@ -25,4 +25,4 @@ export const oracleTn = fromUnit(oracleUnit).assetName
 export const configTN = fromText("") 
 export const configUnit = toUnit(configCS, configTN)
 
-export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cfba55fa9a4c6166d0d52d40dd4989e1"
+export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cf3b07d3dcdb7006f747a6413a7dd157"

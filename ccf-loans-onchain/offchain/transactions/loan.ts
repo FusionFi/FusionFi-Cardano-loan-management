@@ -1,8 +1,8 @@
 import { Constr, Data, toHex, toUnit, UTxO, } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { lucid } from "../blockfrost.ts"
-import { oracleDatum1, loanDatum, collateralDatum } from "../datums.ts";
+import { oracleDatum1, oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, oracleDatum6, loanDatum, collateralDatum } from "../datums.ts";
 import { ownerAddress, ownerPKH } from "../owner.ts";
-import { oracleUpdateAction, mintLoanAction, loanCloseAction, burnLoanAction, loanBalanceAction, loanLiquidateAction } from "../redeemers.ts";
+import { oracleUpdateAction, mintLoanAction, loanCloseAction, burnLoanAction, loanBalanceAction, loanLiquidateAction, configCloseAction } from "../redeemers.ts";
 import { loanCS, configAddr, oracleAddr, loanMint, loanAddr, collateralAddr, oracleVal, closeHash, closeAddr, close, loanVal, collateralVal, balanceAddr, balance, liquidateAddr, liquidate } from "../validators.ts";
 import { configUnit, oracleUnit, loanAmt, loanUnit, timestamp, oracleTn, rewards, term } from "../variables.ts";
 
@@ -83,6 +83,10 @@ export async function burnLoan() {
     ])
   )
 
+  console.log(lUtxo)
+  console.log(cUtxo)
+  console.log(oracleUtxo)
+
   const tx = await lucid
     .newTx()
     .collectFrom([lUtxo], loanCloseAction)
@@ -136,9 +140,18 @@ export async function balanceLoan() {
 
   const withdrawRedeemer = Data.to(
     new Constr(0, [
-      [0n]
+      [1n]
     ])
   )
+
+  console.log(inDatum)
+  console.log(Data.from(loanDatum))
+
+  console.log(Data.from(cUtxo.datum))
+  console.log(Data.from(collateralDatum))
+
+  console.log(lUtxo)
+  console.log(cUtxo)
 
   const tx = await lucid
     .newTx()
@@ -155,7 +168,7 @@ export async function balanceLoan() {
     .payToContract(
       collateralAddr,
       { inline: collateralDatum },
-      { lovelace: deposit,
+      { lovelace: (deposit * 2n),
         [loanUnit]: 1,
       }
     )
@@ -182,7 +195,7 @@ export async function balanceLoan() {
 export async function liquidateLoan() {
   console.log(`LIQUIDATE LOAN TRANSACTION
     `)
-  const oracleDatum = Data.from(oracleDatum1)
+  const oracleDatum = Data.from(oracleDatum6)
   const newLoanValue = 0n
   const lUtxos: UTxO[] = await lucid.utxosAtWithUnit(loanAddr, loanUnit)
   const lUtxo: UTxO = lUtxos[0]
@@ -193,9 +206,10 @@ export async function liquidateLoan() {
   const configIn = configUtxos[0]
   const oracleUtxos: UTxO[] = await lucid.utxosAtWithUnit(oracleAddr, oracleUnit)
   const oracleUtxo: UTxO = oracleUtxos[0]
+  
   const withdrawRedeemer = Data.to(
     new Constr(0, [
-      [0n]
+      [1n]
     ])
   )
 
@@ -215,6 +229,8 @@ export async function liquidateLoan() {
     ])
   )
 
+  console.log(Data.from(lUtxo.datum))
+
   const tx = await lucid
     .newTx()
     .collectFrom([lUtxo], loanLiquidateAction)
@@ -233,7 +249,7 @@ export async function liquidateLoan() {
     )
     .payToContract(
       oracleAddr,
-      { inline: Data.To(oracleDatum) },
+      { inline: Data.to(oracleDatum) },
       { [oracleUnit]: 1}
     )
     .attachSpendingValidator(oracleVal)

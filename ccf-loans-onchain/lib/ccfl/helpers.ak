@@ -123,7 +123,7 @@ pub fn merkelTx(
             fn(output) {
               value.without_lovelace(output.value) == value.without_lovelace(
                 loan.value,
-              )
+              ) && output.address.payment_credential != loan.address.payment_credential
             },
           )
         (loan, col)
@@ -156,7 +156,7 @@ pub fn merkelBurn(
             fn(input) {
               value.without_lovelace(input.output.value) == value.without_lovelace(
                 loan.output.value,
-              )
+              ) && input.output.address.payment_credential != loan.output.address.payment_credential
             },
           )
         (loan.output, col.output)
