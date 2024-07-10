@@ -20,7 +20,7 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
   fn rewardsMint(r: RewardsAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
-    let Transaction { mint, outputs, .. } = transaction
+    let Transaction { mint, outputs, inputs, .. } = transaction
 
     expect Some(refIn) =
       find(
@@ -37,20 +37,69 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
         |> value.tokens(policyId)
         |> dict.to_pairs()
 
+    expect burnedLoanList =
+      mint
+        |> value.from_minted_value()
+        |> value.tokens(lp)
+        |> dict.to_pairs()
+
     when r is {
       RewardMint -> {
-        expect Some(loanIn) =
-          find(
-            transaction.inputs,
-            fn(input) { has(policies(input.output.value), lp) },
+        // expect Some(loanIn) =
+        //   find(
+        //     transaction.inputs,
+        //     fn(input) { has(policies(input.output.value), lp) },
+        //   )
+
+        // expect InlineDatum(datum) = loanIn.output.datum
+        // expect lDatum: LoanDatum = datum
+
+        // expect [] = find_script_outputs(outputs, cDatum.loanVal)
+
+        // tAmt == lDatum.rewards && 
+        let loanInputs =
+          list.filter(
+            inputs,
+            fn(input) {
+              expect has(policies(input.output.value), lp)
+              expect InlineDatum(datum) = input.output.datum
+              expect loanDatum: LoanDatum = datum
+
+              loanDatum.amount == 0
+            },
           )
 
-        expect InlineDatum(datum) = loanIn.output.datum
-        expect lDatum: LoanDatum = datum
+        expect
+          list.all(
+            loanInputs,
+            fn(input) {
+              let loanTokenList =
+                input.output.value
+                  |> value.tokens(lp)
+                  |> dict.to_pairs()
 
-        expect [] = find_script_outputs(outputs, cDatum.loanVal)
+              // expect list.length(loanToken) == 1
+              expect [Pair(tName, -1)] = loanTokenList
 
-        tAmt == lDatum.rewards && tName == ""
+              expect Some(loanToken) = list.head(loanTokenList)
+
+              list.has(burnedLoanList, loanToken)
+            },
+          )
+
+        let loanRewardsValue =
+          list.foldl(
+            loanInputs,
+            0,
+            fn(input, accumulator) {
+              expect InlineDatum(datum) = input.output.datum
+              expect loanDatum: LoanDatum = datum
+
+              loanDatum.rewards + accumulator
+            },
+          )
+
+        tName == "" && tAmt == loanRewardsValue
       }
 
       RewardBurn -> tAmt <= -1

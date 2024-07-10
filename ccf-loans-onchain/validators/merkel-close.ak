@@ -33,29 +33,29 @@ validator(lp: PolicyId, op: PolicyId) {
       )
 
     merkelBurn(
-      fn(loan, collateral) { True },
-      //     expect InlineDatum(datum) = loan.datum
-      //     expect ld: LoanDatum = datum
-      //     expect InlineDatum(datum) = collateral.datum
-      //     expect cd: CollateralDatum = datum
-      //     // let loanTokenValue = value.without_lovelace(loan.value)
-      //     // let colTokenValue = value.without_lovelace(collateral.value)
-      //     // expect [Pair(loanTn, 1)] =
-      //     //   loanTokenValue
-      //     //     |> value.tokens(lp)
-      //     //     |> dict.to_pairs()
-      //     // expect Some(burnVal) =
-      //     //   value.zero()
-      //     //     |> value.add(lp, loanTn, -2)
-      //     //     |> value.flatten()
-      //     //     |> list.head()
-      //     // let burns =
-      //     //   mint
-      //     //     |> value.from_minted_value()
-      //     //     |> value.flatten()
-      //     // expect list.has(burns, burnVal)
-      //     ld.amount == 0 && cd.amount == 0
-      //   // && loanTokenValue == colTokenValue
+      fn(loan, collateral) {
+        expect InlineDatum(datum) = loan.datum
+        expect ld: LoanDatum = datum
+        expect InlineDatum(datum) = collateral.datum
+        expect cd: CollateralDatum = datum
+        let loanTokenValue = value.without_lovelace(loan.value)
+        let colTokenValue = value.without_lovelace(collateral.value)
+        expect [Pair(loanTn, 1)] =
+          loanTokenValue
+            |> value.tokens(lp)
+            |> dict.to_pairs()
+        expect Some(burnVal) =
+          value.zero()
+            |> value.add(lp, loanTn, -2)
+            |> value.flatten()
+            |> list.head()
+        let burns =
+          mint
+            |> value.from_minted_value()
+            |> value.flatten()
+        expect list.has(burns, burnVal)
+        ld.amount == 0 && cd.amount == 0 && loanTokenValue == colTokenValue
+      },
       r.a,
       inputs,
     )

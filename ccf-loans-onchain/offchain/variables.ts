@@ -1,4 +1,4 @@
-import { fromText, fromUnit, toUnit, } from "https://deno.land/x/lucid@0.10.7/mod.ts";
+import { fromText, fromUnit, toUnit, } from "https://deno.land/x/lucid@0.10.7/mod.ts" ;
 import { configCS } from "./validators.ts"
 
 export const price1 = 500n
@@ -25,4 +25,4 @@ export const oracleTn = fromUnit(oracleUnit).assetName
 export const configTN = fromText("") 
 export const configUnit = toUnit(configCS, configTN)
 
-export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cf3b07d3dcdb7006f747a6413a7dd157"
+export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cf94b03e22220d299ffee7b2449c5503"

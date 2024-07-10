@@ -1,9 +1,9 @@
-import { Constr, Data, toHex, toUnit, UTxO, } from "https://deno.land/x/lucid@0.10.7/mod.ts";
+import { Constr, Data, toHex, toUnit, UTxO, fromText } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { lucid } from "../blockfrost.ts"
 import { oracleDatum1, oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, oracleDatum6, loanDatum, collateralDatum } from "../datums.ts";
 import { ownerAddress, ownerPKH } from "../owner.ts";
-import { oracleUpdateAction, mintLoanAction, loanCloseAction, burnLoanAction, loanBalanceAction, loanLiquidateAction, configCloseAction } from "../redeemers.ts";
-import { loanCS, configAddr, oracleAddr, loanMint, loanAddr, collateralAddr, oracleVal, closeHash, closeAddr, close, loanVal, collateralVal, balanceAddr, balance, liquidateAddr, liquidate } from "../validators.ts";
+import { oracleUpdateAction, mintLoanAction, loanCloseAction, burnLoanAction, loanBalanceAction, loanLiquidateAction, configCloseAction, rewardsMintAction } from "../redeemers.ts";
+import { loanCS, configAddr, oracleAddr, loanMint, loanAddr, collateralAddr, oracleVal, closeHash, closeAddr, close, loanVal, collateralVal, balanceAddr, balance, liquidateAddr, liquidate, rewardsCS, rewardsMint } from "../validators.ts";
 import { configUnit, oracleUnit, loanAmt, loanUnit, timestamp, oracleTn, rewards, term } from "../variables.ts";
 
 lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./owner.sk"));
@@ -76,16 +76,20 @@ export async function burnLoan() {
   const oracleUtxo: UTxO = oracleUtxos[0]
   const exchange = oracleDatum[0]
   const inDatum = Data.from(lUtxo.datum)
+  const rewardsTn = fromText("")
+  const rewardsUnit = toUnit(rewardsCS, rewardsTn)
 
   const withdrawRedeemer = Data.to(
     new Constr(0, [
-      [1n]
+      [0n]
     ])
   )
 
   console.log(lUtxo)
   console.log(cUtxo)
   console.log(oracleUtxo)
+
+  console.log(inDatum)
 
   const tx = await lucid
     .newTx()
@@ -96,7 +100,15 @@ export async function burnLoan() {
     .mintAssets({
       [loanUnit]: -2,
     }, burnLoanAction)
+    .mintAssets({
+      [rewardsUnit]: 5,
+    }, rewardsMintAction)
     .attachMintingPolicy(loanMint)
+    .attachMintingPolicy(rewardsMint)
+    // .payToAddress(
+    //   ownerAddress, 
+    //   { rewardsUnit: 5 }
+    // )
     .payToContract(oracleAddr, 
       { inline: Data.to(oracleDatum) }, 
       { [oracleUnit]: 1 } 
@@ -285,7 +297,7 @@ export async function repayLoan() {
   
   const withdrawRedeemer = Data.to(
     new Constr(0, [
-      [0n]
+      [1n]
     ])
   )
 

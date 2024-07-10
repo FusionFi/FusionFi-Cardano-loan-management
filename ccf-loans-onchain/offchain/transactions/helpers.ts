@@ -8,8 +8,8 @@ export async function registerStake() {
   const tx = await lucid
     .newTx()
     // .registerStake(balanceAddr)
-    .registerStake(liquidateAddr)
-    // .registerStake(closeAddr) // balanceAddr | liquidateAddr | closeAddr
+    // .registerStake(liquidateAddr)
+    .registerStake(closeAddr) // balanceAddr | liquidateAddr | closeAddr
     .complete()
   
   const txSigned = await tx.sign().complete()

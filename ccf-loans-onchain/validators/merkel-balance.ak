@@ -78,11 +78,13 @@ validator(p: PolicyId, cp: PolicyId) {
           )
         expect InlineDatum(datum) = colIn.output.datum
         expect cin: CollateralDatum = datum
+
         let adaOut = value.lovelace_of(collateral.value) / 1000000
         let exchangeAdjustment = loanDatum.amount * 1000
         let expectedCollateral = exchangeAdjustment / exchangeRate
         let minCollateralValue = expectedCollateral * 2
         let expectedOracle = value.from_asset(p, loanDatum.oracle, 1)
+
         adaOut >= minCollateralValue && value.without_lovelace(oracleOut.value) == expectedOracle && loanDatum.amount == lin.amount
       },
       r.a,
