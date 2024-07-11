@@ -7,6 +7,7 @@ export const price3 = 600n
 export const price4 = 450n
 export const price5 = 400n
 export const price6 = 265n
+export const price7 = 50n
 
 export const collateral = fromText("ADA")
 export const collateralAmt = 10n
@@ -25,4 +26,4 @@ export const oracleTn = fromUnit(oracleUnit).assetName
 export const configTN = fromText("") 
 export const configUnit = toUnit(configCS, configTN)
 
-export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cf94b03e22220d299ffee7b2449c5503"
+export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cff4aa85f8406f6bd163f504438d8126"

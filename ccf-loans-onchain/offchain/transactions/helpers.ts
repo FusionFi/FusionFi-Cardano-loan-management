@@ -1,5 +1,5 @@
 import { lucid } from "../blockfrost.ts"
-import { balanceAddr, closeAddr, liquidateAddr } from "../validators.ts"
+import { balanceAddr, closeAddr, liquidateAddr, repayAddr } from "../validators.ts"
 import { ownerAddress } from "../owner.ts"
 
 lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./owner.sk"));
@@ -9,7 +9,8 @@ export async function registerStake() {
     .newTx()
     // .registerStake(balanceAddr)
     // .registerStake(liquidateAddr)
-    .registerStake(closeAddr) // balanceAddr | liquidateAddr | closeAddr
+    // .registerStake(closeAddr) // balanceAddr | liquidateAddr | closeAddr
+    .registerStake(repayAddr)
     .complete()
   
   const txSigned = await tx.sign().complete()

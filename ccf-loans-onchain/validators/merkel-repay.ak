@@ -20,7 +20,7 @@ use tests/transactions as tx
 // it combines both the merkel-loan && merkel-collateral cases together
 
 validator(p: PolicyId, cp: PolicyId) {
-  fn balance(r: WithdrawRedeemer, c: ScriptContext) {
+  fn repay(r: WithdrawRedeemer, c: ScriptContext) {
     // True
     expect ScriptContext {
       transaction,

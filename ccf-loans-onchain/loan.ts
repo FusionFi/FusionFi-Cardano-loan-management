@@ -1,4 +1,4 @@
-import { mintLoan, balanceLoan, liquidateLoan, repayLoan, burnLoan, loanAmt, rewards, term, timestamp, oracleTn } from "./offchain/mod.ts"
+import { mintLoan, closeLoan, balanceLoan, liquidateLoan, repayLoan, burnLoan, loanAmt, rewards, term, timestamp, oracleTn } from "./offchain/mod.ts"
 
 // deno run --allow-net --allow-read --allow-env loan.ts
 
@@ -60,3 +60,13 @@ YOU HAVE CLOSED YOUR LOAN!
   -> Close Oracles and Config
   -> Mint new Loans and Oracles
   `)
+
+// // close W Rewards 
+// const closeLoanTx = await closeLoan()
+// console.log(`Close Loan Tx:
+//   https://preview.cardanoscan.io/transaction/${closeLoanTx}
+  
+// YOU HAVE CLOSED YOUR LOAN!
+//   -> You recieved ${loanAmt} rewards tokens!
+//   -> You can Mint more Loans or close the dapp
+//   `)

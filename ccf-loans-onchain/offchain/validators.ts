@@ -24,6 +24,7 @@ export const rewardsCS = lucid.utils.mintingPolicyToId(rewardsMint)
 export const balance = await readBalanceValidator()
 export const liquidate = await readLiquidateValidator()
 export const close = await readCloseValidator()
+export const repay = await readRepayValidator()
 
 // --- Supporting functions
 
@@ -107,8 +108,18 @@ async function readLiquidateValidator(): Promise<WithdrawalValidator> {
   }
 }
 
+async function readRepayValidator(): Promise<WithdrawalValidator> {
+  const validator = JSON.parse( await Deno.readTextFile("plutus.json")).validators[8];
+  return {
+    type: "PlutusV2",
+    script: applyParamsToScript(
+      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, configCS]
+    ),
+  }
+}
+
 async function readOracleMint(): Promise<MintingPolicy> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[8]
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[9]
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -118,7 +129,7 @@ async function readOracleMint(): Promise<MintingPolicy> {
 }
 
 async function readOracleValidator(): Promise<SpendingValidator> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[9];
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[10];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -128,7 +139,7 @@ async function readOracleValidator(): Promise<SpendingValidator> {
 }
 
 async function readRewardsMint(): Promise<MintingPolicy> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[10];
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[11];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -146,6 +157,7 @@ export const configAddr = lucid.utils.validatorToAddress(configVal)
 export const balanceAddr = lucid.utils.validatorToRewardAddress(balance)
 export const liquidateAddr = lucid.utils.validatorToRewardAddress(liquidate)
 export const closeAddr = lucid.utils.validatorToRewardAddress(close)
+export const repayAddr = lucid.utils.validatorToRewardAddress(repay)
 
 // Validator Hashes //
 
@@ -156,7 +168,8 @@ export const collateralHash = await lucid.utils.validatorToScriptHash(collateral
 export const balanceHash = await lucid.utils.validatorToScriptHash(balance)
 export const liquidateHash = await lucid.utils.validatorToScriptHash(liquidate)
 export const closeHash = await lucid.utils.validatorToScriptHash(close)
+export const repayHash = await lucid.utils.validatorToScriptHash(repay)
 
 
 export const loanHashz = [balanceHash]
-export const collateralHashz = [balanceHash, liquidateHash, closeHash]
+export const collateralHashz = [balanceHash, liquidateHash, closeHash, repayHash]

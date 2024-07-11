@@ -45,67 +45,56 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
 
     when r is {
       RewardMint -> {
-        // expect Some(loanIn) =
-        //   find(
-        //     transaction.inputs,
-        //     fn(input) { has(policies(input.output.value), lp) },
-        //   )
-
-        // expect InlineDatum(datum) = loanIn.output.datum
-        // expect lDatum: LoanDatum = datum
-
-        // expect [] = find_script_outputs(outputs, cDatum.loanVal)
-
-        // tAmt == lDatum.rewards && 
-        let loanInputs =
-          list.filter(
-            inputs,
+        expect Some(loanIn) =
+          find(
+            transaction.inputs,
             fn(input) {
-              expect has(policies(input.output.value), lp)
               expect InlineDatum(datum) = input.output.datum
-              expect loanDatum: LoanDatum = datum
-
-              loanDatum.amount == 0
+              expect lDatum: LoanDatum = datum
+              has(policies(input.output.value), lp) && tAmt == lDatum.rewards
             },
           )
 
-        expect
-          list.all(
-            loanInputs,
-            fn(input) {
-              let loanTokenList =
-                input.output.value
-                  |> value.tokens(lp)
-                  |> dict.to_pairs()
-
-              // expect list.length(loanToken) == 1
-              expect [Pair(tName, -1)] = loanTokenList
-
-              expect Some(loanToken) = list.head(loanTokenList)
-
-              list.has(burnedLoanList, loanToken)
-            },
-          )
-
-        let loanRewardsValue =
-          list.foldl(
-            loanInputs,
-            0,
-            fn(input, accumulator) {
-              expect InlineDatum(datum) = input.output.datum
-              expect loanDatum: LoanDatum = datum
-
-              loanDatum.rewards + accumulator
-            },
-          )
-
-        tName == "" && tAmt == loanRewardsValue
+        tName == ""
       }
 
       RewardBurn -> tAmt <= -1
     }
   }
 }
+// expect [] = find_script_outputs(outputs, cDatum.loanVal)
+// tAmt == lDatum.rewards && 
+// let loanInputs =
+//   list.filter(
+//     inputs,
+//     fn(input) { has(policies(input.output.value), lp) },
+//   )
+// expect
+//   list.all(
+//     inputs,
+//     fn(input) {
+//       let loanTokenList =
+//         input.output.value
+//           |> value.tokens(lp)
+//           |> dict.to_pairs()
+//       // expect list.length(loanToken) == 1
+//       expect [Pair(lName, 1)] = loanTokenList
+//       // expect Some(loanToken) = list.head(loanTokenList)
+//       list.has(burnedLoanList, Pair(lName, -2))
+//     },
+//   )
+// let loanRewardsValue =
+//   list.foldl(
+//     loanInputs,
+//     0,
+//     fn(input, accumulator) {
+//       expect InlineDatum(datum) = input.output.datum
+//       expect loanDatum: LoanDatum = datum
+//       expect loanDatum.amount == 0
+//       loanDatum.rewards + accumulator
+//     },
+//   )
+// && tAmt == loanRewardsValue
 //                    //
 // Rewards Mint Tests //
 //                    //

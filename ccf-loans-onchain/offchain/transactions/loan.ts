@@ -1,16 +1,16 @@
 import { Constr, Data, toHex, toUnit, UTxO, fromText } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { lucid } from "../blockfrost.ts"
-import { oracleDatum1, oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, oracleDatum6, loanDatum, collateralDatum } from "../datums.ts";
+import { oracleDatum1, oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, oracleDatum6, loanDatum, collateralDatum, oracleDatum7 } from "../datums.ts";
 import { ownerAddress, ownerPKH } from "../owner.ts";
-import { oracleUpdateAction, mintLoanAction, loanCloseAction, burnLoanAction, loanBalanceAction, loanLiquidateAction, configCloseAction, rewardsMintAction } from "../redeemers.ts";
-import { loanCS, configAddr, oracleAddr, loanMint, loanAddr, collateralAddr, oracleVal, closeHash, closeAddr, close, loanVal, collateralVal, balanceAddr, balance, liquidateAddr, liquidate, rewardsCS, rewardsMint } from "../validators.ts";
+import { oracleUpdateAction, mintLoanAction, loanCloseAction, burnLoanAction, loanBalanceAction, loanLiquidateAction, configCloseAction, rewardsMintAction, loanRepayAction } from "../redeemers.ts";
+import { loanCS, configAddr, oracleAddr, loanMint, loanAddr, collateralAddr, oracleVal, closeHash, closeAddr, close, loanVal, collateralVal, balanceAddr, balance, liquidateAddr, liquidate, rewardsCS, rewardsMint, repayAddr, repay } from "../validators.ts";
 import { configUnit, oracleUnit, loanAmt, loanUnit, timestamp, oracleTn, rewards, term } from "../variables.ts";
 
 lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./owner.sk"));
 
 export async function mintLoan() {
-  console.log(`Loan Minting Transaction
-  `)
+  // console.log(`Loan Minting Transaction
+  // `)
 
   const oracleOutDatum = Data.from(oracleDatum1) // Change the oracle datum here
   const deposit = loanAmt * 1000n / oracleOutDatum.fields[0]
@@ -23,9 +23,13 @@ export async function mintLoan() {
   const oracleUtxos: UTxO[] = await lucid.utxosAtWithUnit(oracleAddr, oracleUnit)
   const oracleUtxo: UTxO = oracleUtxos[0]
 
-  console.log(`Loan Unit: `, loanUnit)
-  console.log(`Collateral Value: `, deposit * 1000000n)
-  console.log(`Expected Collateral: `, ((loanAmt * 1000n) / oracleOutDatum.fields[0]) * 1000000n )
+  console.log(`Loan Unit: 
+    ${loanUnit}
+    `)
+  console.log(`Collateral Value: `, deposit * 1000000n * 2n, `
+    `)
+  console.log(`Expected Collateral: `, ((loanAmt * 1000n) / oracleOutDatum.fields[0]) * 1000000n * 2n, `
+  ` )
   
   const tx = await lucid
     .newTx()
@@ -44,7 +48,7 @@ export async function mintLoan() {
     .payToContract(
       collateralAddr,
       { inline: collateralDatum },
-      { lovelace: (deposit * 1000000n), [loanUnit]: 1 }
+      { lovelace: (deposit * 1000000n * 2n), [loanUnit]: 1 }
     )
     .payToContract(
       oracleAddr,
@@ -60,11 +64,11 @@ export async function mintLoan() {
   return txSigned.submit()
 }
 
-export async function burnLoan() {
-  console.log(`BURN LOAN TRANSACTION
+export async function closeLoan() {
+  // console.log(`BURN LOAN TRANSACTION
     
-  Loan Token: `, loanUnit, `
-    `)
+  // Loan Token: `, loanUnit, `
+  //   `)
   const oracleDatum = Data.from(oracleDatum1)
   const lUtxos: UTxO[] = await lucid.utxosAtWithUnit(loanAddr, loanUnit)
   const lUtxo: UTxO = lUtxos[0]
@@ -85,11 +89,8 @@ export async function burnLoan() {
     ])
   )
 
-  console.log(lUtxo)
-  console.log(cUtxo)
-  console.log(oracleUtxo)
-
-  console.log(inDatum)
+  // console.log(lUtxo)
+  // console.log(cUtxo)
 
   const tx = await lucid
     .newTx()
@@ -105,10 +106,6 @@ export async function burnLoan() {
     }, rewardsMintAction)
     .attachMintingPolicy(loanMint)
     .attachMintingPolicy(rewardsMint)
-    // .payToAddress(
-    //   ownerAddress, 
-    //   { rewardsUnit: 5 }
-    // )
     .payToContract(oracleAddr, 
       { inline: Data.to(oracleDatum) }, 
       { [oracleUnit]: 1 } 
@@ -123,8 +120,65 @@ export async function burnLoan() {
 
   const txSigned = await tx.sign().complete()
 
-  console.log(`New Oracle Price: `, oracleDatum.fields[0], `
-    `)
+  // console.log(`New Oracle Price: `, oracleDatum.fields[0], `
+  //   `)
+
+  return txSigned.submit()
+
+}
+
+export async function burnLoan() {
+  // console.log(`BURN LOAN TRANSACTION
+    
+  // Loan Token: `, loanUnit, `
+  //   `)
+  const oracleDatum = Data.from(oracleDatum1)
+  const lUtxos: UTxO[] = await lucid.utxosAtWithUnit(loanAddr, loanUnit)
+  const lUtxo: UTxO = lUtxos[0]
+  const cUtxos: UTxO[] = await lucid.utxosAtWithUnit(collateralAddr, loanUnit)
+  const cUtxo: UTxO = cUtxos[0]
+  const configUtxos = await lucid.utxosAtWithUnit(configAddr, configUnit)
+  const configIn = configUtxos[0]
+  const oracleUtxos: UTxO[] = await lucid.utxosAtWithUnit(oracleAddr, oracleUnit)
+  const oracleUtxo: UTxO = oracleUtxos[0]
+  const exchange = oracleDatum[0]
+  const inDatum = Data.from(lUtxo.datum)
+
+  const withdrawRedeemer = Data.to(
+    new Constr(0, [
+      [0n]
+    ])
+  )
+
+  // console.log(lUtxo)
+  // console.log(cUtxo)
+
+  const tx = await lucid
+    .newTx()
+    .collectFrom([lUtxo], loanCloseAction)
+    .collectFrom([cUtxo], loanCloseAction)
+    .readFrom([configIn])
+    .collectFrom([oracleUtxo], oracleUpdateAction)
+    .mintAssets({
+      [loanUnit]: -2,
+    }, burnLoanAction)
+    .attachMintingPolicy(loanMint)
+    .payToContract(oracleAddr, 
+      { inline: Data.to(oracleDatum) }, 
+      { [oracleUnit]: 1 } 
+    )
+    .withdraw(closeAddr, 0n, withdrawRedeemer)
+    .attachSpendingValidator(loanVal)
+    .attachSpendingValidator(collateralVal)
+    .attachSpendingValidator(oracleVal)
+    .attachWithdrawalValidator(close)
+    .addSignerKey(ownerPKH)
+    .complete()
+
+  const txSigned = await tx.sign().complete()
+
+  // console.log(`New Oracle Price: `, oracleDatum.fields[0], `
+  //   `)
 
   return txSigned.submit()
 
@@ -133,8 +187,8 @@ export async function burnLoan() {
 // // Loan Validator Transactions //
 
 export async function balanceLoan() {
-  console.log(`BALANCE LOAN TRANSACTION
-    `)
+  // console.log(`BALANCE LOAN TRANSACTION
+  //   `)
   // Change Oracle Datum Here
   const oracleDatum = Data.from(oracleDatum1) // set to oracleDatum1 by default
   const oracleExchangeRate = oracleDatum.fields[0]
@@ -156,14 +210,14 @@ export async function balanceLoan() {
     ])
   )
 
-  console.log(inDatum)
-  console.log(Data.from(loanDatum))
+  // console.log(inDatum)
+  // console.log(Data.from(loanDatum))
 
-  console.log(Data.from(cUtxo.datum))
-  console.log(Data.from(collateralDatum))
+  // console.log(Data.from(cUtxo.datum))
+  // console.log(Data.from(collateralDatum))
 
-  console.log(lUtxo)
-  console.log(cUtxo)
+  // console.log(lUtxo)
+  // console.log(cUtxo)
 
   const tx = await lucid
     .newTx()
@@ -198,16 +252,16 @@ export async function balanceLoan() {
 
   const txSigned = await tx.sign().complete()
 
-  console.log(`New Oracle Price: `, oracleDatum.fields[0], `
-    `)
+  // console.log(`New Oracle Price: `, oracleDatum.fields[0], `
+  //   `)
 
   return txSigned.submit()
 }
 
 export async function liquidateLoan() {
-  console.log(`LIQUIDATE LOAN TRANSACTION
-    `)
-  const oracleDatum = Data.from(oracleDatum6)
+  // console.log(`LIQUIDATE LOAN TRANSACTION
+  //   `)
+  const oracleDatum = Data.from(oracleDatum7)
   const newLoanValue = 0n
   const lUtxos: UTxO[] = await lucid.utxosAtWithUnit(loanAddr, loanUnit)
   const lUtxo: UTxO = lUtxos[0]
@@ -274,8 +328,8 @@ export async function liquidateLoan() {
 
   const txSigned = await tx.sign().complete()
 
-  console.log(`New Oracle Price: `, oracleDatum.fields[0], `
-    `)
+  // console.log(`New Oracle Price: `, oracleDatum.fields[0], `
+  //   `)
 
   return txSigned.submit()
 }
@@ -301,6 +355,8 @@ export async function repayLoan() {
     ])
   )
 
+  // console.log(lUtxo)
+
   const loanDatum = Data.to(
     new Constr(0, [
       remainingValue,  
@@ -320,8 +376,8 @@ export async function repayLoan() {
 
   const tx = await lucid
     .newTx()
-    .collectFrom([lUtxo], loanBalanceAction)
-    .collectFrom([cUtxo], loanBalanceAction)
+    .collectFrom([lUtxo], loanRepayAction)
+    .collectFrom([cUtxo], loanRepayAction)
     .collectFrom([oracleUtxo], oracleUpdateAction)
     .readFrom([configIn])
     .payToContract(
@@ -339,18 +395,18 @@ export async function repayLoan() {
       { inline: Data.to(oracleDatum) },
       { [oracleUnit]: 1 }
     )
-    .withdraw(balanceAddr, 0, withdrawRedeemer)
+    .withdraw(repayAddr, 0, withdrawRedeemer)
     .attachSpendingValidator(loanVal)
     .attachSpendingValidator(collateralVal)
     .attachSpendingValidator(oracleVal)
-    .attachWithdrawalValidator(balance)
+    .attachWithdrawalValidator(repay)
     .addSignerKey(ownerPKH)
     .complete()
 
   const txSigned = await tx.sign().complete()
 
-  console.log(`New Oracle Price: `, oracleDatum.fields[0], `
-    `)
+  // console.log(`New Oracle Price: `, oracleDatum.fields[0], `
+  //   `)
 
   return txSigned.submit()
 }
