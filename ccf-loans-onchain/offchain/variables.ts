@@ -34,3 +34,30 @@ export const configTN = fromText("")
 export const configUnit = toUnit(configCS, configTN)
 
 export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cff4aa85f8406f6bd163f504438d8126"
+
+export const interestPayAddr = "addr_test1vr4m7cd94yhymrwcmgs2k6zs00jql9d075ms0dgxjv2tuxqjy82wz"
+
+export function interestCalc(
+  base,
+  optimal,
+  slope1,
+  slope2,
+  supply,
+  borrowed,
+) {
+  const utilisation = borrowed / supply
+  if (utilisation <= optimal) {
+    const ratio = utilisation / optimal 
+    const variable = ratio * slope1 
+    const combined = base + variable
+    return combined
+  } else {
+    const slope = base + slope1 
+    const nominator = utilisation - optimal 
+    const denominator = 100 - optimal 
+    const ratio = nominator / denominator 
+    const variableFee = ratio * slope2 
+    const combined = slope + variableFee
+    return combined
+  }
+}

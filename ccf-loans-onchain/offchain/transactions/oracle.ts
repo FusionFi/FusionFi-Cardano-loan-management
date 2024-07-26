@@ -1,10 +1,10 @@
 import { toHex, toUnit, UTxO, Data } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import * as cbor from "https://deno.land/x/cbor@v1.4.1/index.js";
 import { lucid } from "../blockfrost.ts"
-import { oracleDatum1, oracleDatum6 , oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5} from "../datums.ts";
+import { oracleDatum1, oracleDatum6 , oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, interestDatum} from "../datums.ts";
 import { ownerAddress, ownerPKH } from "../owner.ts";
 import { oracleMintAction, oracleUpdateAction, oracleCloseAction, oracleBurnAction } from "../redeemers.ts";
-import { configAddr, oracleCS, oracleMint, oracleAddr, oracleVal } from "../validators.ts";
+import { configAddr, oracleCS, oracleMint, oracleAddr, oracleVal, interestAddr } from "../validators.ts";
 import { configUnit, oracleUnit } from "../variables.ts";
 
 lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./owner.sk"));
@@ -31,13 +31,18 @@ export async function mintOracle() {
     .collectFrom([utxo])
     .readFrom([configIn])
     .mintAssets({
-      [oracleUnit]: 1,
+      [oracleUnit]: 2,
     }, oracleMintAction)
     .attachMintingPolicy(oracleMint)
     .payToContract(
       oracleAddr, 
       { inline: oracleDatum }, 
       { [oracleUnit]: 1 }
+    )
+    .payToContract(
+      interestAddr,
+      { inline: interestDatum },
+      { [oracleUnit]: 1}
     )
     .addSignerKey(ownerPKH)
     .complete()
@@ -110,14 +115,17 @@ export async function oracleClose() {
 
   const utxos: UTxO[] = await lucid.utxosAtWithUnit(oracleAddr, oracleUnit)
   const utxo: UTxO = utxos[0]
+  const iUtxos: UTxO[] = await lucid.utxosAtWithUnit(interestAddr, oracleUnit)
+  const interestUtxo: UTxO = iUtxos[0]
   console.log(utxo)
 
   const tx = await lucid
     .newTx()
     .collectFrom([utxo], oracleCloseAction)
+    .collectFrom([interestUtxo], oracleCloseAction)
     .attachSpendingValidator(oracleVal)
     .mintAssets({
-      [oracleUnit]: -1,
+      [oracleUnit]: -2,
     }, oracleBurnAction)
     .attachMintingPolicy(oracleMint)
     .addSignerKey(ownerPKH)

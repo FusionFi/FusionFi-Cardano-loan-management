@@ -3,8 +3,8 @@ import { lucid } from "../blockfrost.ts"
 import { oracleDatum1, oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, oracleDatum6, loanDatum, collateralDatum, oracleDatum7 } from "../datums.ts";
 import { ownerAddress, ownerPKH } from "../owner.ts";
 import { oracleUpdateAction, mintLoanAction, loanCloseAction, burnLoanAction, loanBalanceAction, loanLiquidateAction, configCloseAction, rewardsMintAction, loanRepayAction } from "../redeemers.ts";
-import { loanCS, configAddr, oracleAddr, loanMint, loanAddr, collateralAddr, oracleVal, closeHash, closeAddr, close, loanVal, collateralVal, balanceAddr, balance, liquidateAddr, liquidate, rewardsCS, rewardsMint, repayAddr, repay } from "../validators.ts";
-import { configUnit, oracleUnit, loanAmt, loanUnit, timestamp, oracleTn, rewards, term } from "../variables.ts";
+import { loanCS, configAddr, oracleAddr, loanMint, loanAddr, collateralAddr, oracleVal, closeHash, closeAddr, close, loanVal, collateralVal, balanceAddr, balance, liquidateAddr, liquidate, rewardsCS, rewardsMint, repayAddr, repay, interestAddr } from "../validators.ts";
+import { configUnit, oracleUnit, loanAmt, loanUnit, timestamp, oracleTn, rewards, term, interestPayAddr, interestCalc } from "../variables.ts";
 
 lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./owner.sk"));
 
@@ -336,6 +336,8 @@ export async function liquidateLoan() {
 
 export async function repayLoan() {
   const oracleDatum = Data.from(oracleDatum1)
+  const interestUtxos = await lucid.utxosAtWithUnit(interestAddr, oracleUnit)
+  const interestIn = interestUtxos[0]
   const exchange = oracleDatum.fields[0]
   const lUtxos: UTxO[] = await lucid.utxosAtWithUnit(loanAddr, loanUnit)
   const lUtxo: UTxO = lUtxos[0]
@@ -348,6 +350,10 @@ export async function repayLoan() {
   const oracleUtxo: UTxO = oracleUtxos[0]
   const collateralValue = 2000000n
   const remainingValue = 0n
+
+  const loanValue = inDatum.fields[0]
+  const interestTimeframe = (timestamp - inDatum.fields[3]) * interestCalc(5.5, 70, 4, 300, 1000000, 200000)
+  const accruedInterest = loanValue * interestTimeframe
   
   const withdrawRedeemer = Data.to(
     new Constr(0, [
@@ -380,6 +386,7 @@ export async function repayLoan() {
     .collectFrom([cUtxo], loanRepayAction)
     .collectFrom([oracleUtxo], oracleUpdateAction)
     .readFrom([configIn])
+    .readFrom([interestIn])
     .payToContract(
       loanAddr, 
       { inline: loanDatum }, 
@@ -394,6 +401,10 @@ export async function repayLoan() {
       oracleAddr,
       { inline: Data.to(oracleDatum) },
       { [oracleUnit]: 1 }
+    )
+    .payToAddress(
+      interestPayAddr,
+      { lovelace: accruedInterest },
     )
     .withdraw(repayAddr, 0, withdrawRedeemer)
     .attachSpendingValidator(loanVal)
