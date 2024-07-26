@@ -7,10 +7,12 @@ use aiken/transaction.{
 use aiken/transaction/value.{AssetName, PolicyId}
 use ccfl/types.{
   AMint, CollateralAction, CollateralDatum, ConUpdate, ConfigAction, ConfigDatum,
-  LoanAction, LoanDatum, LoanMintAction, MConUpdate, MerkelCollateralAction,
-  MerkelConfigAction, MerkelConfigDatum, MerkelLoanAction, OMint, OracleAction,
-  OracleDatum, OracleMintAction, OracleUpdate, RewardMint, RewardsAction,
-  SCBalance, SCClose, SCLiquidate, SLBalance, SLClose, SLLiquidate, ScriptHash,
+  InterestAction, InterestDatum, InterestUpdate, LoanAction, LoanDatum,
+  LoanMintAction, MConUpdate, MerkelCollateralAction, MerkelConfigAction,
+  MerkelConfigDatum, MerkelLoanAction, OMint, OracleAction, OracleDatum,
+  OracleMintAction, OracleUpdate, RewardMint, RewardsAction, SCBalance, SCClose,
+  SCLiquidate, SLBalance, SLClose, SLLiquidate, ScriptHash, Withdraw,
+  WithdrawRedeemer,
 }
 use tests/tools as t
 
@@ -18,8 +20,31 @@ use tests/tools as t
 // Transaction Testing Helpers //
 //                             //
 
+pub fn interestDatum(
+  base: Int,
+  optimal: Int,
+  slope1: Int,
+  slope2: Int,
+  term: Int,
+) -> InterestDatum {
+  let iDatum = InterestDatum { base, optimal, slope1, slope2, term }
+
+  iDatum
+}
+
+pub fn interestAction(base, optimal, slope1, slope2, term) -> InterestAction {
+  let redeemer = InterestUpdate { base, optimal, slope1, slope2, term }
+
+  redeemer
+}
+
 pub fn oref(hash: ByteArray, index: Int) -> OutputReference {
   t.test_oref(hash, index)
+}
+
+pub fn withdrawRedeemer(a: List<Int>) -> WithdrawRedeemer {
+  let redeemer = Withdraw { a }
+  redeemer
 }
 
 pub fn merkelLoanAction(i: Int) -> MerkelLoanAction {
@@ -37,7 +62,7 @@ pub fn mConfigDatum(
   c: ScriptHash,
   r: ScriptHash,
   o: ScriptHash,
-  lR: List<ScriptHash>,
+  i: ScriptHash,
   cR: List<ScriptHash>,
 ) -> MerkelConfigDatum {
   let datum =
@@ -46,7 +71,7 @@ pub fn mConfigDatum(
       colVal: c,
       rewardsVal: r,
       oracleVal: o,
-      loanRedeemers: lR,
+      interestVal: i,
       collateralRedeemers: cR,
     }
   datum
@@ -57,7 +82,7 @@ pub fn mConUpdate(
   collateral: ScriptHash,
   rewards: ScriptHash,
   oracle: ScriptHash,
-  loanRedeemers: List<ScriptHash>,
+  interestVal: ScriptHash,
   collateralRedeemers: List<ScriptHash>,
 ) -> MerkelConfigAction {
   let redeemer =
@@ -66,7 +91,7 @@ pub fn mConUpdate(
       colVal: collateral,
       rewardsVal: rewards,
       oracleVal: oracle,
-      loanRedeemers,
+      interestVal,
       collateralRedeemers,
     }
   redeemer
@@ -75,17 +100,24 @@ pub fn mConUpdate(
 pub fn oracleDatum(
   x: Int,
   t: PosixTime,
-  r: Int,
-  f: Int,
+  s: Int,
+  b: Int,
   c: ByteArray,
 ) -> OracleDatum {
   let datum =
-    OracleDatum { exchange: x, timestamp: t, interest: r, fee: f, currency: c }
+    OracleDatum {
+      exchange: x,
+      timestamp: t,
+      supply: s,
+      borrowed: b,
+      currency: c,
+    }
   datum
 }
 
-pub fn oracleAction(x: Int, t: PosixTime, r: Int, f: Int) -> OracleAction {
-  let redeemer = OracleUpdate { exchange: x, timestamp: t, interest: r, fee: f }
+pub fn oracleAction(x: Int, t: PosixTime, s: Int, b: Int) -> OracleAction {
+  let redeemer =
+    OracleUpdate { exchange: x, timestamp: t, supply: s, borrowed: b }
   redeemer
 }
 
@@ -180,8 +212,31 @@ pub fn rewardsActionMint() -> RewardsAction {
 //   redeemer
 // }
 
-pub fn oracleMintActionMint() -> OracleMintAction {
-  let redeemer = OMint
+pub fn oracleMintActionMint(
+  x: Int,
+  ti: PosixTime,
+  c: ByteArray,
+  su: Int,
+  bo: Int,
+  ba: Int,
+  o: Int,
+  s1: Int,
+  s2: Int,
+  te: Int,
+) -> OracleMintAction {
+  let redeemer =
+    OMint {
+      exchange: x,
+      timestamp: ti,
+      currency: c,
+      supply: su,
+      borrowed: bo,
+      base: ba,
+      optimal: o,
+      slope1: s1,
+      slope2: s2,
+      term: te,
+    }
   redeemer
 }
 
@@ -201,7 +256,7 @@ pub fn configDatumIn() -> Datum {
       t.merkelCollateralSpend,
       t.rewardsMintHash,
       t.oracleValHash,
-      [t.merkelLoanBalance, t.merkelLoanLiquidate, t.merkelLoanClose],
+      t.interestValHash,
       [
         t.merkelCollateralBalance,
         t.merkelCollateralLiquidate,
@@ -215,18 +270,18 @@ pub fn configDatumIn() -> Datum {
 }
 
 pub fn oracleDatumIn(ratio: Int) -> Datum {
-  let oracleInDatum = oracleDatum(ratio, 11111111, 15, 2, "USD")
+  let oracleInDatum = oracleDatum(ratio, 11111111, 1000000, 200000, "USD")
 
   InlineDatum(oracleInDatum)
 }
 
 pub fn loanDatumIn(value: Int) -> Datum {
-  let loanDatum1 = loanDatum(value, value, 0, 1111111111, #"beef")
+  let loanDatum1 = loanDatum(value, value, 0, 1721819831, #"beef")
   InlineDatum(loanDatum1)
 }
 
 pub fn loanDatumIn0() -> Datum {
-  let loanDatum1 = loanDatum(0, 1000, 0, 1111111111, #"beef")
+  let loanDatum1 = loanDatum(0, 1000, 0, 1721819831, #"beef")
 
   InlineDatum(loanDatum1)
 }
@@ -247,6 +302,26 @@ pub fn oracleInput(ratio: Int) -> Input {
       ),
     )
   oracleIn
+}
+
+pub fn interestInput() -> Input {
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let term = 31556926
+
+  let interestIn =
+    t.test_input(
+      oref(#"deaf", 8),
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        InlineDatum(interestDatum(base, optimal, slope1, slope2, term)),
+      ),
+    )
+
+  interestIn
 }
 
 pub fn configInput() -> Input {
@@ -301,6 +376,16 @@ pub fn userInput(value: Int) -> Input {
 // Validator Outputs //
 //                   //
 
+pub fn interestOutput(interest: Int) -> Output {
+  let interestOut =
+    t.test_output(
+      t.test_address(#"deaf"),
+      value.from_lovelace(interest),
+      NoDatum,
+    )
+  interestOut
+}
+
 pub fn configOutput(datum: MerkelConfigDatum) -> Output {
   let configIn =
     t.test_output(
@@ -313,7 +398,7 @@ pub fn configOutput(datum: MerkelConfigDatum) -> Output {
 }
 
 pub fn oracleOutDatum(ratio: Int) -> Datum {
-  let oracleOutDatum = oracleDatum(ratio, 11111112, 15, 2, "USD")
+  let oracleOutDatum = oracleDatum(ratio, 1724449574, 1000000, 200000, "USD")
   InlineDatum(oracleOutDatum)
 }
 
@@ -328,7 +413,7 @@ pub fn oracleOutput(ratio) -> Output {
 }
 
 pub fn loanOutDatum(value: Int) -> Datum {
-  let loanDatum1 = loanDatum(value, value, 0, 1111111111, #"beef")
+  let loanDatum1 = loanDatum(value, value, 0, 1724449574, #"beef")
   InlineDatum(loanDatum1)
 }
 
@@ -358,14 +443,15 @@ pub fn collateralOutput(amount: Int, value: Int) -> Output {
   colOut
 }
 
-// pub fn withdrawal(script: ScriptHash) {
-//   let withdraw0 =
-//     dict.from_ascending_pairs(
-//       [Pair(t.create_stake_credential(script), 0)],
-//       t.stakeCompare,
-//     )
-//   withdraw0
-// }
+pub fn withdrawal(script: ScriptHash) {
+  let withdraw0 =
+    [Pair(t.create_stake_credential(script), 0)]
+  // dict.from_ascending_pairs(
+  //   [Pair(t.create_stake_credential(script), 0)],
+  //   t.stakeCompare,
+  // )
+  withdraw0
+}
 
 //                        //
 // Merkel Combined Inputs //

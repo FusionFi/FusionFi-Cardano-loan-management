@@ -93,57 +93,56 @@ validator(p: PolicyId, cp: PolicyId) {
     )
   }
 }
+
 //                 //
 // Validator Tests //
 //                 //
 
-// test merkel_liquidate_single() {
-//   let inRatio = 2
-//   let outRatio = 2
+test merkel_liquidate_single() {
+  let inRatio = 2
+  let outRatio = 2
 
-//   let inLoanAmount = 1000
-//   let inCollateralAmount = 1000
-//   let inCollateralValue = 2000
+  let inLoanAmount = 1000
+  let inCollateralAmount = 1000
+  let inCollateralValue = 2000
 
-//   let outLoanAmount = 0
-//   let outCollateralAmount = 0
-//   let outCollateralValue = 2
+  let outLoanAmount = 0
+  let outCollateralAmount = 0
+  let outCollateralValue = 2
 
-//   let test_owner = #"face"
+  let test_owner = #"face"
 
-//   // withdrawl
-//   let withdraw0 = tx.withdrawal(t.merkelLiquidate)
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelLiquidate)
 
-//   let loanIn1 = tx.mLoanInput(1, inLoanAmount)
-//   let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
 
-//   let userIn1 = tx.userInput(2024)
+  let userIn1 = tx.userInput(2024)
 
-//   let configIn = tx.configInput()
-//   let oracleIn = tx.oracleInput(inRatio)
-//   let oracleOut = tx.oracleOutput(outRatio)
+  let configIn = tx.configInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
 
-//   let loanOut1 = tx.mLoanOutput(outLoanAmount)
-//   let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       extra_signatories: [test_owner],
-//       inputs: [loanIn1, oracleIn, userIn1, colIn1],
-//       outputs: [loanOut1, oracleOut, colOut1],
-//       withdrawals: withdraw0,
-//     }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [loanIn1, oracleIn, userIn1, colIn1],
+      outputs: [loanOut1, oracleOut, colOut1],
+      withdrawals: withdraw0,
+    }
 
-//   let redeemerList =
-//     [(0, 2)]
+  let redeemerList = tx.withdrawRedeemer([2])
 
-//   let ctx1 = tx.wCtx(t.merkelLiquidate, tx)
+  let ctx1 = tx.wCtx(t.merkelLiquidate, tx)
 
-//   liquidate(t.oracleMintHash, t.configMintHash, redeemerList, ctx1)?
-// }
-
+  liquidate(t.oracleMintHash, t.configMintHash, redeemerList, ctx1)?
+}
 // test separate_liquidate_single() {
 //   let inRatio = 2
 //   let outRatio = 2

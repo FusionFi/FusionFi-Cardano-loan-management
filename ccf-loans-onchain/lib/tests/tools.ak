@@ -5,9 +5,15 @@ use aiken/transaction.{
 }
 use aiken/transaction/credential.{
   Address, Credential, Inline, Referenced, Script, ScriptCredential,
-  VerificationKey, VerificationKeyCredential,
+  StakeCredential, VerificationKey, VerificationKeyCredential,
 }
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
+
+pub const interestValHash =
+  #"8776cedf0c2677a95328e64f05de2c142a39f4ed9bf7ec877cc93352"
+
+pub const merkelRepay =
+  #"b4f6ee44a656ce9aac4f5adc0c72f4e48fc532f02907ec0ce1e44834"
 
 pub const merkelClose =
   #"93fb1f13c199bdb5ec24cc6b171a7f57448c9cab20c5de7068619d4c"
@@ -90,7 +96,7 @@ pub fn loanRedeemers() -> List<ScriptHash> {
 
 pub fn collateralRedeemers() -> List<ScriptHash> {
   let list =
-    [mCol, mLoan, merkelBalance, merkelLiquidate, merkelClose]
+    [mCol, mLoan, merkelBalance, merkelLiquidate, merkelClose, merkelRepay]
   list
 }
 
@@ -277,9 +283,7 @@ pub fn test_tx_id(h: ByteArray) -> TransactionId {
 
 // Testing Helper Functions //
 
-pub fn create_stake_credential(
-  s: Hash<Blake2b_224, Script>,
-) -> Referenced<Credential> {
+pub fn create_stake_credential(s: Hash<Blake2b_224, Script>) -> StakeCredential {
   Inline(ScriptCredential(s))
 }
 

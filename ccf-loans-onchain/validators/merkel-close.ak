@@ -61,52 +61,51 @@ validator(lp: PolicyId, op: PolicyId) {
     )
   }
 }
+
 //                 //
 // Validator Tests //
 //                 //
 
-// test merkel_close_single() {
-//   let inRatio = 2
-//   let outRatio = 2
+test merkel_close_single() {
+  let inRatio = 2
+  let outRatio = 2
 
-//   let inLoanAmount = 0
-//   let inCollateralAmount = 0
-//   let inCollateralValue = 2
+  let inLoanAmount = 0
+  let inCollateralAmount = 0
+  let inCollateralValue = 2
 
-//   let test_owner = #"face"
+  let test_owner = #"face"
 
-//   let configDatum = tx.configDatumIn()
+  let configDatum = tx.configDatumIn()
 
-//   let withdraw0 = tx.withdrawal(t.merkelClose)
+  let withdraw0 = tx.withdrawal(t.merkelClose)
 
-//   let loanIn1 = tx.mLoanInput(1, inLoanAmount)
-//   let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
-//   let userIn1 = tx.userInput(2024)
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+  let userIn1 = tx.userInput(2024)
 
-//   let configIn = tx.configInput()
+  let configIn = tx.configInput()
 
-//   let oracleIn = tx.oracleInput(inRatio)
-//   let oracleOut = tx.oracleOutput(outRatio)
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
 
-//   let redeemerList =
-//     [(0, 3)]
+  let redeemerList = tx.withdrawRedeemer([3])
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       extra_signatories: [test_owner],
-//       inputs: [loanIn1, oracleIn, userIn1, colIn1],
-//       outputs: [oracleOut],
-//       mint: value.to_minted_value(t.loanBurnValue()),
-//       withdrawals: withdraw0,
-//     }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [loanIn1, oracleIn, userIn1, colIn1],
+      outputs: [oracleOut],
+      mint: value.to_minted_value(t.loanBurnValue()),
+      withdrawals: withdraw0,
+    }
 
-//   let ctx5 = tx.wCtx(t.merkelClose, tx)
+  let ctx5 = tx.wCtx(t.merkelClose, tx)
 
-//   close(t.loanMintHash, t.oracleMintHash, redeemerList, ctx5)?
-// }
-
+  close(t.loanMintHash, t.oracleMintHash, redeemerList, ctx5)?
+}
 // test separate_close_single() {
 //   let inRatio = 2
 //   let outRatio = 2

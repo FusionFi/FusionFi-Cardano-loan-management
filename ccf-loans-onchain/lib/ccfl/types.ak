@@ -28,7 +28,7 @@ pub type MerkelConfigDatum {
   colVal: ScriptHash,
   rewardsVal: ScriptHash,
   oracleVal: ScriptHash,
-  loanRedeemers: List<ScriptHash>,
+  interestVal: ScriptHash,
   collateralRedeemers: List<ScriptHash>,
 }
 
@@ -43,7 +43,7 @@ pub type MerkelConfigAction {
     colVal: ScriptHash,
     rewardsVal: ScriptHash,
     oracleVal: ScriptHash,
-    loanRedeemers: List<ScriptHash>,
+    interestVal: ScriptHash,
     collateralRedeemers: List<ScriptHash>,
   }
   MConClose
@@ -97,17 +97,52 @@ pub type RewardsAction {
 pub type OracleDatum {
   exchange: Int,
   timestamp: PosixTime,
-  interest: Int,
-  fee: Int,
   currency: ByteArray,
+  supply: Int,
+  borrowed: Int,
 }
 
 pub type OracleAction {
-  OracleUpdate { exchange: Int, timestamp: PosixTime, interest: Int, fee: Int }
+  OracleUpdate {
+    exchange: Int,
+    timestamp: PosixTime,
+    supply: Int,
+    borrowed: Int,
+  }
   OracleClose
 }
 
 pub type OracleMintAction {
-  OMint
+  OMint {
+    exchange: Int,
+    timestamp: PosixTime,
+    currency: ByteArray,
+    supply: Int,
+    borrowed: Int,
+    base: Int,
+    optimal: Int,
+    slope1: Int,
+    slope2: Int,
+    term: Int,
+  }
   OBurn
+}
+
+pub type InterestDatum {
+  base: Int,
+  optimal: Int,
+  slope1: Int,
+  slope2: Int,
+  term: Int,
+}
+
+pub type InterestAction {
+  InterestUpdate {
+    base: Int,
+    optimal: Int,
+    slope1: Int,
+    slope2: Int,
+    term: Int,
+  }
+  InterestClose
 }

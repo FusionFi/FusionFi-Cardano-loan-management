@@ -15,6 +15,7 @@ export const configVal = await readConfigValidator()
 export const oracleMint = await readOracleMint()
 export const oracleCS = lucid.utils.mintingPolicyToId(oracleMint)
 export const oracleVal = await readOracleValidator()
+export const interestVal = await readInterestValidator()
 export const loanMint = await readLoanMint()
 export const loanCS = lucid.utils.mintingPolicyToId(loanMint)
 export const loanVal = await readLoanValidator()
@@ -48,7 +49,7 @@ async function readConfigMint(): Promise<MintingPolicy> {
   };
 }
 
-async function readLoanMint(): Promise<MintingPolicy> {
+async function readInterestValidator(): Promise<SpendingValidator> {
   const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[2];
   return {
     type: "PlutusV2",
@@ -58,8 +59,18 @@ async function readLoanMint(): Promise<MintingPolicy> {
   };
 }
 
-async function readLoanValidator(): Promise<SpendingValidator> {
+async function readLoanMint(): Promise<MintingPolicy> {
   const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[3];
+  return {
+    type: "PlutusV2",
+    script: applyParamsToScript(
+      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, configCS]
+    ),
+  };
+}
+
+async function readLoanValidator(): Promise<SpendingValidator> {
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[4];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -69,7 +80,7 @@ async function readLoanValidator(): Promise<SpendingValidator> {
 }
 
 async function readBalanceValidator(): Promise<WithdrawalValidator> {
-  const validator = JSON.parse( await Deno.readTextFile("plutus.json")).validators[4];
+  const validator = JSON.parse( await Deno.readTextFile("plutus.json")).validators[5];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -79,7 +90,7 @@ async function readBalanceValidator(): Promise<WithdrawalValidator> {
 }
 
 async function readCloseValidator(): Promise<WithdrawalValidator> {
-  const validator = JSON.parse( await Deno.readTextFile("plutus.json")).validators[5];
+  const validator = JSON.parse( await Deno.readTextFile("plutus.json")).validators[6];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -89,7 +100,7 @@ async function readCloseValidator(): Promise<WithdrawalValidator> {
 }
 
 async function readConfigValidator(): Promise<SpendingValidator> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[6];
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[7];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -99,16 +110,6 @@ async function readConfigValidator(): Promise<SpendingValidator> {
 }
 
 async function readLiquidateValidator(): Promise<WithdrawalValidator> {
-  const validator = JSON.parse( await Deno.readTextFile("plutus.json")).validators[7];
-  return {
-    type: "PlutusV2",
-    script: applyParamsToScript(
-      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, configCS]
-    ),
-  }
-}
-
-async function readRepayValidator(): Promise<WithdrawalValidator> {
   const validator = JSON.parse( await Deno.readTextFile("plutus.json")).validators[8];
   return {
     type: "PlutusV2",
@@ -118,8 +119,18 @@ async function readRepayValidator(): Promise<WithdrawalValidator> {
   }
 }
 
+async function readRepayValidator(): Promise<WithdrawalValidator> {
+  const validator = JSON.parse( await Deno.readTextFile("plutus.json")).validators[9];
+  return {
+    type: "PlutusV2",
+    script: applyParamsToScript(
+      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, configCS]
+    ),
+  }
+}
+
 async function readOracleMint(): Promise<MintingPolicy> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[9]
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[10]
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -129,7 +140,7 @@ async function readOracleMint(): Promise<MintingPolicy> {
 }
 
 async function readOracleValidator(): Promise<SpendingValidator> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[10];
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[11];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -139,7 +150,7 @@ async function readOracleValidator(): Promise<SpendingValidator> {
 }
 
 async function readRewardsMint(): Promise<MintingPolicy> {
-  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[11];
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[12];
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
@@ -158,6 +169,7 @@ export const balanceAddr = lucid.utils.validatorToRewardAddress(balance)
 export const liquidateAddr = lucid.utils.validatorToRewardAddress(liquidate)
 export const closeAddr = lucid.utils.validatorToRewardAddress(close)
 export const repayAddr = lucid.utils.validatorToRewardAddress(repay)
+export const interestAddr = lucid.utils.validatorToAddress(interestVal)
 
 // Validator Hashes //
 
@@ -169,7 +181,7 @@ export const balanceHash = await lucid.utils.validatorToScriptHash(balance)
 export const liquidateHash = await lucid.utils.validatorToScriptHash(liquidate)
 export const closeHash = await lucid.utils.validatorToScriptHash(close)
 export const repayHash = await lucid.utils.validatorToScriptHash(repay)
-
+export const interestHash = await lucid.utils.validatorToScriptHash(interestVal)
 
 export const loanHashz = [balanceHash]
 export const collateralHashz = [balanceHash, liquidateHash, closeHash, repayHash]

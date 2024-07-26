@@ -15,15 +15,15 @@ import { mintOracle, oracleClose, oAutoUpdate, oManualUpdate, oracleDatum1, orac
 //   -> Mint A Loan with loan.ts
 // `)
 
-// // closeOracle
-// const closeOracleTx = await oracleClose()
-// console.log(`Burned Oracle Tx: 
-//   https://preview.cardanoscan.io/transaction/${closeOracleTx}
+// closeOracle
+const closeOracleTx = await oracleClose()
+console.log(`Burned Oracle Tx: 
+  https://preview.cardanoscan.io/transaction/${closeOracleTx}
 
-// YOU'VE CLOSED YOUR ORACLE!
-//   -> Mint a new one
-//   -> burn your ConfigToken and close the Dapp
-// `)
+YOU'VE CLOSED YOUR ORACLE!
+  -> Mint a new one
+  -> burn your ConfigToken and close the Dapp
+`)
 
 // // updateOracle
 // const updateOracleTX = await oAutoUpdate()
@@ -34,11 +34,11 @@ import { mintOracle, oracleClose, oAutoUpdate, oManualUpdate, oracleDatum1, orac
 //   -> You can update a loan in loan.ts
 //   `)
 
-// updateOracleManual
-const updateOracleManualTx = await oManualUpdate()
-console.log(`Update Oracle Manual Tx: 
-  https://preview.cardanoscan.io/transaction/${updateOracleManualTx}
+// // updateOracleManual
+// const updateOracleManualTx = await oManualUpdate()
+// console.log(`Update Oracle Manual Tx: 
+//   https://preview.cardanoscan.io/transaction/${updateOracleManualTx}
 
-THE ORACLE HAS UPDATED!
-  -> You can update a loan in loan.ts
-`)
+// THE ORACLE HAS UPDATED!
+//   -> You can update a loan in loan.ts
+// `)

@@ -23,7 +23,7 @@ validator(o: VerificationKeyHash, p: PolicyId) {
 
     expect has_singleton_input(transaction, ownRef)
     when r is {
-      OracleUpdate { exchange, timestamp, interest, fee } -> {
+      OracleUpdate { exchange, timestamp, supply, borrowed } -> {
         let out = get_own_singleton_output(transaction, ownRef)
 
         expect [Pair(_, 1)] =
@@ -34,7 +34,7 @@ validator(o: VerificationKeyHash, p: PolicyId) {
         expect InlineDatum(datum) = out.datum
         expect datum: OracleDatum = datum
 
-        has(transaction.extra_signatories, o) && timestamp > d.timestamp && interest >= 0 && fee >= 0 && datum.exchange == exchange && datum.timestamp == timestamp && datum.currency == d.currency && datum.fee == fee
+        has(transaction.extra_signatories, o) && timestamp > d.timestamp && datum.currency == d.currency && datum.timestamp == timestamp
       }
       OracleClose -> {
         expect Some(input) = find_input(transaction.inputs, ownRef)
@@ -45,7 +45,7 @@ validator(o: VerificationKeyHash, p: PolicyId) {
             |> tokens(p)
             |> to_pairs()
 
-        expect [Pair(burnName, -1)] =
+        expect [Pair(burnName, -2)] =
           transaction.mint
             |> value.from_minted_value()
             |> value.tokens(p)
@@ -56,52 +56,52 @@ validator(o: VerificationKeyHash, p: PolicyId) {
     }
   }
 }
+
 //       //
 // Tests //
 //       //
 
-// test oracle_vault() {
-//   let test_owner = #"face"
+test oracle_vault() {
+  let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+  let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2, "beef")
-//   let oracleDatum2 = oracleDatum(2, 11111112, 15, 2, "beef")
-//   let inDatum = InlineDatum(oracleDatum1)
-//   let outDatum = InlineDatum(oracleDatum2)
+  let oracleDatum1 = oracleDatum(1, 11111111, 1000000, 500000, "beef")
+  let oracleDatum2 = oracleDatum(2, 11111112, 1000000, 500000, "beef")
+  let inDatum = InlineDatum(oracleDatum1)
+  let outDatum = InlineDatum(oracleDatum2)
 
-//   let oracleInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.oracleValHash),
-//         t.oracleValue(),
-//         inDatum,
-//       ),
-//     )
+  let oracleInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.oracleValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
 
-//   let oracleAction = oracleAction(2, 11111112, 15, 2)
+  let oracleAction = oracleAction(2, 11111112, 15, 2)
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [oracleInput],
-//       outputs: [oracleOutput],
-//     }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [oracleInput],
+      outputs: [oracleOutput],
+    }
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
-// }
-
+  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)?
+}
 // test oracle_vault_datum_fail() fail {
 //   let test_owner = #"face"
 

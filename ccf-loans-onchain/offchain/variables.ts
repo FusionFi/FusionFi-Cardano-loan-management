@@ -9,6 +9,13 @@ export const price5 = 400n
 export const price6 = 265n
 export const price7 = 50n
 
+export const base = 55n 
+export const optimal = 70n 
+export const slope1 = 40n
+export const slope2 = 300n
+export const supply = 1000000n
+export const borrowed = 200000n
+
 export const collateral = fromText("ADA")
 export const collateralAmt = 10n
 export const loanCurrency = fromText("USDT")

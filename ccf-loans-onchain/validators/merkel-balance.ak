@@ -1,15 +1,13 @@
-use aiken/dict
 use aiken/list
 use aiken/transaction.{
   InlineDatum, Input, Output, ScriptContext, Transaction, WithdrawFrom,
   placeholder,
 }
-use aiken/transaction/credential.{Inline, ScriptCredential}
+use aiken/transaction/credential
 use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkelTx, withdraw4}
+use ccfl/helpers.{merkelTx}
 use ccfl/types.{
-  CollateralDatum, LoanDatum, MerkelCollateralAction, MerkelConfigDatum,
-  MerkelLoanAction, OracleDatum, ScriptHash, WithdrawRedeemer,
+  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawRedeemer,
 }
 use tests/tools as t
 use tests/transactions as tx
@@ -24,7 +22,7 @@ validator(p: PolicyId, cp: PolicyId) {
     // True
     expect ScriptContext {
       transaction,
-      purpose: WithdrawFrom(stake_credential),
+      purpose: WithdrawFrom(_stake_credential),
     } = c
 
     let Transaction { inputs, outputs, reference_inputs, .. } = transaction
@@ -92,56 +90,55 @@ validator(p: PolicyId, cp: PolicyId) {
     )
   }
 }
+
 //                 //
 // Validator Tests //
 //                 //
 
-// test merkel_balance_single() {
-//   let inRatio = 2
-//   let outRatio = 2
+test merkel_balance_single() {
+  let inRatio = 2
+  let outRatio = 2
 
-//   let inLoanAmount = 1000
-//   let inCollateralAmount = 1000
-//   let inCollateralValue = 2000
+  let inLoanAmount = 1000
+  let inCollateralAmount = 1000
+  let inCollateralValue = 2000
 
-//   let outLoanAmount = 1000
-//   let outCollateralAmount = 1000
-//   let outCollateralValue = 2000
+  let outLoanAmount = 1000
+  let outCollateralAmount = 1000
+  let outCollateralValue = 2000
 
-//   let test_owner = #"face"
+  let test_owner = #"face"
 
-//   // withdrawl
-//   let withdraw0 = tx.withdrawal(t.merkelBalance)
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelBalance)
 
-//   let bRedeemer =
-//     [(1, 0)]
+  let bRedeemer = tx.withdrawRedeemer([0])
 
-//   let loanIn1 = tx.mLoanInput(1, inLoanAmount)
-//   let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
 
-//   let userIn1 = tx.userInput(2024)
-//   let configIn = tx.configInput()
-//   let oracleIn = tx.oracleInput(inRatio)
-//   let oracleOut = tx.oracleOutput(outRatio)
+  let userIn1 = tx.userInput(2024)
+  let configIn = tx.configInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
 
-//   let loanOut1 = tx.mLoanOutput(outLoanAmount)
-//   let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       extra_signatories: [test_owner],
-//       inputs: [colIn1, loanIn1, oracleIn, userIn1],
-//       outputs: [colOut1, loanOut1, oracleOut],
-//       withdrawals: withdraw0,
-//     }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut],
+      withdrawals: withdraw0,
+    }
 
-//   let ctx1 = tx.wCtx(t.merkelBalance, tx)
+  let ctx1 = tx.wCtx(t.merkelBalance, tx)
 
-//   balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
-// }
-
+  balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
+}
 // test separate_balance_single() {
 //   let inRatio = 2
 //   let outRatio = 2

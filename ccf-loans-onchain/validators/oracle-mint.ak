@@ -6,7 +6,7 @@ use aiken/transaction.{
 use aiken/transaction/credential.{ScriptCredential}
 use aiken/transaction/value.{PolicyId, from_minted_value, tokens}
 use ccfl/types.{
-  MerkelConfigDatum, OBurn, OMint, OracleDatum, OracleMintAction,
+  InterestDatum, MerkelConfigDatum, OBurn, OMint, OracleDatum, OracleMintAction,
   VerificationKeyHash,
 }
 use tests/tools as t
@@ -30,9 +30,18 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
         |> to_pairs()
 
     when r is {
-      // checks signed by owner and No. of tokens
-      // TODO: verify output datum
-      OMint -> {
+      OMint {
+        exchange,
+        timestamp,
+        currency,
+        supply,
+        borrowed,
+        base,
+        optimal,
+        slope1,
+        slope2,
+        term,
+      } -> {
         expect Some(configIn) =
           list.find(
             transaction.reference_inputs,
@@ -46,7 +55,7 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
           list.find(
             transaction.outputs,
             fn(output) {
-              expect [Pair(oName, oAmt)] =
+              expect [Pair(oName, 1)] =
                 output.value
                   |> value.without_lovelace()
                   |> value.tokens(policyId)
@@ -56,10 +65,41 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
               )
             },
           )
+        expect InlineDatum(datum) = out.datum
+        expect oracleDatum: OracleDatum = datum
 
-        list.has(transaction.extra_signatories, o) && oAmt == 1
+        expect oracleDatum.exchange == exchange
+        expect oracleDatum.timestamp == timestamp
+        expect oracleDatum.currency == currency
+        expect oracleDatum.supply == supply
+        expect oracleDatum.borrowed == borrowed
+
+        expect Some(interest) =
+          list.find(
+            transaction.outputs,
+            fn(output) {
+              expect [Pair(oName, 1)] =
+                output.value
+                  |> value.without_lovelace()
+                  |> value.tokens(policyId)
+                  |> dict.to_pairs()
+              output.address.payment_credential == ScriptCredential(
+                cDatum.interestVal,
+              )
+            },
+          )
+        expect InlineDatum(datum) = interest.datum
+        expect interestDatum: InterestDatum = datum
+
+        expect interestDatum.base == base
+        expect interestDatum.optimal == optimal
+        expect interestDatum.slope1 == slope1
+        expect interestDatum.slope2 == slope2
+        expect interestDatum.term == term
+
+        list.has(transaction.extra_signatories, o) && oAmt == 2
       }
-      OBurn -> list.has(transaction.extra_signatories, o) && oAmt == -1
+      OBurn -> list.has(transaction.extra_signatories, o) && oAmt == -2
     }
   }
 }
@@ -72,7 +112,7 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
 
 //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2, #"beef")
 //   let outDatum = InlineDatum(oracleDatum1)
 //   let configIn = configInput()
 
@@ -109,7 +149,7 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
 
 //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2, #"beef")
 //   let outDatum = InlineDatum(oracleDatum1)
 
 //   let configIn = configInput()
@@ -191,7 +231,7 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
 
 //   let oref = t.test_oref(#"face", 1)
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2)
+//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2, #"beef")
 //   let outDatum = InlineDatum(oracleDatum1)
 
 //   let configIn = configInput()
