@@ -28,11 +28,11 @@ Loan Transactions:
 
 [x] - Mint Loan
 
-[] - Balance Loan
+[x] - Balance Loan
 
 [x] - Repay Loan 
 
-[] - Liquidate Loan
+[x] - Liquidate Loan
 
 [x] - Close Loan
 

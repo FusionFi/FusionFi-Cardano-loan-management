@@ -51,22 +51,22 @@ import { mintLoan, closeLoan, balanceLoan, liquidateLoan, repayLoan, burnLoan, l
 //   -> burnLoanTx()
 //   `)
 
-// // burnLoan
-// const burnLoanTx = await burnLoan()
-// console.log(`Burn Loan Tx: 
-//   https://preview.cardanoscan.io/transaction/${burnLoanTx}
+// burnLoan
+const burnLoanTx = await burnLoan()
+console.log(`Burn Loan Tx: 
+  https://preview.cardanoscan.io/transaction/${burnLoanTx}
 
-// YOU HAVE CLOSED YOUR LOAN!
-//   -> Close Oracles and Config
-//   -> Mint new Loans and Oracles
-//   `)
-
-// close W Rewards 
-const closeLoanTx = await closeLoan()
-console.log(`Close Loan Tx:
-  https://preview.cardanoscan.io/transaction/${closeLoanTx}
-  
 YOU HAVE CLOSED YOUR LOAN!
-  -> You recieved ${loanAmt} rewards tokens!
-  -> You can Mint more Loans or close the dapp
+  -> Close Oracles and Config
+  -> Mint new Loans and Oracles
   `)
+
+// // close W Rewards 
+// const closeLoanTx = await closeLoan()
+// console.log(`Close Loan Tx:
+//   https://preview.cardanoscan.io/transaction/${closeLoanTx}
+  
+// YOU HAVE CLOSED YOUR LOAN!
+//   -> You recieved ${loanAmt} rewards tokens!
+//   -> You can Mint more Loans or close the dapp
+//   `)
