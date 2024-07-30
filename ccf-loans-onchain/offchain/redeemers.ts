@@ -24,6 +24,15 @@ export const oracleUpdateAction = Data.to(
     borrowed,
   ]))
 
+export const interestUpdateAction = Data.to(
+  new Constr(0, [
+    base,
+    optimal,
+    slope1,
+    slope2,
+    term,
+  ]))
+
 export const oracleCloseAction = Data.to(new Constr(1, []))
 
 export const oracleMintAction = Data.to(new Constr(0, [

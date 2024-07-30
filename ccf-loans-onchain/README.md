@@ -22,7 +22,7 @@ Oracle Transactions:
 
 Interest Transactions:
 
-[] - Update Interest
+[x] - Update Interest
 
 Loan Transactions:
 

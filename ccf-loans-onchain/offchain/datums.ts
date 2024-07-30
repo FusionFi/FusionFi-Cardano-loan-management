@@ -20,6 +20,7 @@ export const oracleDatum6 = Data.to(new Constr(0, [price6, timestamp, loanCurren
 export const oracleDatum7 = Data.to(new Constr(0, [price7, timestamp, loanCurrency, supply, borrowed]))
 
 export const interestDatum = Data.to(new Constr(0, [base, optimal, slope1, slope2, term]))
+export const interestDatum2 = Data.to(new Constr(0, [slope1, optimal, base, slope2, term]))
 
 export const loanDatum = Data.to(
   new Constr(0, [

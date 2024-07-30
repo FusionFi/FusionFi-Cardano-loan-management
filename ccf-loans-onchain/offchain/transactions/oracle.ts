@@ -1,9 +1,9 @@
 import { toHex, toUnit, UTxO, Data } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import * as cbor from "https://deno.land/x/cbor@v1.4.1/index.js";
 import { lucid } from "../blockfrost.ts"
-import { oracleDatum1, oracleDatum6 , oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, interestDatum} from "../datums.ts";
+import { oracleDatum1, oracleDatum6 , oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, interestDatum, interestDatum2} from "../datums.ts";
 import { ownerAddress, ownerPKH } from "../owner.ts";
-import { oracleMintAction, oracleUpdateAction, oracleCloseAction, oracleBurnAction } from "../redeemers.ts";
+import { oracleMintAction, oracleUpdateAction, oracleCloseAction, oracleBurnAction, interestUpdateAction } from "../redeemers.ts";
 import { configAddr, oracleCS, oracleMint, oracleAddr, oracleVal, interestAddr, interestVal } from "../validators.ts";
 import { configUnit, oracleUnit } from "../variables.ts";
 
@@ -130,6 +130,32 @@ export async function oracleClose() {
       [oracleUnit]: -2,
     }, oracleBurnAction)
     .attachMintingPolicy(oracleMint)
+    .addSignerKey(ownerPKH)
+    .complete()
+
+  const txSigned = await tx.sign().complete()
+
+  return txSigned.submit()
+}
+
+export async function updateInterest() {
+  console.log(`INTEREST TRANSACTION - UPDATE
+    `)
+  
+  const utxos: UTxO[] = await lucid.utxosAtWithUnit(interestAddr, oracleUnit)
+  const utxo: UTxO = utxos[0]
+  
+  // const interestDatum = interestDatum2
+
+  const tx = await lucid
+    .newTx()
+    .collectFrom([utxo], interestUpdateAction)
+    .attachSpendingValidator(interestVal)
+    .payToContract(
+      interestAddr,
+      { inline: interestDatum },
+      { [oracleUnit]: 1 },
+    )
     .addSignerKey(ownerPKH)
     .complete()
 
