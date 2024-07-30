@@ -54,7 +54,7 @@ async function readInterestValidator(): Promise<SpendingValidator> {
   return {
     type: "PlutusV2",
     script: applyParamsToScript(
-      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, configCS]
+      applyDoubleCborEncoding(validator.compiledCode), [oracleCS, ownerPKH]
     ),
   };
 }

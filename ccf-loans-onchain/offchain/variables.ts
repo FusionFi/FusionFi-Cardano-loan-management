@@ -23,33 +23,37 @@ export const loanAmt = 5n
 export const timestamp = BigInt(new Date().getTime())
 export const interest = 15n
 export const fee = 2n
-export const term = 0n
+export const term = 31556926n
 export const rewards = 5n
 
-export const oracleUnit = "e75c32da3aad61874dcc7f3a47a8c534fa60eebdccd974f19763f6221d44314e9af788196f468071823b69"
+export const oracleUnit = "40da844f41c3204a770e6c7f082eab5f9bfed43384650dccf990b30d1cb0a8c6f198743ef35661381d0575"
 
 export const oracleTn = fromUnit(oracleUnit).assetName
 
 export const configTN = fromText("") 
 export const configUnit = toUnit(configCS, configTN)
 
-export const loanUnit = "bcb4b7cc49cdfa05d6964c79e62b1bb4df59172c7010f4e55b1f13cff4aa85f8406f6bd163f504438d8126"
+export const loanUnit = "e680537242d8e3a6561060004690486a6148de8d040eab256d6300fad7ea8f56b942138493148247eb1a81"
 
 export const interestPayAddr = "addr_test1vr4m7cd94yhymrwcmgs2k6zs00jql9d075ms0dgxjv2tuxqjy82wz"
 
 export function interestCalc(
-  base,
-  optimal,
-  slope1,
-  slope2,
-  supply,
-  borrowed,
+  base: number,
+  optimal: number,
+  slope1: number,
+  slope2: number,
+  supply: number,
+  borrowed: number,
 ) {
   const utilisation = borrowed / supply
+  console.log(`utilisation: ${utilisation}`)
   if (utilisation <= optimal) {
     const ratio = utilisation / optimal 
+    console.log(`ratio: ${ratio}`)
     const variable = ratio * slope1 
+    console.log(`variable: ${variable}`)
     const combined = base + variable
+    console.log(`combined: ${combined}`)
     return combined
   } else {
     const slope = base + slope1 

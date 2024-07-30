@@ -4,7 +4,7 @@ import { lucid } from "../blockfrost.ts"
 import { oracleDatum1, oracleDatum6 , oracleDatum2, oracleDatum3, oracleDatum4, oracleDatum5, interestDatum} from "../datums.ts";
 import { ownerAddress, ownerPKH } from "../owner.ts";
 import { oracleMintAction, oracleUpdateAction, oracleCloseAction, oracleBurnAction } from "../redeemers.ts";
-import { configAddr, oracleCS, oracleMint, oracleAddr, oracleVal, interestAddr } from "../validators.ts";
+import { configAddr, oracleCS, oracleMint, oracleAddr, oracleVal, interestAddr, interestVal } from "../validators.ts";
 import { configUnit, oracleUnit } from "../variables.ts";
 
 lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./owner.sk"));
@@ -118,12 +118,14 @@ export async function oracleClose() {
   const iUtxos: UTxO[] = await lucid.utxosAtWithUnit(interestAddr, oracleUnit)
   const interestUtxo: UTxO = iUtxos[0]
   console.log(utxo)
+  console.log(interestUtxo)
 
   const tx = await lucid
     .newTx()
     .collectFrom([utxo], oracleCloseAction)
     .collectFrom([interestUtxo], oracleCloseAction)
     .attachSpendingValidator(oracleVal)
+    .attachSpendingValidator(interestVal)
     .mintAssets({
       [oracleUnit]: -2,
     }, oracleBurnAction)

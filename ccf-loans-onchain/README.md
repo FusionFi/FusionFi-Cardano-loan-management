@@ -1,5 +1,49 @@
 # ccf-loans
 
+---
+
+Transaction Checklist:
+
+Config Token Transactions:
+
+[x] - Mint Config
+
+[x] - Update Config
+
+[] - Burn Config
+
+Oracle Transactions:
+
+[x] - Mint Oracle
+
+[x] - Update Oracle
+
+[x] - Burn Oracle
+
+Interest Transactions:
+
+[] - Update Interest
+
+Loan Transactions:
+
+[x] - Mint Loan
+
+[] - Balance Loan
+
+[x] - Repay Loan 
+
+[] - Liquidate Loan
+
+[x] - Close Loan
+
+Rewards Transactions: 
+
+[x] - Mint Rewards
+
+[] - Burn Rewards
+
+---
+
 Currently finalising `validators/merkel-close.ak` 
 
 I have refactored the offchain code into `offchain`

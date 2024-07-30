@@ -10,7 +10,7 @@ export async function registerStake() {
     // .registerStake(balanceAddr)
     // .registerStake(liquidateAddr)
     // .registerStake(closeAddr) // balanceAddr | liquidateAddr | closeAddr
-    .registerStake(repayAddr)
+    .registerStake(closeAddr)
     .complete()
   
   const txSigned = await tx.sign().complete()

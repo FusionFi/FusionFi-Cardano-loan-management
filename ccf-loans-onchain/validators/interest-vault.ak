@@ -36,11 +36,11 @@ validator(op: PolicyId, o: VerificationKeyHash) {
         has(transaction.extra_signatories, o) && datum.base == base && datum.optimal == optimal && datum.slope1 == slope1 && datum.slope2 == slope2 && datum.term == term
       }
       InterestClose -> {
-        expect Some(input) = find_input(transaction.inputs, ownRef)
+        expect Some(ownIn) = find_input(transaction.inputs, ownRef)
 
         expect [Pair(inName, 1)] =
           // get singleton name
-          without_lovelace(input.output.value)
+          without_lovelace(ownIn.output.value)
             |> tokens(op)
             |> to_pairs()
 
