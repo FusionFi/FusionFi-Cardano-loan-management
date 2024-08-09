@@ -1,4 +1,3 @@
-use aiken/dict
 use aiken/hash.{Blake2b_224, Hash}
 use aiken/list
 // use aiken/string
@@ -8,7 +7,7 @@ use aiken/transaction.{
 }
 use aiken/transaction/credential.{Address, Inline, Script, ScriptCredential}
 use aiken/transaction/value
-use ccfl/types.{LoanAction, ScriptHash}
+use ccfl/types.{ScriptHash}
 
 //         //
 // Helpers //

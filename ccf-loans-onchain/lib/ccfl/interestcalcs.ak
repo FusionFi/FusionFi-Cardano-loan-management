@@ -1,17 +1,16 @@
-use aiken/math
 use aiken/string
 
-type InterestDatum {
-  supply: Int,
-  borrowed: Int,
-  base: Int,
-  optimal: Int,
-  slope1: Int,
-  slope2: Int,
-  term: Int,
-  loan: Int,
-  ratio: Int,
-}
+// type InterestDatum {
+//   supply: Int,
+//   borrowed: Int,
+//   base: Int,
+//   optimal: Int,
+//   slope1: Int,
+//   slope2: Int,
+//   term: Int,
+//   loan: Int,
+//   ratio: Int,
+// }
 
 pub fn utilisationRatio(borrowed: Int, supply: Int) -> Int {
   borrowed / supply
@@ -65,18 +64,18 @@ pub fn interestSlope2(
   borrowed: Int,
 ) -> Int {
   let slope = ( base + slope1 ) * 100
-  trace string.from_int(slope)
+  // trace string.from_int(slope)
   let ratio = utilisationRatio(borrowed, supply)
-  trace string.from_int(ratio)
+  // trace string.from_int(ratio)
   let nominator = ratio - optimal
-  trace string.from_int(nominator)
+  // trace string.from_int(nominator)
   let decimalAdjustment = nominator * 100000
   let denominator = 100 - optimal
-  trace string.from_int(denominator)
+  // trace string.from_int(denominator)
   let utilisation = decimalAdjustment / denominator
-  trace string.from_int(utilisation)
+  // trace string.from_int(utilisation)
   let variableFee = utilisation * slope2
-  trace string.from_int(variableFee)
+  // trace string.from_int(variableFee)
   slope + variableFee / 100
 }
 

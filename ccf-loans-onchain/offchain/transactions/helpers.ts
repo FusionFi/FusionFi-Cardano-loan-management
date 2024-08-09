@@ -12,7 +12,7 @@ export async function registerStake() {
     // .registerStake(closeAddr) // balanceAddr | liquidateAddr | closeAddr
     // .registerStake(closeAddr)
     .complete()
-  
+
   const txSigned = await tx.sign().complete()
 
   return txSigned.submit()
@@ -21,11 +21,11 @@ export async function registerStake() {
 export async function splitUtxos() {
   const tx = await lucid
     .newTx()
-    .payToAddress(ownerAddress, {lovelace: 100000000n})
-    .payToAddress(ownerAddress, {lovelace: 100000000n})
-    .payToAddress(ownerAddress, {lovelace: 100000000n})
-    .payToAddress(ownerAddress, {lovelace: 100000000n})
-    .payToAddress(ownerAddress, {lovelace: 100000000n})
+    .payToAddress(ownerAddress, { lovelace: 100000000n })
+    .payToAddress(ownerAddress, { lovelace: 100000000n })
+    .payToAddress(ownerAddress, { lovelace: 100000000n })
+    .payToAddress(ownerAddress, { lovelace: 100000000n })
+    .payToAddress(ownerAddress, { lovelace: 100000000n })
     .complete()
 
   const signedTx = await tx.sign().complete()

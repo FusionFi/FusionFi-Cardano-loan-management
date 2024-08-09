@@ -158,8 +158,10 @@ pub fn loanMintedValue() -> MintedValue {
 
 pub fn oracleMintedValue() -> MintedValue {
   let oracleToken = oracleTokenValue()
+  let interestToken = oracleTokenValue()
+  let combinedValue = value.merge(oracleToken, interestToken)
 
-  value.to_minted_value(oracleToken)
+  value.to_minted_value(combinedValue)
 }
 
 //        //

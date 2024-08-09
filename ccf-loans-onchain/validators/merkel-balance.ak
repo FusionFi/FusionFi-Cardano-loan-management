@@ -3,7 +3,7 @@ use aiken/transaction.{
   InlineDatum, Input, Output, ScriptContext, Transaction, WithdrawFrom,
   placeholder,
 }
-use aiken/transaction/credential
+// use aiken/transaction/credential
 use aiken/transaction/value.{PolicyId}
 use ccfl/helpers.{merkelTx}
 use ccfl/types.{
@@ -45,13 +45,13 @@ validator(p: PolicyId, cp: PolicyId) {
       )
 
     expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
+    expect _cDatum: MerkelConfigDatum = datum
 
     merkelTx(
       fn(collateral, loan) {
-        expect loanToken = value.without_lovelace(loan.value)
+        let loanToken = value.without_lovelace(loan.value)
         expect InlineDatum(datum) = collateral.datum
-        expect colDatum: CollateralDatum = datum
+        expect _colDatum: CollateralDatum = datum
         expect InlineDatum(datum) = loan.datum
         expect loanDatum: LoanDatum = datum
         expect Some(loanIn) =
@@ -75,7 +75,7 @@ validator(p: PolicyId, cp: PolicyId) {
             },
           )
         expect InlineDatum(datum) = colIn.output.datum
-        expect cin: CollateralDatum = datum
+        expect _cin: CollateralDatum = datum
 
         let adaOut = value.lovelace_of(collateral.value) / 1000000
         let exchangeAdjustment = loanDatum.amount * 1000
@@ -96,16 +96,16 @@ validator(p: PolicyId, cp: PolicyId) {
 //                 //
 
 test merkel_balance_single() {
-  let inRatio = 2
-  let outRatio = 2
+  let inRatio = 1000
+  let outRatio = 1000
 
   let inLoanAmount = 1000
-  let inCollateralAmount = 1000
+  let inCollateralAmount = 2000
   let inCollateralValue = 2000
 
   let outLoanAmount = 1000
-  let outCollateralAmount = 1000
-  let outCollateralValue = 2000
+  let outCollateralAmount = 2000
+  let outCollateralValue = 4000
 
   let test_owner = #"face"
 

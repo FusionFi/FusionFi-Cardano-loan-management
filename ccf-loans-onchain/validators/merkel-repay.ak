@@ -99,7 +99,7 @@ validator(p: PolicyId, cp: PolicyId) {
             },
           )
         expect InlineDatum(datum) = colIn.output.datum
-        expect cin: CollateralDatum = datum
+        expect _cin: CollateralDatum = datum
 
         let adaOut = value.lovelace_of(collateral.value)
         let exchangeAdjustment = loanDatum.amount * 1000
@@ -137,7 +137,7 @@ validator(p: PolicyId, cp: PolicyId) {
         let interestPaymentValue = interestRequirement / exchangeRate
         trace string.from_int(interestPaymentValue)
 
-        expect Some(payment) =
+        expect Some(_payment) =
           list.find(
             outputs,
             fn(output) {

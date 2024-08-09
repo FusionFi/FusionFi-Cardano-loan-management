@@ -1,13 +1,12 @@
 use aiken/dict
 use aiken/list
 use aiken/transaction.{
-  InlineDatum, NoDatum, Output, ScriptContext, Transaction, WithdrawFrom,
-  placeholder,
+  InlineDatum, Output, ScriptContext, Transaction, WithdrawFrom, placeholder,
 }
 use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkelBurn, withBurn}
-use ccfl/types.{CollateralDatum, LoanDatum, ScriptHash, WithdrawRedeemer}
+use ccfl/helpers.{merkelBurn}
+use ccfl/types.{CollateralDatum, LoanDatum, WithdrawRedeemer}
 use tests/tools as t
 use tests/transactions as tx
 
@@ -67,8 +66,8 @@ validator(lp: PolicyId, op: PolicyId) {
 //                 //
 
 test merkel_close_single() {
-  let inRatio = 2
-  let outRatio = 2
+  let inRatio = 1000
+  let outRatio = 1000
 
   let inLoanAmount = 0
   let inCollateralAmount = 0
@@ -76,8 +75,7 @@ test merkel_close_single() {
 
   let test_owner = #"face"
 
-  let configDatum = tx.configDatumIn()
-
+  // let configDatum = tx.configDatumIn()
   let withdraw0 = tx.withdrawal(t.merkelClose)
 
   let loanIn1 = tx.mLoanInput(1, inLoanAmount)
@@ -89,7 +87,7 @@ test merkel_close_single() {
   let oracleIn = tx.oracleInput(inRatio)
   let oracleOut = tx.oracleOutput(outRatio)
 
-  let redeemerList = tx.withdrawRedeemer([3])
+  let redeemerList = tx.withdrawRedeemer([0])
 
   let tx =
     Transaction {

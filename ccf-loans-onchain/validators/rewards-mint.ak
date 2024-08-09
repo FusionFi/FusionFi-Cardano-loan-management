@@ -2,7 +2,7 @@ use aiken/dict
 use aiken/list.{find, has}
 use aiken/transaction.{
   InlineDatum, Input, Mint, NoDatum, Output, ScriptContext, Transaction,
-  find_script_outputs, placeholder,
+  placeholder,
 }
 use aiken/transaction/value.{PolicyId, policies}
 use ccfl/types.{
@@ -16,11 +16,11 @@ use tests/transactions as tx
 // Rewards Token Minting Policy //
 //                              //
 
-validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
+validator(_o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
   fn rewardsMint(r: RewardsAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
-    let Transaction { mint, outputs, inputs, .. } = transaction
+    let Transaction { mint, inputs, .. } = transaction
 
     expect Some(refIn) =
       find(
@@ -29,7 +29,7 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
       )
 
     expect InlineDatum(datum) = refIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
+    expect _cDatum: MerkelConfigDatum = datum
 
     expect [Pair(tName, tAmt)] =
       mint
@@ -37,7 +37,7 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
         |> value.tokens(policyId)
         |> dict.to_pairs()
 
-    expect burnedLoanList =
+    let _burnedLoanList =
       mint
         |> value.from_minted_value()
         |> value.tokens(lp)
@@ -45,9 +45,9 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
 
     when r is {
       RewardMint -> {
-        expect Some(loanIn) =
+        expect Some(_loanIn) =
           find(
-            transaction.inputs,
+            inputs,
             fn(input) {
               expect InlineDatum(datum) = input.output.datum
               expect lDatum: LoanDatum = datum
@@ -62,82 +62,48 @@ validator(o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
     }
   }
 }
-// expect [] = find_script_outputs(outputs, cDatum.loanVal)
-// tAmt == lDatum.rewards && 
-// let loanInputs =
-//   list.filter(
-//     inputs,
-//     fn(input) { has(policies(input.output.value), lp) },
-//   )
-// expect
-//   list.all(
-//     inputs,
-//     fn(input) {
-//       let loanTokenList =
-//         input.output.value
-//           |> value.tokens(lp)
-//           |> dict.to_pairs()
-//       // expect list.length(loanToken) == 1
-//       expect [Pair(lName, 1)] = loanTokenList
-//       // expect Some(loanToken) = list.head(loanTokenList)
-//       list.has(burnedLoanList, Pair(lName, -2))
-//     },
-//   )
-// let loanRewardsValue =
-//   list.foldl(
-//     loanInputs,
-//     0,
-//     fn(input, accumulator) {
-//       expect InlineDatum(datum) = input.output.datum
-//       expect loanDatum: LoanDatum = datum
-//       expect loanDatum.amount == 0
-//       loanDatum.rewards + accumulator
-//     },
-//   )
-// && tAmt == loanRewardsValue
+
 //                    //
 // Rewards Mint Tests //
 //                    //
 
-// test rewards_mint() {
-//   let loanValue = 1000
+test rewards_mint() {
+  let loanValue = 1000
 
-//   let test_owner = #"face"
+  let test_owner = #"face"
 
-//   // let test_user = #"cafe"
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
+  // let test_user = #"cafe"
+  // let oref = t.test_oref(#"face", 1)
+  // let rref = t.test_oref(#"dead", 6)
+  let rewardsAction = tx.rewardsActionMint()
 
-//   let rewardsAction = tx.rewardsActionMint()
+  let outDatum = NoDatum
 
-//   let outDatum = NoDatum
+  let loanInput = tx.loanInput(1, loanValue)
 
-//   let loanInput = tx.loanInput(1, loanValue)
+  let userOutput =
+    t.test_output(
+      t.test_address(test_owner),
+      t.rewardsValue(loanValue),
+      outDatum,
+    )
 
-//   let userOutput =
-//     t.test_output(
-//       t.test_address(test_owner),
-//       t.rewardsValue(loanValue),
-//       outDatum,
-//     )
+  let configIn = tx.configInput()
 
-//   let configIn = tx.configInput()
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.rewardsMintedValue(loanValue),
+      extra_signatories: [test_owner],
+      inputs: [loanInput],
+      outputs: [userOutput],
+    }
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(loanValue),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput],
-//     }
+  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
 
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
-
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
-
+  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+}
 // test rewards_mint_qty_fail() fail {
 //   let test_owner = #"face"
 

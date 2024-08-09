@@ -1,15 +1,12 @@
-use aiken/dict
 use aiken/list
 use aiken/transaction.{
-  InlineDatum, Input, NoDatum, Output, ScriptContext, Transaction, WithdrawFrom,
+  InlineDatum, Input, Output, ScriptContext, Transaction, WithdrawFrom,
   placeholder,
 }
-use aiken/transaction/credential.{Inline, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkelTx, withdraw4}
+use ccfl/helpers.{merkelTx}
 use ccfl/types.{
-  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, ScriptHash,
-  WithdrawRedeemer,
+  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawRedeemer,
 }
 use tests/tools as t
 use tests/transactions as tx
@@ -22,7 +19,7 @@ validator(p: PolicyId, cp: PolicyId) {
   fn liquidate(r: WithdrawRedeemer, c: ScriptContext) {
     expect ScriptContext {
       transaction,
-      purpose: WithdrawFrom(stake_credential),
+      purpose: WithdrawFrom(_stake_credential),
     } = c
 
     let Transaction { inputs, outputs, reference_inputs, .. } = transaction
@@ -42,11 +39,11 @@ validator(p: PolicyId, cp: PolicyId) {
         fn(input) { list.has(value.policies(input.output.value), cp) },
       )
     expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
+    expect _cDatum: MerkelConfigDatum = datum
 
     merkelTx(
       fn(collateral, loan) {
-        expect loanToken = value.without_lovelace(loan.value)
+        let loanToken = value.without_lovelace(loan.value)
         expect InlineDatum(datum) = collateral.datum
         expect colDatum: CollateralDatum = datum
         expect InlineDatum(datum) = loan.datum
@@ -72,14 +69,14 @@ validator(p: PolicyId, cp: PolicyId) {
             },
           )
         expect InlineDatum(datum) = colIn.output.datum
-        expect cin: CollateralDatum = datum
+        expect _cin: CollateralDatum = datum
 
         let expectedOracle = value.from_asset(p, lin.oracle, 1)
 
         let exchangeAdjustment = lin.amount * 1000
         let loanExpected = exchangeAdjustment / exchangeRate
-        let adaOut = value.lovelace_of(collateral.value) / 1000000
 
+        // let adaOut = value.lovelace_of(collateral.value) / 1000000
         let ratio = loanDatum.amount * 1000 / ( exchangeAdjustment / 100 )
 
         value.lovelace_of(colIn.output.value) / 1000000 <= loanExpected * 85 / 100 && value.without_lovelace(

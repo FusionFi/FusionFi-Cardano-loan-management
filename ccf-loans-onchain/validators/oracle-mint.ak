@@ -10,9 +10,9 @@ use ccfl/types.{
   VerificationKeyHash,
 }
 use tests/tools as t
-use tests/transactions.{
-  collateralDatum, configInput, oracleDatum, oracleMintActionMint,
-}
+use tests/transactions.{configInput, interestDatum, oracleDatum}
+
+//oracleMintActionMint,
 
 //             //
 // Oracle Mint //
@@ -23,7 +23,7 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
 
-    expect [Pair(oName, oAmt)] =
+    expect [Pair(_oName, oAmt)] =
       transaction.mint
         |> from_minted_value()
         |> tokens(policyId)
@@ -55,7 +55,7 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
           list.find(
             transaction.outputs,
             fn(output) {
-              expect [Pair(oName, 1)] =
+              expect [Pair(_oName, 1)] =
                 output.value
                   |> value.without_lovelace()
                   |> value.tokens(policyId)
@@ -78,7 +78,7 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
           list.find(
             transaction.outputs,
             fn(output) {
-              expect [Pair(oName, 1)] =
+              expect [Pair(_oName, 1)] =
                 output.value
                   |> value.without_lovelace()
                   |> value.tokens(policyId)
@@ -103,47 +103,81 @@ validator(o: VerificationKeyHash, cp: PolicyId) {
     }
   }
 }
+
 //       //
 // Tests //
 //       //
 
-// test oracle_mint() {
-//   let test_owner = #"face"
+test oracle_mint() {
+  let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+  let exchange = 500
+  let timestamp = 11111111
+  let currency = "USD"
+  let supply = 1000000
+  let borrowed = 200000
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let term = 12
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2, #"beef")
-//   let outDatum = InlineDatum(oracleDatum1)
-//   let configIn = configInput()
+  let oracleMintAction =
+    OMint {
+      exchange,
+      timestamp,
+      currency,
+      supply,
+      borrowed,
+      base,
+      optimal,
+      slope1,
+      slope2,
+      term,
+    }
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+  let oref = t.test_oref(#"face", 1)
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+  let oracleDatum1 =
+    oracleDatum(exchange, timestamp, supply, borrowed, currency)
+  let interestDatum = interestDatum(base, optimal, slope1, slope2, term)
+  let outDatum = InlineDatum(oracleDatum1)
+  let configIn = configInput()
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.oracleMintedValue(),
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [oracleOutput],
-//     }
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
 
-//   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
 
-//   oracleMint(test_owner, t.configMintHash, oracleMintActionMint(), ctx)?
-// }
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.oracleValue(),
+      InlineDatum(interestDatum),
+    )
 
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.oracleMintedValue(),
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [oracleOutput, interestOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+
+  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+}
 // test oracle_mint_qty_fail() fail {
 //   let test_owner = #"face"
 

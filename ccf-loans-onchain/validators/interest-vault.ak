@@ -16,7 +16,7 @@ use tests/transactions.{interestAction, interestDatum}
 // validator for handling updating and enforcing rates
 
 validator(op: PolicyId, o: VerificationKeyHash) {
-  fn interest(d: InterestDatum, r: InterestAction, c: ScriptContext) {
+  fn interest(_d: InterestDatum, r: InterestAction, c: ScriptContext) {
     let ScriptContext { transaction, purpose } = c
     expect Spend(ownRef) = purpose
 
@@ -99,5 +99,313 @@ test interestUpdate() {
 
   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
+  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+}
+
+test interest_sigFail() fail {
+  let test_owner = #"face"
+  let vulnSig = #"aced"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let interestDatum1 = interestDatum(55, 70, 40, 300, 12)
+  let interestDatum2 = interestDatum(55, 70, 40, 300, 12)
+  let inDatum = InlineDatum(interestDatum1)
+  let outDatum = InlineDatum(interestDatum2)
+
+  let interestInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let interestAction = interestAction(55, 70, 40, 300, 12)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [vulnSig],
+      inputs: [interestInput],
+      outputs: [interestOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)
+}
+
+test interest_datumFail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let interestDatum1 = interestDatum(55, 70, 40, 300, 12)
+  let interestDatum2 = interestDatum(55, 70, 50, 300, 12)
+  let inDatum = InlineDatum(interestDatum1)
+  let outDatum = InlineDatum(interestDatum2)
+
+  let interestInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let interestAction = interestAction(55, 70, 40, 300, 12)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [interestInput],
+      outputs: [interestOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)
+}
+
+test interest_actionFail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let interestDatum1 = interestDatum(55, 70, 40, 300, 12)
+  let interestDatum2 = interestDatum(55, 70, 40, 300, 12)
+  let inDatum = InlineDatum(interestDatum1)
+  let outDatum = InlineDatum(interestDatum2)
+
+  let interestInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let interestAction = interestAction(55, 70, 50, 300, 12)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [interestInput],
+      outputs: [interestOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)
+}
+
+test interest_outputFail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let interestDatum1 = interestDatum(55, 70, 40, 300, 12)
+  let interestDatum2 = interestDatum(55, 70, 40, 300, 12)
+  let inDatum = InlineDatum(interestDatum1)
+  let outDatum = InlineDatum(interestDatum2)
+
+  let interestInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let vulnOutput =
+    t.test_output(
+      t.test_script_address(t.loanValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let interestAction = interestAction(55, 70, 40, 300, 12)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [interestInput],
+      outputs: [vulnOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+}
+
+test interest_inputFail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let interestDatum1 = interestDatum(55, 70, 40, 300, 12)
+  let interestDatum2 = interestDatum(55, 70, 40, 300, 12)
+  let inDatum = InlineDatum(interestDatum1)
+  let outDatum = InlineDatum(interestDatum2)
+
+  let interestInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let vulnInput =
+    t.test_input(
+      t.test_oref(#"aced", 1),
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.loanValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let interestAction = interestAction(55, 70, 40, 300, 12)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [interestInput, vulnInput],
+      outputs: [interestOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+}
+
+test interest_outTokenFail() fail {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let interestDatum1 = interestDatum(55, 70, 40, 300, 12)
+  let interestDatum2 = interestDatum(55, 70, 40, 300, 12)
+  let inDatum = InlineDatum(interestDatum1)
+  let outDatum = InlineDatum(interestDatum2)
+
+  let interestInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let vulnOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.configValue(),
+      outDatum,
+    )
+
+  let interestAction = interestAction(55, 70, 40, 300, 12)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [interestInput],
+      outputs: [vulnOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+
+  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+}
+
+test interest_tokenChange() {
+  let test_owner = #"face"
+
+  let oref = t.test_oref(#"face", 1)
+
+  let interestDatum1 = interestDatum(55, 70, 40, 300, 12)
+  let interestDatum2 = interestDatum(55, 70, 40, 300, 12)
+  let inDatum = InlineDatum(interestDatum1)
+  let outDatum = InlineDatum(interestDatum2)
+
+  let interestInput =
+    t.test_input(
+      oref,
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        inDatum,
+      ),
+    )
+
+  let vulnOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      value.merge(
+        value.from_lovelace(2),
+        value.from_asset(t.oracleMintHash, #"cece", 1),
+      ),
+      outDatum,
+    )
+
+  let interestAction = interestAction(55, 70, 40, 300, 12)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [interestInput],
+      outputs: [vulnOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  trace @"VULNERABILITY"
   interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
 }

@@ -353,7 +353,7 @@ export async function repayLoan() {
 
   const loanValue = inDatum.fields[0]
   const interestTimeframe = Number(timestamp - inDatum.fields[3]) * interestCalc(5.5, 70, 4, 300, 1000000, 200000) /// 100 + 1)
-  const accruedInterest = Math.floor(Number(loanValue) * interestTimeframe)
+  const accruedInterest = Math.floor(Number(loanValue * 1000n / exchange) * interestTimeframe)
 
   console.log(loanValue)
   console.log(interestTimeframe)
