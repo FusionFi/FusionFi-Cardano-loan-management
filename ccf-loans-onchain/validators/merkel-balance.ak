@@ -139,6 +139,300 @@ test merkel_balance_single() {
 
   balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
 }
+
+test balance_colAmtFail() {
+  let inRatio = 1000
+  let outRatio = 1000
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 2000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 1000
+  let outCollateralAmount = 100
+  let outCollateralValue = 4000
+
+  let test_owner = #"face"
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelBalance)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+
+  let userIn1 = tx.userInput(2024)
+  let configIn = tx.configInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx1 = tx.wCtx(t.merkelBalance, tx)
+
+  trace @"VULNERABILITY"
+  trace @"Vou can change the collateralDatum Amount"
+
+  balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
+}
+
+test balance_colValueFail() fail {
+  let inRatio = 1000
+  let outRatio = 1000
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 2000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 1000
+  let outCollateralAmount = 2000
+  let outCollateralValue = 500
+
+  let test_owner = #"face"
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelBalance)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+
+  let userIn1 = tx.userInput(2024)
+  let configIn = tx.configInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx1 = tx.wCtx(t.merkelBalance, tx)
+
+  balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
+}
+
+test balance_loanAmountFail() fail {
+  let inRatio = 1000
+  let outRatio = 1000
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 2000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 500
+  let outCollateralAmount = 1000
+  let outCollateralValue = 1000
+
+  let test_owner = #"face"
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelBalance)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+
+  let userIn1 = tx.userInput(2024)
+  let configIn = tx.configInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx1 = tx.wCtx(t.merkelBalance, tx)
+
+  balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
+}
+
+test balance_tokenSwap() fail {
+  let inRatio = 1000
+  let outRatio = 1000
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 2000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 1000
+  let outCollateralAmount = 2000
+  let outCollateralValue = 4000
+
+  let vulnToken = value.from_asset(t.loanMintHash, #"deaf", 1)
+
+  let test_owner = #"face"
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelBalance)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+
+  let userIn1 = tx.userInput(2024)
+  let configIn = tx.configInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 =
+    t.test_output(
+      t.test_script_address(t.mLoan),
+      value.merge(value.from_lovelace(2000000), vulnToken),
+      tx.loanOutDatum(outLoanAmount),
+    )
+
+  let colOut1 =
+    t.test_output(
+      t.test_script_address(t.mCol),
+      value.merge(value.from_lovelace(outCollateralValue), vulnToken),
+      tx.collateralDatumOut(outCollateralAmount),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx1 = tx.wCtx(t.merkelBalance, tx)
+
+  balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
+}
+
+test balance_oracleSwap() fail {
+  let vulnToken = value.from_asset(t.oracleMintHash, #"1234", 1)
+
+  let vulnOracleValue = value.merge(value.from_lovelace(2000000), vulnToken)
+  let inRatio = 1000
+  let outRatio = 1000
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 2000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 1000
+  let outCollateralAmount = 2000
+  let outCollateralValue = 4000
+
+  let test_owner = #"face"
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelBalance)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+
+  let userIn1 = tx.userInput(2024)
+  let configIn = tx.configInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      vulnOracleValue,
+      tx.oracleOutDatum(outRatio),
+    )
+
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx1 = tx.wCtx(t.merkelBalance, tx)
+
+  balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
+}
+
+test balance_ratioFail() fail {
+  let inRatio = 1000
+  let outRatio = 900
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 2000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 1000
+  let outCollateralAmount = 2000
+  let outCollateralValue = 2000
+
+  let test_owner = #"face"
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelBalance)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+
+  let userIn1 = tx.userInput(2024)
+  let configIn = tx.configInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx1 = tx.wCtx(t.merkelBalance, tx)
+
+  balance(t.oracleMintHash, t.configMintHash, bRedeemer, ctx1)?
+}
 // test separate_balance_single() {
 //   let inRatio = 2
 //   let outRatio = 2
