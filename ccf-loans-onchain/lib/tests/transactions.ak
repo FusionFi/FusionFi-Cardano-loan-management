@@ -1,18 +1,17 @@
-use aiken/dict
 use aiken/time.{PosixTime}
 use aiken/transaction.{
   Datum, InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext,
   Transaction,
 }
-use aiken/transaction/value.{AssetName, PolicyId}
+use aiken/transaction/value.{AssetName, Value}
 use ccfl/types.{
   AMint, CollateralAction, CollateralDatum, ConUpdate, ConfigAction, ConfigDatum,
   InterestAction, InterestDatum, InterestUpdate, LoanAction, LoanDatum,
   LoanMintAction, MConUpdate, MerkelCollateralAction, MerkelConfigAction,
   MerkelConfigDatum, MerkelLoanAction, OMint, OracleAction, OracleDatum,
   OracleMintAction, OracleUpdate, RewardMint, RewardsAction, SCBalance, SCClose,
-  SCLiquidate, SLBalance, SLClose, SLLiquidate, ScriptHash, Withdraw,
-  WithdrawRedeemer,
+  SCLiquidate, SLBalance, SLClose, SLLiquidate, ScriptHash, VerificationKeyHash,
+  Withdraw, WithdrawRedeemer,
 }
 use tests/tools as t
 
@@ -63,6 +62,7 @@ pub fn mConfigDatum(
   r: ScriptHash,
   o: ScriptHash,
   i: ScriptHash,
+  y: VerificationKeyHash,
   cR: List<ScriptHash>,
 ) -> MerkelConfigDatum {
   let datum =
@@ -72,6 +72,7 @@ pub fn mConfigDatum(
       rewardsVal: r,
       oracleVal: o,
       interestVal: i,
+      yield: y,
       collateralRedeemers: cR,
     }
   datum
@@ -197,8 +198,8 @@ pub fn collateralActionClose() -> CollateralAction {
   redeemer
 }
 
-pub fn collateralDatum(a: Int, t: PosixTime) -> CollateralDatum {
-  let datum = CollateralDatum { amount: a, timestamp: t }
+pub fn collateralDatum(a: Int, t: PosixTime, y: Int) -> CollateralDatum {
+  let datum = CollateralDatum { amount: a, timestamp: t, yield: y }
   datum
 }
 
@@ -257,6 +258,7 @@ pub fn configDatumIn() -> Datum {
       t.rewardsMintHash,
       t.oracleValHash,
       t.interestValHash,
+      #"bebe",
       [
         t.merkelCollateralBalance,
         t.merkelCollateralLiquidate,
@@ -286,8 +288,8 @@ pub fn loanDatumIn0() -> Datum {
   InlineDatum(loanDatum1)
 }
 
-pub fn collateralDatumIn(value: Int) -> Datum {
-  let collateralDatum1 = collateralDatum(value, 1111111111)
+pub fn collateralDatumIn(value: Int, yield: Int) -> Datum {
+  let collateralDatum1 = collateralDatum(value, 1111111111, yield)
   InlineDatum(collateralDatum1)
 }
 
@@ -337,10 +339,10 @@ pub fn configInput() -> Input {
   configIn
 }
 
-pub fn loanInput(_n: Int, amount: Int) -> Input {
+pub fn loanInput(n: Int, amount: Int) -> Input {
   let loanIn =
     t.test_input(
-      oref(#"face", 1),
+      oref(#"face", n),
       t.test_output(
         t.test_script_address(t.merkelLoanSpend),
         t.loanTokenValue(),
@@ -350,14 +352,46 @@ pub fn loanInput(_n: Int, amount: Int) -> Input {
   loanIn
 }
 
-pub fn collateralInput(_n: Int, amount: Int, value: Int) -> Input {
+pub fn multiLoanIn(loanToken: Value, amount: Int, index: Int) -> Input {
+  let loanIn =
+    t.test_input(
+      oref(#"face", index),
+      t.test_output(
+        t.test_script_address(t.merkelLoanSpend),
+        value.merge(loanToken, value.from_lovelace(2000000)),
+        loanDatumIn(amount),
+      ),
+    )
+  loanIn
+}
+
+pub fn collateralInput(_n: Int, amount: Int, value: Int, yield: Int) -> Input {
   let colIn =
     t.test_input(
       oref(#"cafe", 1),
       t.test_output(
         t.test_script_address(t.merkelCollateralSpend),
         value.merge(t.makeAdaValue(value), t.loanTokenValue()),
-        collateralDatumIn(amount),
+        collateralDatumIn(amount, yield),
+      ),
+    )
+  colIn
+}
+
+pub fn multiCollateralIn(
+  loanToken: Value,
+  n: Int,
+  amount: Int,
+  value: Int,
+  yield: Int,
+) -> Input {
+  let colIn =
+    t.test_input(
+      oref(#"cafe", n),
+      t.test_output(
+        t.test_script_address(t.merkelCollateralSpend),
+        value.merge(t.makeAdaValue(value), loanToken),
+        collateralDatumIn(amount, yield),
       ),
     )
   colIn
@@ -427,18 +461,43 @@ pub fn loanOutput(value: Int) -> Output {
   loanOut1
 }
 
-pub fn collateralDatumOut(amount: Int) -> Datum {
-  let collateralDatum = collateralDatum(amount, 12)
+pub fn multiLoanOut(loanToken: Value, value: Int) -> Output {
+  let loanOut1 =
+    t.test_output(
+      t.test_script_address(t.merkelLoanSpend),
+      value.merge(loanToken, value.from_lovelace(2000000)),
+      loanOutDatum(value),
+    )
+  loanOut1
+}
+
+pub fn collateralDatumOut(amount: Int, yield: Int) -> Datum {
+  let collateralDatum = collateralDatum(amount, 12, yield)
 
   InlineDatum(collateralDatum)
 }
 
-pub fn collateralOutput(amount: Int, value: Int) -> Output {
+pub fn collateralOutput(amount: Int, value: Int, yield: Int) -> Output {
   let colOut =
     t.test_output(
       t.test_script_address(t.merkelCollateralSpend),
       value.merge(t.makeAdaValue(value), t.loanTokenValue()),
-      collateralDatumOut(amount),
+      collateralDatumOut(amount, yield),
+    )
+  colOut
+}
+
+pub fn multiCollateralOut(
+  loanToken: Value,
+  amount: Int,
+  value: Int,
+  yield: Int,
+) -> Output {
+  let colOut =
+    t.test_output(
+      t.test_script_address(t.merkelCollateralSpend),
+      value.merge(t.makeAdaValue(value), loanToken),
+      collateralDatumOut(amount, yield),
     )
   colOut
 }
@@ -470,14 +529,46 @@ pub fn mLoanInput(n: Int, amount: Int) -> Input {
   loanIn
 }
 
-pub fn mCollateralInput(n: Int, amount: Int, value: Int) -> Input {
+pub fn mLoanIn(n: Int, amount: Int, loanToken: Value) -> Input {
+  let loanIn =
+    t.test_input(
+      oref(#"face", n),
+      t.test_output(
+        t.test_script_address(t.mLoan),
+        value.merge(t.makeAdaValue(2), loanToken),
+        loanDatumIn(amount),
+      ),
+    )
+  loanIn
+}
+
+pub fn mCollateralInput(n: Int, amount: Int, value: Int, yield: Int) -> Input {
   let colIn =
     t.test_input(
       oref(#"cafe", n),
       t.test_output(
         t.test_script_address(t.mCol),
         value.merge(t.makeAdaValue(value), t.loanTokenValue()),
-        collateralDatumIn(amount),
+        collateralDatumIn(amount, yield),
+      ),
+    )
+  colIn
+}
+
+pub fn mColIn(
+  n: Int,
+  amount: Int,
+  value: Int,
+  loanToken: Value,
+  yield: Int,
+) -> Input {
+  let colIn =
+    t.test_input(
+      oref(#"cafe", n),
+      t.test_output(
+        t.test_script_address(t.mCol),
+        value.merge(t.makeAdaValue(value), loanToken),
+        collateralDatumIn(amount, yield),
       ),
     )
   colIn
@@ -493,12 +584,32 @@ pub fn mLoanOutput(value: Int) -> Output {
   loanOut1
 }
 
-pub fn mCollateralOutput(amount: Int, value: Int) -> Output {
+pub fn mLoanOut(value: Int, loanToken: Value) -> Output {
+  let loanOut1 =
+    t.test_output(
+      t.test_script_address(t.mLoan),
+      value.merge(t.makeAdaValue(2), loanToken),
+      loanOutDatum(value),
+    )
+  loanOut1
+}
+
+pub fn mCollateralOutput(amount: Int, value: Int, yield: Int) -> Output {
   let colOut =
     t.test_output(
       t.test_script_address(t.mCol),
       value.merge(t.makeAdaValue(value), t.loanTokenValue()),
-      collateralDatumOut(amount),
+      collateralDatumOut(amount, yield),
+    )
+  colOut
+}
+
+pub fn mColOut(amount: Int, value: Int, loanToken: Value, yield: Int) -> Output {
+  let colOut =
+    t.test_output(
+      t.test_script_address(t.mCol),
+      value.merge(t.makeAdaValue(value), loanToken),
+      collateralDatumOut(amount, yield),
     )
   colOut
 }

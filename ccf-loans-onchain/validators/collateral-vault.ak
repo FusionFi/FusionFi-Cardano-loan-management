@@ -33,13 +33,11 @@ validator(cp: PolicyId) {
 }
 
 test collateral_vault() {
-  let user = "face"
-
   let configInDatum = tx.configDatumIn()
 
   let loanAction = tx.merkelCollateralAction(3)
 
-  let collateralDatum = tx.collateralDatum(2000, 12)
+  let collateralDatum = tx.collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
   let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
 

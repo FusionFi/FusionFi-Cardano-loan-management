@@ -93,7 +93,7 @@ validator(op: PolicyId, cp: PolicyId) {
         // checks loan values against redeemer && collateral && 2 tokens minted
         lDatum.amount == amount && lDatum.term == term && colDatum.amount == amount * 2 && lovelace_of(
           colOut.value,
-        ) >= exchangeValue * 1000000 && tAmt == 2 && lDatum.oracle == oracleTn && lDatum.rewards == rewards && lDatum.timestamp == timestamp
+        ) >= exchangeValue * 1000000 && tAmt == 2 && lDatum.oracle == oracleTn && lDatum.rewards == rewards && lDatum.timestamp == timestamp && colDatum.yield == 0
       }
       // True
       // always allows Burn -> This needs to be changed to only allow burning when the loan is 
@@ -125,7 +125,7 @@ test loan_mint() {
   let loanOutDatum = InlineDatum(loanDatum)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum = collateralDatum(2000, 12)
+  let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
   let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
@@ -216,7 +216,7 @@ test mint_loanDatumFail() fail {
   let loanOutDatum = InlineDatum(loanDatum)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum = collateralDatum(2000, 12)
+  let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
   let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
@@ -307,7 +307,7 @@ test mint_colDatumFail() fail {
   let loanOutDatum = InlineDatum(loanDatum)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum = collateralDatum(1000, 12)
+  let collateralDatum = collateralDatum(1000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
   let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
@@ -398,7 +398,7 @@ test mint_actionFail() fail {
   let loanOutDatum = InlineDatum(loanDatum)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum = collateralDatum(2000, 12)
+  let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
   let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
@@ -489,7 +489,7 @@ test mint_oracleFail() fail {
   let loanOutDatum = InlineDatum(loanDatum)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum = collateralDatum(2000, 12)
+  let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
   let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
@@ -580,7 +580,7 @@ test collateral_ValueFail() {
   let loanOutDatum = InlineDatum(loanDatum)
   let loanOutValue = t.loanTokenValue()
 
-  let collateralDatum = collateralDatum(2000, 12)
+  let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
   let colOutValue = value.merge(t.makeAdaValue(1002), t.loanTokenValue())
 

@@ -9,11 +9,15 @@ use aiken/transaction/credential.{
 }
 use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
 
+pub const yieldIn = #"3c30a1becdf0b0f35e0f575031d793333200a13beb08a5afb35a5bc6"
+
+pub const yieldOut = #"0f9f51c83f607b8131e2d62ccf0cb9d7406d080e303478013914ac91"
+
 pub const interestValHash =
   #"8776cedf0c2677a95328e64f05de2c142a39f4ed9bf7ec877cc93352"
 
 pub const merkelRepay =
-  #"b4f6ee44a656ce9aac4f5adc0c72f4e48fc532f02907ec0ce1e44834"
+  #"1e356ca1c4624f748adbfd5b999a3a3c69b66bc94ed040ffefd639fc"
 
 pub const merkelClose =
   #"93fb1f13c199bdb5ec24cc6b171a7f57448c9cab20c5de7068619d4c"

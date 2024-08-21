@@ -5,7 +5,7 @@ use aiken/transaction.{
   InlineDatum, Input, Output, ScriptContext, Transaction, WithdrawFrom,
   placeholder,
 }
-use aiken/transaction/credential.{ScriptCredential}
+use aiken/transaction/credential.{ScriptCredential, VerificationKeyCredential}
 use aiken/transaction/value.{PolicyId}
 use ccfl/helpers.{merkelTx}
 use ccfl/interestcalcs.{
@@ -23,7 +23,7 @@ use tests/transactions as tx
 // Merkel Balance validates the whole transaction for the Balance redeemer case
 // it combines both the merkel-loan && merkel-collateral cases together
 
-validator(p: PolicyId, cp: PolicyId) {
+validator(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
   fn repay(r: WithdrawRedeemer, c: ScriptContext) {
     // True
     expect ScriptContext {
@@ -99,9 +99,9 @@ validator(p: PolicyId, cp: PolicyId) {
             },
           )
         expect InlineDatum(datum) = colIn.output.datum
-        expect _cin: CollateralDatum = datum
+        expect cin: CollateralDatum = datum
 
-        let adaOut = value.lovelace_of(collateral.value)
+        let adaOut = value.lovelace_of(collateral.value) + colDatum.yield
         let exchangeAdjustment = loanDatum.amount * 1000
         let expectedCollateral = exchangeAdjustment / exchangeRate
         let minCollateralValue = expectedCollateral * 2
@@ -126,10 +126,8 @@ validator(p: PolicyId, cp: PolicyId) {
               rDatum.borrowed,
             ),
           )
-        trace string.from_int(interestCalc)
 
         let interestTimeframe = rDatum.timestamp - lin.timestamp
-        trace string.from_int(interestTimeframe)
 
         let interestRequirement =
           interestPayment(interestTimeframe, lin.amount, interestCalc)
@@ -141,12 +139,15 @@ validator(p: PolicyId, cp: PolicyId) {
           list.find(
             outputs,
             fn(output) {
+              // we need to validate the pkh here -> either param or configDatum
               // times 10 to convert to lovelace value
-              value.lovelace_of(output.value) >= interestPaymentValue
+              output.address.payment_credential == VerificationKeyCredential(
+                pkh,
+              ) && value.lovelace_of(output.value) == interestPaymentValue
             },
           )
 
-        (adaOut >= minCollateralValue)? && (value.without_lovelace(
+        (adaOut >= minCollateralValue)? && cin.yield == colDatum.yield && (value.without_lovelace(
           oracleOut.value,
         ) == expectedOracle)? && (loanDatum.amount <= lin.amount)? && colDatum.amount == loanDatum.amount * 2 && (loanDatum.timestamp == rDatum.timestamp)?
       },
@@ -157,6 +158,325 @@ validator(p: PolicyId, cp: PolicyId) {
 }
 
 test repay_interest() {
+  let inRatio = 1000
+  let outRatio = 1000
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 1000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 500
+  let outCollateralAmount = 1000
+  let outCollateralValue = 2000
+
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let supply = 1000000
+  let borrowed = 200000
+  let utilisation = 1000000 / 200000
+
+  let test_owner = #"face"
+  let interestAddr = #"deaf"
+
+  let inTimestamp = 1721819831
+  let outTimestamp = 1724449574
+
+  let timeframe = outTimestamp - inTimestamp
+
+  // trace string.from_int(timeframe)
+  let interest =
+    if_then_else(
+      utilisation <= optimal,
+      interestSlope1(base, optimal, slope1, supply, borrowed),
+      interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
+    )
+
+  // trace string.from_int(interest)
+  let interestPayment = interestPayment(timeframe, inLoanAmount, interest)
+
+  // trace string.from_int(interestPayment)
+  let interestExchange = interestPayment / outRatio
+
+  // trace string.from_int(interestExchange)
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelRepay)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue, 0)
+
+  let userIn1 = tx.userInput(2000000)
+  let configIn = tx.configInput()
+  let interestIn = tx.interestInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue, 0)
+  let interestOut = tx.interestOutput(interestExchange)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn, interestIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut, interestOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx = tx.wCtx(t.merkelRepay, tx)
+
+  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+}
+
+test repay_colAmtFail() fail {
+  let inRatio = 2
+  let outRatio = 2
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 1000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 500
+  let outCollateralAmount = 10
+  let outCollateralValue = 2000
+
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let supply = 1000000
+  let borrowed = 200000
+  let utilisation = 1000000 / 200000
+
+  let test_owner = #"face"
+  let interestAddr = #"deaf"
+
+  let inTimestamp = 1721819831
+  let outTimestamp = 1724449574
+
+  let timeframe = outTimestamp - inTimestamp
+
+  // trace string.from_int(timeframe)
+  let interest =
+    if_then_else(
+      utilisation <= optimal,
+      interestSlope1(base, optimal, slope1, supply, borrowed),
+      interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
+    )
+
+  // trace string.from_int(interest)
+  let interestPayment = interestPayment(timeframe, inLoanAmount, interest)
+
+  // trace string.from_int(interestPayment)
+  let interestExchange = interestPayment / outRatio
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelRepay)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue, 0)
+
+  let userIn1 = tx.userInput(2000000)
+  let configIn = tx.configInput()
+  let interestIn = tx.interestInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue, 0)
+  let interestOut = tx.interestOutput(interestExchange)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn, interestIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut, interestOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx = tx.wCtx(t.merkelRepay, tx)
+
+  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+}
+
+test repay_loanAmtFail() fail {
+  let inRatio = 2
+  let outRatio = 2
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 1000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 1000
+  let outCollateralAmount = 1000
+  let outCollateralValue = 2000
+
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let supply = 1000000
+  let borrowed = 200000
+  let utilisation = 1000000 / 200000
+
+  let test_owner = #"face"
+  let interestAddr = #"deaf"
+
+  let inTimestamp = 1721819831
+  let outTimestamp = 1724449574
+
+  let timeframe = outTimestamp - inTimestamp
+
+  // trace string.from_int(timeframe)
+  let interest =
+    if_then_else(
+      utilisation <= optimal,
+      interestSlope1(base, optimal, slope1, supply, borrowed),
+      interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
+    )
+
+  // trace string.from_int(interest)
+  let interestPayment = interestPayment(timeframe, inLoanAmount, interest)
+
+  // trace string.from_int(interestPayment)
+  let interestExchange = interestPayment / outRatio
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelRepay)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue, 0)
+
+  let userIn1 = tx.userInput(2000000)
+  let configIn = tx.configInput()
+  let interestIn = tx.interestInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 = tx.mLoanOutput(outLoanAmount)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue, 0)
+  let interestOut = tx.interestOutput(interestExchange)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn, interestIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut, interestOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx = tx.wCtx(t.merkelRepay, tx)
+
+  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+}
+
+test repay_tokenSwap() fail {
+  let vulnToken = value.from_asset(t.loanMintHash, #"deaf", 1)
+
+  let inRatio = 2
+  let outRatio = 2
+
+  let inLoanAmount = 1000
+  let inCollateralAmount = 1000
+  let inCollateralValue = 2000
+
+  let outLoanAmount = 500
+  let outCollateralAmount = 1000
+  let outCollateralValue = 2000
+
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let supply = 1000000
+  let borrowed = 200000
+  let utilisation = 1000000 / 200000
+
+  let test_owner = #"face"
+  let interestAddr = #"deaf"
+
+  let inTimestamp = 1721819831
+  let outTimestamp = 1724449574
+
+  let timeframe = outTimestamp - inTimestamp
+
+  // trace string.from_int(timeframe)
+  let interest =
+    if_then_else(
+      utilisation <= optimal,
+      interestSlope1(base, optimal, slope1, supply, borrowed),
+      interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
+    )
+
+  // trace string.from_int(interest)
+  let interestPayment = interestPayment(timeframe, inLoanAmount, interest)
+
+  // trace string.from_int(interestPayment)
+  let interestExchange = interestPayment / outRatio
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelRepay)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanInput(1, inLoanAmount)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue, 0)
+
+  let userIn1 = tx.userInput(2000000)
+  let configIn = tx.configInput()
+  let interestIn = tx.interestInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 =
+    t.test_output(
+      t.test_script_address(t.mLoan),
+      value.merge(value.from_lovelace(2000000), vulnToken),
+      tx.loanOutDatum(outLoanAmount),
+    )
+
+  let colOut1 =
+    t.test_output(
+      t.test_script_address(t.mCol),
+      value.merge(value.from_lovelace(outCollateralValue), vulnToken),
+      tx.collateralDatumOut(outCollateralAmount, 0),
+    )
+
+  let interestOut = tx.interestOutput(interestExchange)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn, interestIn],
+      extra_signatories: [test_owner],
+      inputs: [colIn1, loanIn1, oracleIn, userIn1],
+      outputs: [colOut1, loanOut1, oracleOut, interestOut],
+      withdrawals: withdraw0,
+    }
+
+  let ctx = tx.wCtx(t.merkelRepay, tx)
+
+  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+}
+
+test repay_oracleSwap() fail {
+  let vulnToken = value.from_asset(t.oracleMintHash, #"1234", 1)
+
+  let vulnOracleValue = value.merge(value.from_lovelace(2000000), vulnToken)
+
   let inRatio = 2
   let outRatio = 2
 
@@ -178,6 +498,14 @@ test repay_interest() {
 
   let test_owner = #"face"
 
+  let interestAddr = #"deaf"
+
+  let inTimestamp = 1721819831
+  let outTimestamp = 1724449574
+
+  let timeframe = outTimestamp - inTimestamp
+
+  // trace string.from_int(timeframe)
   let interest =
     if_then_else(
       utilisation <= optimal,
@@ -185,7 +513,11 @@ test repay_interest() {
       interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
     )
 
-  trace string.from_int(interest)
+  // trace string.from_int(interest)
+  let interestPayment = interestPayment(timeframe, inLoanAmount, interest)
+
+  // trace string.from_int(interestPayment)
+  let interestExchange = interestPayment / outRatio
 
   // withdrawl
   let withdraw0 = tx.withdrawal(t.merkelRepay)
@@ -193,17 +525,22 @@ test repay_interest() {
   let bRedeemer = tx.withdrawRedeemer([0])
 
   let loanIn1 = tx.mLoanInput(1, inLoanAmount)
-  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue)
+  let colIn1 = tx.mCollateralInput(1, inCollateralAmount, inCollateralValue, 0)
 
   let userIn1 = tx.userInput(2000000)
   let configIn = tx.configInput()
   let interestIn = tx.interestInput()
   let oracleIn = tx.oracleInput(inRatio)
-  let oracleOut = tx.oracleOutput(outRatio)
+  let oracleOut =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      vulnOracleValue,
+      tx.oracleOutDatum(outRatio),
+    )
 
   let loanOut1 = tx.mLoanOutput(outLoanAmount)
-  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue)
-  let interestOut = tx.interestOutput(interest)
+  let colOut1 = tx.mCollateralOutput(outCollateralAmount, outCollateralValue, 0)
+  let interestOut = tx.interestOutput(interestExchange)
 
   let tx =
     Transaction {
@@ -217,5 +554,142 @@ test repay_interest() {
 
   let ctx = tx.wCtx(t.merkelRepay, tx)
 
-  repay(t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+}
+
+test repay_multi() {
+  let inRatio = 1000
+  let outRatio = 1000
+
+  let loanToken1 = value.from_asset(t.loanMintHash, #"aced", 1)
+  let loanToken2 = value.from_asset(t.loanMintHash, #"beef", 1)
+  let loanToken3 = value.from_asset(t.loanMintHash, #"ceed", 1)
+
+  let inLoanAmount1 = 1000
+  let inCollateralAmount1 = 1000
+  let inCollateralValue1 = 2000
+
+  let outLoanAmount1 = 1000
+  let outCollateralAmount1 = 2000
+  let outCollateralValue1 = 2000
+
+  let inLoanAmount2 = 1000
+  let inCollateralAmount2 = 2000
+  let inCollateralValue2 = 4000
+
+  let outLoanAmount2 = 500
+  let outCollateralAmount2 = 1000
+  let outCollateralValue2 = 4000
+
+  let inLoanAmount3 = 500
+  let inCollateralAmount3 = 1000
+  let inCollateralValue3 = 2000
+
+  let outLoanAmount3 = 500
+  let outCollateralAmount3 = 1000
+  let outCollateralValue3 = 2000
+
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let supply = 1000000
+  let borrowed = 200000
+  let utilisation = 1000000 / 200000
+
+  let test_owner = #"face"
+  let interestAddr = #"deaf"
+
+  let inTimestamp = 1721819831
+  let outTimestamp = 1724449574
+
+  let timeframe = outTimestamp - inTimestamp
+
+  // trace string.from_int(timeframe)
+  let interest =
+    if_then_else(
+      utilisation <= optimal,
+      interestSlope1(base, optimal, slope1, supply, borrowed),
+      interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
+    )
+
+  // trace string.from_int(interest)
+  let interestPayment1 = interestPayment(timeframe, inLoanAmount1, interest)
+  let interestPayment2 = interestPayment(timeframe, inLoanAmount2, interest)
+  let interestPayment3 = interestPayment(timeframe, inLoanAmount3, interest)
+
+  let interestExchange1 = interestPayment1 / outRatio
+  let interestExchange2 = interestPayment2 / outRatio
+  let interestExchange3 = interestPayment3 / outRatio
+  trace string.from_int(interestExchange1)
+
+  // withdrawl
+  let withdraw0 = tx.withdrawal(t.merkelRepay)
+
+  let bRedeemer = tx.withdrawRedeemer([0])
+
+  let loanIn1 = tx.mLoanIn(1, inLoanAmount1, loanToken1)
+  let colIn1 =
+    tx.mColIn(1, inCollateralAmount1, inCollateralValue1, loanToken1, 0)
+  let loanIn2 = tx.mLoanIn(2, inLoanAmount2, loanToken2)
+  let colIn2 =
+    tx.mColIn(2, inCollateralAmount2, inCollateralValue2, loanToken2, 0)
+  let loanIn3 = tx.mLoanIn(3, inLoanAmount3, loanToken3)
+  let colIn3 =
+    tx.mColIn(3, inCollateralAmount3, inCollateralValue3, loanToken3, 0)
+
+  let userIn1 = tx.userInput(2000)
+  let configIn = tx.configInput()
+  let interestIn = tx.interestInput()
+  let oracleIn = tx.oracleInput(inRatio)
+  let oracleOut = tx.oracleOutput(outRatio)
+
+  let loanOut1 = tx.mLoanOut(outLoanAmount1, loanToken1)
+  let colOut1 =
+    tx.mColOut(outCollateralAmount1, outCollateralValue1, loanToken1, 0)
+  let interestOut1 = tx.interestOutput(interestExchange1)
+  let loanOut2 = tx.mLoanOut(outLoanAmount2, loanToken2)
+  let colOut2 =
+    tx.mColOut(outCollateralAmount2, outCollateralValue2, loanToken2, 0)
+  let interestOut2 = tx.interestOutput(interestExchange2)
+  let loanOut3 = tx.mLoanOut(outLoanAmount3, loanToken3)
+  let colOut3 =
+    tx.mColOut(outCollateralAmount3, outCollateralValue3, loanToken3, 0)
+  let interestOut3 = tx.interestOutput(interestExchange3)
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn, interestIn],
+      extra_signatories: [test_owner],
+      inputs: [
+        colIn1,
+        loanIn1,
+        colIn2,
+        loanIn2,
+        colIn3,
+        loanIn3,
+        oracleIn,
+        userIn1,
+      ],
+      outputs: [
+        colOut1,
+        loanOut1,
+        colOut2,
+        loanOut2,
+        colOut3,
+        loanOut3,
+        oracleOut,
+        interestOut1,
+        interestOut2,
+        interestOut3,
+      ],
+      withdrawals: withdraw0,
+    }
+
+  // interestOut2,
+  // interestOut3,
+  let ctx = tx.wCtx(t.merkelRepay, tx)
+
+  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
 }

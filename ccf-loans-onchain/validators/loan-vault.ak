@@ -33,8 +33,6 @@ validator(cp: PolicyId) {
 }
 
 test loan_vault() {
-  let user = "face"
-
   let configInDatum = tx.configDatumIn()
 
   let loanAction = tx.merkelLoanAction(3)
@@ -93,8 +91,6 @@ test loan_vault() {
 }
 
 test loan_datumFail() {
-  let user = "face"
-
   let configInDatum = tx.configDatumIn()
 
   let loanAction = tx.merkelLoanAction(3)

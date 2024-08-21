@@ -20,7 +20,7 @@ validator(_o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
   fn rewardsMint(r: RewardsAction, c: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } = c
     expect Mint(policyId) = purpose
-    let Transaction { mint, inputs, .. } = transaction
+    let Transaction { mint, inputs, outputs, .. } = transaction
 
     expect Some(refIn) =
       find(
@@ -37,28 +37,30 @@ validator(_o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
         |> value.tokens(policyId)
         |> dict.to_pairs()
 
-    let _burnedLoanList =
-      mint
-        |> value.from_minted_value()
-        |> value.tokens(lp)
-        |> dict.to_pairs()
-
     when r is {
       RewardMint -> {
-        expect Some(_loanIn) =
+        expect Some(loanIn) =
+          find(inputs, fn(input) { has(policies(input.output.value), lp) })
+
+        expect InlineDatum(datum) = loanIn.output.datum
+        expect inDatum: LoanDatum = datum
+
+        expect Some(loanOut) =
           find(
-            inputs,
-            fn(input) {
-              expect InlineDatum(datum) = input.output.datum
-              expect lDatum: LoanDatum = datum
-              has(policies(input.output.value), lp) && tAmt == lDatum.rewards
+            outputs,
+            fn(out) {
+              value.without_lovelace(out.value) == value.without_lovelace(
+                loanIn.output.value,
+              )
             },
           )
+        expect InlineDatum(datum) = loanOut.datum
+        expect outDatum: LoanDatum = datum
 
-        tName == ""
+        tName == "" && tAmt == inDatum.rewards && outDatum.rewards == 0 && inDatum.amount == 0 && outDatum.amount == 0 && inDatum.term == outDatum.term && inDatum.timestamp == outDatum.timestamp && inDatum.oracle == outDatum.oracle
       }
 
-      RewardBurn -> tAmt <= -1
+      RewardBurn -> tAmt <= 0
     }
   }
 }
@@ -68,7 +70,58 @@ validator(_o: VerificationKeyHash, cp: PolicyId, lp: PolicyId) {
 //                    //
 
 test rewards_mint() {
+  let inLoanDatum = tx.loanDatum(0, 1000, 0, 1721819831, #"beef")
+  let outLoanDatum = tx.loanDatum(0, 0, 0, 1721819831, #"beef")
+
+  let test_owner = #"face"
+
+  // let test_user = #"cafe"
+  // let oref = t.test_oref(#"face", 1)
+  // let rref = t.test_oref(#"dead", 6)
+  let rewardsAction = tx.rewardsActionMint()
+
+  let outDatum = NoDatum
+
+  let loanInput =
+    t.test_input(
+      tx.oref(#"face", 1),
+      t.test_output(
+        t.test_script_address(t.mLoan),
+        t.loanValue(),
+        InlineDatum(inLoanDatum),
+      ),
+    )
+
+  let userOutput =
+    t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
+
+  let loanOutput =
+    t.test_output(
+      t.test_script_address(t.mLoan),
+      t.loanValue(),
+      InlineDatum(outLoanDatum),
+    )
+
+  let configIn = tx.configInput()
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.rewardsMintedValue(1000),
+      extra_signatories: [test_owner],
+      inputs: [loanInput],
+      outputs: [userOutput, loanOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
+
+  rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
+}
+
+test mint_qtyFail() fail {
   let loanValue = 1000
+  let rewardsValue = 100
 
   let test_owner = #"face"
 
@@ -84,7 +137,7 @@ test rewards_mint() {
   let userOutput =
     t.test_output(
       t.test_address(test_owner),
-      t.rewardsValue(loanValue),
+      t.rewardsValue(rewardsValue),
       outDatum,
     )
 
@@ -94,7 +147,7 @@ test rewards_mint() {
     Transaction {
       ..placeholder(),
       reference_inputs: [configIn],
-      mint: t.rewardsMintedValue(loanValue),
+      mint: t.rewardsMintedValue(rewardsValue),
       extra_signatories: [test_owner],
       inputs: [loanInput],
       outputs: [userOutput],
@@ -104,282 +157,3 @@ test rewards_mint() {
 
   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
 }
-// test rewards_mint_qty_fail() fail {
-//   let test_owner = #"face"
-
-//   // let test_user = #"cafe"
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
-
-//   let rewardsAction = rewardsActionMint()
-
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
-
-//   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
-
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.loanValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
-
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(100), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         configInDatum,
-//       ),
-//     )
-
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(100),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput],
-//     }
-
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
-
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
-
-// test rewards_mint_loanOutput_fail() fail {
-//   let test_owner = #"face"
-
-//   // let test_user = #"cafe"
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
-
-//   let rewardsAction = rewardsActionMint()
-
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
-
-//   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
-
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.loanValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
-
-//   let loanOutput =
-//     t.test_output(
-//       t.test_script_address(t.loanValHash),
-//       t.loanValue(),
-//       loanInDatum,
-//     )
-
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         configInDatum,
-//       ),
-//     )
-
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(1000),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput, loanOutput],
-//     }
-
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
-
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
-
-// test rewards_mint_config_fail() fail {
-//   let test_owner = #"face"
-
-//   // let test_user = #"cafe"
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
-
-//   let rewardsAction = rewardsActionMint()
-
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
-
-//   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
-
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.loanValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
-
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.makeAdaValue(2),
-//         configInDatum,
-//       ),
-//     )
-
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(1000),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput],
-//     }
-
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
-
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
-
-// test rewards_mint_noRewards_fail() fail {
-//   let test_owner = #"face"
-
-//   // let test_user = #"cafe"
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
-
-//   let rewardsAction = rewardsActionMint()
-
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
-
-//   let loanDatum = loanDatum(1000, 15, 0, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
-
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.loanValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
-
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         configInDatum,
-//       ),
-//     )
-
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(1000),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput],
-//     }
-
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
-
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }
-
-// test rewards_mint_fakeLoanIn_fail() fail {
-//   // this fails because we dont check the incoming script hash
-//   // if we can't remove a loan token from our control, it doesnt matter
-//   // but we could verify the loanIn Credential as we have the config refInput
-//   let test_owner = #"face"
-
-//   // let test_user = #"cafe"
-//   let oref = t.test_oref(#"face", 1)
-//   let rref = t.test_oref(#"dead", 6)
-
-//   let rewardsAction = rewardsActionMint()
-
-//   let configDatum =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let configInDatum = InlineDatum(configDatum)
-
-//   let loanDatum = loanDatum(1000, 15, 1000, 2, 1111111190)
-//   let loanInDatum = InlineDatum(loanDatum)
-//   let outDatum = NoDatum
-
-//   let loanInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.loanValue(),
-//         loanInDatum,
-//       ),
-//     )
-
-//   let userOutput =
-//     t.test_output(t.test_address(test_owner), t.rewardsValue(1000), outDatum)
-//   let configIn =
-//     t.test_input(
-//       rref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         configInDatum,
-//       ),
-//     )
-
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.rewardsMintedValue(1000),
-//       extra_signatories: [test_owner],
-//       inputs: [loanInput],
-//       outputs: [userOutput],
-//     }
-
-//   let ctx = ScriptContext { purpose: Mint(t.rewardsMintHash), transaction: tx }
-
-//   rewardsMint(test_owner, t.configMintHash, t.loanMintHash, rewardsAction, ctx)?
-// }

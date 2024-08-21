@@ -178,122 +178,316 @@ test oracle_mint() {
 
   oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
 }
-// test oracle_mint_qty_fail() fail {
-//   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+test mint_qtyFail() fail {
+  let test_owner = #"face"
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2, #"beef")
-//   let outDatum = InlineDatum(oracleDatum1)
+  let mintedValue =
+    value.from_asset(t.oracleMintHash, #"beef", 3)
+      |> value.to_minted_value()
 
-//   let configIn = configInput()
+  let exchange = 500
+  let timestamp = 11111111
+  let currency = "USD"
+  let supply = 1000000
+  let borrowed = 200000
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let term = 12
 
-//   let mintValue =
-//     value.to_minted_value(
-//       value.merge(t.oracleTokenValue(), t.oracleTokenValue()),
-//     )
+  let oracleMintAction =
+    OMint {
+      exchange,
+      timestamp,
+      currency,
+      supply,
+      borrowed,
+      base,
+      optimal,
+      slope1,
+      slope2,
+      term,
+    }
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+  let oref = t.test_oref(#"face", 1)
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+  let oracleDatum1 =
+    oracleDatum(exchange, timestamp, supply, borrowed, currency)
+  let interestDatum = interestDatum(base, optimal, slope1, slope2, term)
+  let outDatum = InlineDatum(oracleDatum1)
+  let configIn = configInput()
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: mintValue,
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [oracleOutput],
-//     }
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
 
-//   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
 
-//   oracleMint(test_owner, t.configMintHash, oracleMintActionMint(), ctx)?
-// }
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.oracleValue(),
+      InlineDatum(interestDatum),
+    )
 
-// test oracle_mint_datum_fail() fail {
-//   // This passes because we dont guarantee output datum
-//   let test_owner = #"face"
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: mintedValue,
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [oracleOutput, interestOutput],
+    }
 
-//   let oref = t.test_oref(#"face", 1)
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-//   let oracleDatum1 = collateralDatum(1, 11111111)
-//   let outDatum = InlineDatum(oracleDatum1)
+  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+}
 
-//   let configIn = configInput()
+test mint_datumFail() fail {
+  let test_owner = #"face"
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+  let exchange = 500
+  let timestamp = 11111111
+  let currency = "USD"
+  let currency2 = "EUR"
+  let supply = 1000000
+  let borrowed = 200000
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let term = 12
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+  let oracleMintAction =
+    OMint {
+      exchange,
+      timestamp,
+      currency,
+      supply,
+      borrowed,
+      base,
+      optimal,
+      slope1,
+      slope2,
+      term,
+    }
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.oracleMintedValue(),
-//       extra_signatories: [test_owner],
-//       inputs: [ownerInput],
-//       outputs: [oracleOutput],
-//     }
+  let oref = t.test_oref(#"face", 1)
 
-//   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+  let oracleDatum1 =
+    oracleDatum(exchange, timestamp, supply, borrowed, currency2)
+  let interestDatum = interestDatum(base, optimal, slope1, slope2, term)
+  let outDatum = InlineDatum(oracleDatum1)
+  let configIn = configInput()
 
-//   oracleMint(test_owner, t.configMintHash, oracleMintActionMint(), ctx)?
-// }
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
 
-// test oracle_mint_sig_fail() fail {
-//   let test_owner = #"face"
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
 
-//   let oref = t.test_oref(#"face", 1)
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.oracleValue(),
+      InlineDatum(interestDatum),
+    )
 
-//   let oracleDatum1 = oracleDatum(1, 11111111, 15, 2, #"beef")
-//   let outDatum = InlineDatum(oracleDatum1)
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: t.oracleMintedValue(),
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [oracleOutput, interestOutput],
+    }
 
-//   let configIn = configInput()
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
 
-//   let ownerInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
-//     )
+  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+}
 
-//   let oracleOutput =
-//     t.test_output(
-//       t.test_script_address(t.oracleValHash),
-//       t.oracleValue(),
-//       outDatum,
-//     )
+test mint_tokenFail() fail {
+  let mintedValue =
+    value.from_asset(t.oracleMintHash, #"beef", 3)
+      |> value.to_minted_value()
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       reference_inputs: [configIn],
-//       mint: t.oracleMintedValue(),
-//       extra_signatories: [#"cafe"],
-//       inputs: [ownerInput],
-//       outputs: [oracleOutput],
-//     }
+  let test_owner = #"face"
 
-//   let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+  let exchange = 500
+  let timestamp = 11111111
+  let currency = "USD"
+  let supply = 1000000
+  let borrowed = 200000
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let term = 12
 
-//   oracleMint(test_owner, t.configMintHash, oracleMintActionMint(), ctx)?
-// }
+  let oracleMintAction =
+    OMint {
+      exchange,
+      timestamp,
+      currency,
+      supply,
+      borrowed,
+      base,
+      optimal,
+      slope1,
+      slope2,
+      term,
+    }
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 =
+    oracleDatum(exchange, timestamp, supply, borrowed, currency)
+  let interestDatum = interestDatum(base, optimal, slope1, slope2, term)
+  let outDatum = InlineDatum(oracleDatum1)
+  let configIn = configInput()
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.oracleValue(),
+      InlineDatum(interestDatum),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: mintedValue,
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [oracleOutput, interestOutput],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+
+  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+}
+
+test mint_tokenMultiFail() fail {
+  let oracleToken = value.from_asset(t.oracleMintHash, #"cafe", 1)
+  let mintedValue =
+    value.from_asset(t.oracleMintHash, #"cafe", 2)
+      |> value.merge(t.oracleTokenValue())
+      |> value.to_minted_value()
+
+  let test_owner = #"face"
+
+  let exchange = 500
+  let timestamp = 11111111
+  let currency = "USD"
+  let supply = 1000000
+  let borrowed = 200000
+  let base = 55
+  let optimal = 70
+  let slope1 = 40
+  let slope2 = 300
+  let term = 12
+
+  let oracleMintAction =
+    OMint {
+      exchange,
+      timestamp,
+      currency,
+      supply,
+      borrowed,
+      base,
+      optimal,
+      slope1,
+      slope2,
+      term,
+    }
+
+  let oref = t.test_oref(#"face", 1)
+
+  let oracleDatum1 =
+    oracleDatum(exchange, timestamp, supply, borrowed, currency)
+  let interestDatum = interestDatum(base, optimal, slope1, slope2, term)
+  let outDatum = InlineDatum(oracleDatum1)
+  let configIn = configInput()
+
+  let ownerInput =
+    t.test_input(
+      oref,
+      t.test_output(t.test_address(test_owner), t.makeAdaValue(10), NoDatum),
+    )
+
+  let oracleOutput =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      t.oracleValue(),
+      outDatum,
+    )
+
+  let interestOutput =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      t.oracleValue(),
+      InlineDatum(interestDatum),
+    )
+
+  let oracleOutput1 =
+    t.test_output(
+      t.test_script_address(t.oracleValHash),
+      value.merge(value.from_lovelace(2000000), oracleToken),
+      outDatum,
+    )
+
+  let interestOutput1 =
+    t.test_output(
+      t.test_script_address(t.interestValHash),
+      value.merge(value.from_lovelace(2000000), oracleToken),
+      InlineDatum(interestDatum),
+    )
+
+  let tx =
+    Transaction {
+      ..placeholder(),
+      reference_inputs: [configIn],
+      mint: mintedValue,
+      extra_signatories: [test_owner],
+      inputs: [ownerInput],
+      outputs: [oracleOutput, interestOutput, oracleOutput1, interestOutput1],
+    }
+
+  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
+
+  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+}

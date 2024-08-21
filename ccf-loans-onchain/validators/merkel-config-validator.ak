@@ -78,6 +78,7 @@ test config_val() {
       t.rewardsMintHash,
       t.oracleValHash,
       t.interestValHash,
+      #"bebe",
       t.collateralRedeemers(),
     )
 
@@ -97,136 +98,100 @@ test config_val() {
 
   configVal(test_owner, t.configMintHash, configDatum, configAction, ctx)?
 }
-// test config_val_token_fail() fail {
-//   let test_owner = #"face"
 
-//   let oref = t.test_oref(#"face", 1)
+test config_tokenSwap() {
+  let vulnToken = value.from_asset(t.configMintHash, #"1234", 1)
 
-//   let configAction =
-//     tx.configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  let vulnOutputValue = value.merge(value.from_lovelace(2000000), vulnToken)
 
-//   let configDatum1 =
-//     tx.mConfigDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(configDatum1)
+  let test_owner = #"face"
 
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.makeAdaValue(10),
-//         // we dont check for a token input
-//         inDatum,
-//       ),
-//     )
+  let oref = tx.oref(#"cece", 1)
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.makeAdaValue(10),
-//       // this only fails because there is no token output
-//       outDatum,
-//     )
+  let configAction =
+    tx.mConUpdate(
+      t.mLoan,
+      t.mCol,
+      t.rewardsMintHash,
+      t.oracleValHash,
+      t.interestValHash,
+      t.collateralRedeemers(),
+    )
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
+  let configDatum =
+    tx.mConfigDatum(
+      t.mLoan,
+      t.mCol,
+      t.rewardsMintHash,
+      t.oracleValHash,
+      t.interestValHash,
+      #"bebe",
+      t.collateralRedeemers(),
+    )
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let configInput = tx.configInput()
 
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+  let configOutput =
+    t.test_output(
+      t.test_script_address(t.merkelConfigHash),
+      vulnOutputValue,
+      InlineDatum(configDatum),
+    )
 
-// test config_val_datum_fail() fail {
-//   let test_owner = #"face"
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [test_owner],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
 
-//   let oref = t.test_oref(#"face", 1)
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+  trace @"VULNERABILITY"
+  trace @"We can swap out configTokens with different names"
+  configVal(test_owner, t.configMintHash, configDatum, configAction, ctx)?
+}
 
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
+test config_sigFail() fail {
+  let test_owner = #"face"
 
-//   let oracleDatum = oracleDatum(1, 1111111111, 1, 1)
+  let oref = tx.oref(#"cece", 1)
 
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(oracleDatum)
+  let configAction =
+    tx.mConUpdate(
+      t.mLoan,
+      t.mCol,
+      t.rewardsMintHash,
+      t.oracleValHash,
+      t.interestValHash,
+      t.collateralRedeemers(),
+    )
 
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         inDatum,
-//       ),
-//     )
+  let configDatum =
+    tx.mConfigDatum(
+      t.mLoan,
+      t.mCol,
+      t.rewardsMintHash,
+      t.oracleValHash,
+      t.interestValHash,
+      #"bebe",
+      t.collateralRedeemers(),
+    )
 
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
+  let configInput = tx.configInput()
 
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [test_owner],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
+  let configOutput = tx.configOutput(configDatum)
 
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
+  let tx =
+    Transaction {
+      ..placeholder(),
+      extra_signatories: [#"dede"],
+      inputs: [configInput],
+      outputs: [configOutput],
+    }
 
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
 
-// test config_val_sig_fail() fail {
-//   let test_owner = #"face"
-
-//   let oref = t.test_oref(#"face", 1)
-
-//   let configAction =
-//     configActionUpdate(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-
-//   let configDatum1 =
-//     configDatum(t.loanValHash, t.collateralValHash, t.rewardsMintHash)
-//   let inDatum = InlineDatum(configDatum1)
-//   let outDatum = InlineDatum(configDatum1)
-
-//   let configInput =
-//     t.test_input(
-//       oref,
-//       t.test_output(
-//         t.test_script_address(t.configValHash),
-//         t.configValue(),
-//         inDatum,
-//       ),
-//     )
-
-//   let configOutput =
-//     t.test_output(
-//       t.test_script_address(t.configValHash),
-//       t.configValue(),
-//       outDatum,
-//     )
-
-//   let tx =
-//     Transaction {
-//       ..placeholder(),
-//       extra_signatories: [#"cafe"],
-//       inputs: [configInput],
-//       outputs: [configOutput],
-//     }
-
-//   let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-//   configVal(test_owner, t.configMintHash, configDatum1, configAction, ctx)?
-// }
+  configVal(test_owner, t.configMintHash, configDatum, configAction, ctx)?
+}

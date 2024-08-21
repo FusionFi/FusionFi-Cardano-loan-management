@@ -1,17 +1,3 @@
-use aiken/string
-
-// type InterestDatum {
-//   supply: Int,
-//   borrowed: Int,
-//   base: Int,
-//   optimal: Int,
-//   slope1: Int,
-//   slope2: Int,
-//   term: Int,
-//   loan: Int,
-//   ratio: Int,
-// }
-
 pub fn utilisationRatio(borrowed: Int, supply: Int) -> Int {
   borrowed / supply
 }

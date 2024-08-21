@@ -83,6 +83,7 @@ test config_mint() {
       t.rewardsMintHash,
       t.oracleValHash,
       t.interestValHash,
+      #"bebe",
       t.collateralRedeemers(),
     )
 
@@ -142,6 +143,7 @@ test config_mint_qty_fail() fail {
       t.rewardsMintHash,
       t.oracleValHash,
       t.interestValHash,
+      #"bebe",
       t.collateralRedeemers(),
     )
 
@@ -241,6 +243,7 @@ test config_mint_sigs_fail() fail {
       t.rewardsMintHash,
       t.oracleValHash,
       t.interestValHash,
+      #"bebe",
       t.collateralRedeemers(),
     )
   let outDatum = InlineDatum(configDatum1)
@@ -298,6 +301,7 @@ test multi_mint_names_fail() fail {
       t.rewardsMintHash,
       t.oracleValHash,
       t.interestValHash,
+      #"bebe",
       t.collateralRedeemers(),
     )
 
@@ -316,8 +320,7 @@ test multi_mint_names_fail() fail {
       outDatum,
     )
 
-  let vulnOut = t.test_output(t.test_address(test_owner), vulnValue, outDatum)
-
+  // let vulnOut = t.test_output(t.test_address(test_owner), vulnValue, outDatum)
   let tx =
     Transaction {
       ..placeholder(),
@@ -354,6 +357,7 @@ test config_any_output() {
       t.rewardsMintHash,
       t.oracleValHash,
       t.interestValHash,
+      #"bebe",
       t.collateralRedeemers(),
     )
 
