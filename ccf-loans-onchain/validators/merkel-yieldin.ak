@@ -3,7 +3,7 @@ use aiken/transaction.{
   InlineDatum, Input, NoDatum, Output, ScriptContext, Transaction, WithdrawFrom,
   placeholder,
 }
-use aiken/transaction/credential.{Address, VerificationKeyCredential}
+use aiken/transaction/credential.{Address, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
 use ccfl/helpers.{merkelYield}
 use ccfl/types.{CollateralDatum, MerkelConfigDatum, WithdrawRedeemer}
@@ -62,7 +62,7 @@ validator(cp: PolicyId) {
           list.find(
             outputs,
             fn(out) {
-              out.value == value.from_lovelace(outYield - inYield) && out.address.payment_credential == VerificationKeyCredential(
+              out.value == value.from_lovelace(outYield - inYield) && out.address.payment_credential == ScriptCredential(
                 cDatum.yield,
               )
             },
@@ -125,7 +125,7 @@ test yieldIn() {
   let yieldOut =
     Output {
       address: Address {
-        payment_credential: VerificationKeyCredential(#"bebe"),
+        payment_credential: ScriptCredential(#"bebe"),
         stake_credential: None,
       },
       value: value.from_lovelace(outYield),
@@ -200,7 +200,7 @@ test yield_colFail() fail {
   let yieldOut =
     Output {
       address: Address {
-        payment_credential: VerificationKeyCredential(#"bebe"),
+        payment_credential: ScriptCredential(#"bebe"),
         stake_credential: None,
       },
       value: value.from_lovelace(outYield),
@@ -314,7 +314,7 @@ test yield_multi() {
   let yieldOut1 =
     Output {
       address: Address {
-        payment_credential: VerificationKeyCredential(#"bebe"),
+        payment_credential: ScriptCredential(#"bebe"),
         stake_credential: None,
       },
       value: value.from_lovelace(outYield),
@@ -325,7 +325,7 @@ test yield_multi() {
   let yieldOut2 =
     Output {
       address: Address {
-        payment_credential: VerificationKeyCredential(#"bebe"),
+        payment_credential: ScriptCredential(#"bebe"),
         stake_credential: None,
       },
       value: value.from_lovelace(outYield),
@@ -336,7 +336,7 @@ test yield_multi() {
   let yieldOut3 =
     Output {
       address: Address {
-        payment_credential: VerificationKeyCredential(#"bebe"),
+        payment_credential: ScriptCredential(#"bebe"),
         stake_credential: None,
       },
       value: value.from_lovelace(outYield),

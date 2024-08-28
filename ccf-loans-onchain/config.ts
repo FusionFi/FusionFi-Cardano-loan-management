@@ -1,9 +1,10 @@
-import { mintConfig, burnConfig, updateConfig } from "./offchain/mod.ts"
+import { mintConfig, burnConfig, updateConfig, configAddr } from "./offchain/mod.ts"
 
 // deno run --allow-net --allow-read --allow-env config.ts
 
 // // mintConfig
 // const mintConfigTx = await mintConfig()
+
 // console.log(`Mint Config Tx: 
 //   https://preview.cardanoscan.io/transaction/${mintConfigTx}
 
@@ -17,7 +18,7 @@ import { mintConfig, burnConfig, updateConfig } from "./offchain/mod.ts"
 // const burnConfigTx = await burnConfig()
 // console.log(`Burn Config Tx: 
 //   https://preview.cardanoscan.io/transaction/${burnConfigTx} 
-  
+
 // YOU HAVE NOW CLOSED THE DAPP!
 
 // Thanks for testing with STOIC @ EmurgoLabs! =]

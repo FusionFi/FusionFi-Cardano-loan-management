@@ -1,6 +1,6 @@
 import { Constr, Data, } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { loanHashz, collateralHashz, loanHash, collateralHash, rewardsCS, oracleHash, interestHash, } from "./validators.ts"
-import { loanAmt, rewards, term, timestamp, price1, price2, price3, price4, price5, price6, interest, fee, loanCurrency, oracleTn, collateralAmt, price7, base, optimal, slope1, slope2, borrowed, supply } from "./variables.ts"
+import { loanHashz, collateralHashz, loanHash, collateralHash, rewardsCS, oracleHash, interestHash, yieldHash, } from "./validators.ts"
+import { loanAmt, rewards, term, timestamp, price1, price2, price3, price4, price5, price6, interest, fee, loanCurrency, oracleTn, collateralAmt, price7, base, optimal, slope1, slope2, borrowed, supply, yieldDatumText } from "./variables.ts"
 
 export const configDatum = Data.to(new Constr(0, [
   loanHash,
@@ -8,6 +8,7 @@ export const configDatum = Data.to(new Constr(0, [
   rewardsCS,
   oracleHash,
   interestHash,
+  yieldHash,
   collateralHashz,
 ]))
 
@@ -24,16 +25,23 @@ export const interestDatum2 = Data.to(new Constr(0, [slope1, optimal, base, slop
 
 export const loanDatum = Data.to(
   new Constr(0, [
-    loanAmt,  
-    rewards, 
-    term, 
-    timestamp, 
+    loanAmt,
+    rewards,
+    term,
+    timestamp,
     oracleTn
   ]))
 
 export const collateralDatum = Data.to(
   new Constr(0, [
     collateralAmt,
-    timestamp
+    timestamp,
+    0n,
+  ])
+)
+
+export const yieldDatum = Data.to(
+  new Constr(0, [
+    yieldDatumText
   ])
 )

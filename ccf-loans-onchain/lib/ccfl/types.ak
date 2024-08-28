@@ -29,7 +29,7 @@ pub type MerkelConfigDatum {
   rewardsVal: ScriptHash,
   oracleVal: ScriptHash,
   interestVal: ScriptHash,
-  yield: ByteArray,
+  yield: ScriptHash,
   collateralRedeemers: List<ScriptHash>,
 }
 
@@ -83,6 +83,11 @@ pub type CollateralAction {
 
 pub type MerkelCollateralAction {
   i: Int,
+}
+
+pub type TCollateralDatum {
+  amount: Int,
+  timestamp: PosixTime,
 }
 
 pub type CollateralDatum {
@@ -147,4 +152,12 @@ pub type InterestAction {
     term: Int,
   }
   InterestClose
+}
+
+pub type YieldDatum {
+  loan: ByteArray,
+}
+
+pub type YieldAction {
+  i: Int,
 }

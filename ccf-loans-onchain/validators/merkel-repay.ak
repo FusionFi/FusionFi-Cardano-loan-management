@@ -18,11 +18,6 @@ use ccfl/types.{
 use tests/tools as t
 use tests/transactions as tx
 
-// staking validators that check the full transaction scope.
-
-// Merkel Balance validates the whole transaction for the Balance redeemer case
-// it combines both the merkel-loan && merkel-collateral cases together
-
 validator(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
   fn repay(r: WithdrawRedeemer, c: ScriptContext) {
     // True
@@ -143,10 +138,9 @@ validator(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
               // times 10 to convert to lovelace value
               output.address.payment_credential == VerificationKeyCredential(
                 pkh,
-              ) && value.lovelace_of(output.value) == interestPaymentValue
+              ) && value.lovelace_of(output.value) >= interestPaymentValue
             },
           )
-
         (adaOut >= minCollateralValue)? && cin.yield == colDatum.yield && (value.without_lovelace(
           oracleOut.value,
         ) == expectedOracle)? && (loanDatum.amount <= lin.amount)? && colDatum.amount == loanDatum.amount * 2 && (loanDatum.timestamp == rDatum.timestamp)?
@@ -158,16 +152,16 @@ validator(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
 }
 
 test repay_interest() {
-  let inRatio = 1000
-  let outRatio = 1000
+  let inRatio = 500
+  let outRatio = 500
 
-  let inLoanAmount = 1000
-  let inCollateralAmount = 1000
-  let inCollateralValue = 2000
+  let inLoanAmount = 100
+  let inCollateralAmount = 200
+  let inCollateralValue = 400
 
-  let outLoanAmount = 500
-  let outCollateralAmount = 1000
-  let outCollateralValue = 2000
+  let outLoanAmount = 0
+  let outCollateralAmount = 0
+  let outCollateralValue = 2
 
   let base = 55
   let optimal = 70
@@ -185,7 +179,7 @@ test repay_interest() {
 
   let timeframe = outTimestamp - inTimestamp
 
-  // trace string.from_int(timeframe)
+  trace string.from_int(timeframe)
   let interest =
     if_then_else(
       utilisation <= optimal,
@@ -193,13 +187,13 @@ test repay_interest() {
       interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
     )
 
-  // trace string.from_int(interest)
+  trace string.from_int(interest)
   let interestPayment = interestPayment(timeframe, inLoanAmount, interest)
 
-  // trace string.from_int(interestPayment)
+  trace string.from_int(interestPayment)
   let interestExchange = interestPayment / outRatio
 
-  // trace string.from_int(interestExchange)
+  trace string.from_int(interestExchange)
   // withdrawl
   let withdraw0 = tx.withdrawal(t.merkelRepay)
 

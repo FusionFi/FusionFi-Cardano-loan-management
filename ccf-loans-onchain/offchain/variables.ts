@@ -1,4 +1,4 @@
-import { fromText, fromUnit, toUnit, } from "https://deno.land/x/lucid@0.10.7/mod.ts" ;
+import { fromText, fromUnit, toUnit, } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import { configCS } from "./validators.ts"
 
 export const price1 = 500n
@@ -9,8 +9,8 @@ export const price5 = 400n
 export const price6 = 265n
 export const price7 = 50n
 
-export const base = 55n 
-export const optimal = 70n 
+export const base = 55n
+export const optimal = 70n
 export const slope1 = 40n
 export const slope2 = 300n
 export const supply = 1000000n
@@ -25,18 +25,17 @@ export const interest = 15n
 export const fee = 2n
 export const term = 0n
 export const rewards = 100n
+export const yieldDatumText = fromText("loan")
 
-export const oracleUnit = "40da844f41c3204a770e6c7f082eab5f9bfed43384650dccf990b30d1cb0a8c6f198743ef35661381d0575"
+export const oracleUnit = "eb794aac8cdc0cc937d712f1cea95713d7244f6d42a95dcb7b9201989cf8f06b8555893a1df9cce9375733"
 
 export const oracleTn = fromUnit(oracleUnit).assetName
 
-export const configTN = fromText("") 
+export const configTN = fromText("")
 export const configUnit = toUnit(configCS, configTN)
 
 // $100 loan test for interest payments
-export const loanUnit = "e680537242d8e3a6561060004690486a6148de8d040eab256d6300faac410ee57744c8b53410119a377352"
-
-export const interestPayAddr = "addr_test1vr4m7cd94yhymrwcmgs2k6zs00jql9d075ms0dgxjv2tuxqjy82wz"
+export const loanUnit = "a1872cb404df1918654015c9ec240b0d0866d688091da03114391508cb36a23426294d40a4feead0112796"
 
 export function interestCalc(
   base: number,
@@ -49,19 +48,19 @@ export function interestCalc(
   const utilisation = borrowed / supply
   console.log(`utilisation: ${utilisation}`)
   if (utilisation <= optimal) {
-    const ratio = utilisation / optimal 
+    const ratio = utilisation / optimal
     console.log(`ratio: ${ratio}`)
-    const variable = ratio * slope1 
+    const variable = ratio * slope1
     console.log(`variable: ${variable}`)
     const combined = base + variable
     console.log(`combined: ${combined}`)
     return combined
   } else {
-    const slope = base + slope1 
-    const nominator = utilisation - optimal 
-    const denominator = 100 - optimal 
-    const ratio = nominator / denominator 
-    const variableFee = ratio * slope2 
+    const slope = base + slope1
+    const nominator = utilisation - optimal
+    const denominator = 100 - optimal
+    const ratio = nominator / denominator
+    const variableFee = ratio * slope2
     const combined = slope + variableFee
     return combined
   }

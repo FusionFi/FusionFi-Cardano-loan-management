@@ -3,7 +3,7 @@ use aiken/transaction.{
   InlineDatum, Input, NoDatum, Output, ScriptContext, Transaction, WithdrawFrom,
   placeholder,
 }
-use aiken/transaction/credential.{Address, VerificationKeyCredential}
+use aiken/transaction/credential.{Address, ScriptCredential}
 use aiken/transaction/value.{PolicyId}
 use ccfl/helpers.{merkelYield}
 use ccfl/types.{CollateralDatum, MerkelConfigDatum, WithdrawRedeemer}
@@ -60,7 +60,7 @@ validator(cp: PolicyId) {
           list.find(
             inputs,
             fn(in) {
-              in.output.address.payment_credential == VerificationKeyCredential(
+              in.output.address.payment_credential == ScriptCredential(
                 cDatum.yield,
               ) && value.lovelace_of(in.output.value) >= outDatum.yield - inDatum.yield
             },
@@ -89,7 +89,7 @@ test yieldOut() {
   let output =
     Output {
       address: Address {
-        payment_credential: VerificationKeyCredential(#"bebe"),
+        payment_credential: ScriptCredential(#"bebe"),
         stake_credential: None,
       },
       value: value.from_lovelace(outYield),
@@ -167,7 +167,7 @@ test yield_colFail() fail {
   let output =
     Output {
       address: Address {
-        payment_credential: VerificationKeyCredential(#"bebe"),
+        payment_credential: ScriptCredential(#"bebe"),
         stake_credential: None,
       },
       value: value.from_lovelace(outYield),
@@ -320,7 +320,7 @@ test yield_multi() {
       output_reference: tx.oref(#"abab", 1),
       output: Output {
         address: Address {
-          payment_credential: VerificationKeyCredential(#"bebe"),
+          payment_credential: ScriptCredential(#"bebe"),
           stake_credential: None,
         },
         value: value.from_lovelace(inYield),
@@ -334,7 +334,7 @@ test yield_multi() {
       output_reference: tx.oref(#"abab", 2),
       output: Output {
         address: Address {
-          payment_credential: VerificationKeyCredential(#"bebe"),
+          payment_credential: ScriptCredential(#"bebe"),
           stake_credential: None,
         },
         value: value.from_lovelace(inYield),
@@ -348,7 +348,7 @@ test yield_multi() {
       output_reference: tx.oref(#"abab", 3),
       output: Output {
         address: Address {
-          payment_credential: VerificationKeyCredential(#"bebe"),
+          payment_credential: ScriptCredential(#"bebe"),
           stake_credential: None,
         },
         value: value.from_lovelace(inYield),

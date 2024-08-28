@@ -2,18 +2,18 @@ import { mintOracle, oracleClose, oAutoUpdate, oManualUpdate, oracleDatum1, orac
 
 // deno run --allow-net --allow-read --allow-env oracle.ts
 
-// // mintOracle 
-// const mintOracleTx = await mintOracle()
-// console.log(`Mint Oracle Tx: 
-//   https://preview.cardanoscan.io/transaction/${mintOracleTx}
+// mintOracle 
+const mintOracleTx = await mintOracle()
+console.log(`Mint Oracle Tx: 
+  https://preview.cardanoscan.io/transaction/${mintOracleTx}
 
-// SAVE THE ORACLE UNIT IN variables.ts
-//   Or the other transactions will not work!
+SAVE THE ORACLE UNIT IN variables.ts
+  Or the other transactions will not work!
 
-// NOW YOU HAVE A PRICE FEED HERE ARE YOUR OPTIONS:
-//   -> Update The Oracle with oracle.ts
-//   -> Mint A Loan with loan.ts
-// `)
+NOW YOU HAVE A PRICE FEED HERE ARE YOUR OPTIONS:
+  -> Update The Oracle with oracle.ts
+  -> Mint A Loan with loan.ts
+`)
 
 // // closeOracle
 // const closeOracleTx = await oracleClose()
@@ -43,11 +43,11 @@ import { mintOracle, oracleClose, oAutoUpdate, oManualUpdate, oracleDatum1, orac
 //   -> You can update a loan in loan.ts
 // `)
 
-// updateInterest
-const updateInterestTx = await updateInterest()
-console.log(`Update Interest Rates Tx:
-  https://preview.cardanoscan.io/transaction/${updateInterestTx}
+// // updateInterest
+// const updateInterestTx = await updateInterest()
+// console.log(`Update Interest Rates Tx:
+//   https://preview.cardanoscan.io/transaction/${updateInterestTx}
 
-THE INTEREST RATES HAVE BEEN UPDATED!
-  -> You can now repay and test with loan.ts
-  `)
+// THE INTEREST RATES HAVE BEEN UPDATED!
+//   -> You can now repay and test with loan.ts
+//   `)

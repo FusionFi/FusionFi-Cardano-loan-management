@@ -102,13 +102,13 @@ test monthlyRepayments() {
 }
 
 pub fn interestPayment(timestamp: Int, loan: Int, interest: Int) {
-  let timeframe = 31556926 / timestamp
+  let timeframe = 31556926000 / timestamp
   loan * interest / timeframe
 }
 
 test interestTimeframe() {
   let loan = 1000
-  let timestamp = 2629743
+  let timestamp = 2629743000
   let interest = 8500
 
   // calc is 0.7% p month 
@@ -117,7 +117,7 @@ test interestTimeframe() {
 
 test interestValue() {
   let loan = 2000000
-  let timestamp = 2629743
+  let timestamp = 2629743000
   let interest = 8500
 
   interestPayment(timestamp, loan, interest) == 1416666666
