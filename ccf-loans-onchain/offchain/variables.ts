@@ -35,7 +35,7 @@ export const configTN = fromText("")
 export const configUnit = toUnit(configCS, configTN)
 
 // $100 loan test for interest payments
-export const loanUnit = "a1872cb404df1918654015c9ec240b0d0866d688091da03114391508cb36a23426294d40a4feead0112796"
+export const loanUnit = "a1872cb404df1918654015c9ec240b0d0866d688091da03114391508d29dda177d877fc3456e5ce6d2dcae"
 
 export function interestCalc(
   base: number,

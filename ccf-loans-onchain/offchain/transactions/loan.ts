@@ -80,6 +80,7 @@ export async function closeLoan() {
   const oracleUtxo: UTxO = oracleUtxos[0]
   const exchange = oracleDatum[0]
   const inDatum = Data.from(lUtxo.datum)
+  const rewardsQty = inDatum.fields[1]
   const rewardsTn = fromText("")
   const rewardsUnit = toUnit(rewardsCS, rewardsTn)
 
@@ -102,7 +103,7 @@ export async function closeLoan() {
       [loanUnit]: -2,
     }, burnLoanAction)
     .mintAssets({
-      [rewardsUnit]: 5,
+      [rewardsUnit]: rewardsQty,
     }, rewardsMintAction)
     .attachMintingPolicy(loanMint)
     .attachMintingPolicy(rewardsMint)
@@ -293,7 +294,8 @@ export async function liquidateLoan() {
   const liquidCollateralDatum = Data.to(
     new Constr(0, [
       newLoanValue * 2n,
-      timestamp
+      timestamp,
+      0n
     ])
   )
 
@@ -357,16 +359,18 @@ export async function repayLoan() {
   const interestTimeframe = Number(timestamp - inDatum.fields[3]) * interestCalc(5.5, 70, 4, 300, 1000000, 200000) /// 100 + 1)
   const accruedInterest = BigInt(Math.floor((Number(loanValue * 1000n / exchange) * interestTimeframe) / 1000000))
 
+  const timeframe = 31556926000 / (Number(timestamp - inDatum.fields[3]))
+  const interest = interestCalc(5.5, 70, 4, 300, 1000000, 200000)
+  const recalc = (Number(loanValue) * interest) / timeframe
+  const interestP = recalc * 1000 / Number(exchange)
+  const payment = Math.floor(interestP * 1000000) + 1
+
   console.log(timestamp)
-  console.log(oracleDatum)
-  console.log(interestIn)
-  console.log(lUtxo)
-  console.log(inDatum)
-  console.log(cUtxo)
-  console.log(Data.from(cUtxo.datum))
-  console.log(loanValue)
-  console.log(interestTimeframe)
-  console.log(accruedInterest + 2000000n)
+  console.log(timeframe)
+  console.log(interest)
+  console.log(recalc)
+  console.log(interestP)
+  console.log(payment)
 
   const withdrawRedeemer = Data.to(
     new Constr(0, [
@@ -389,7 +393,8 @@ export async function repayLoan() {
   const collateralDatum = Data.to(
     new Constr(0, [
       remainingValue,
-      timestamp
+      timestamp,
+      0n
     ])
   )
 
@@ -418,7 +423,7 @@ export async function repayLoan() {
     )
     .payToAddress(
       interestPayAddr,
-      { lovelace: accruedInterest + 2000000n },
+      { lovelace: (BigInt(payment) + 2000000n) },
     )
     .attachSpendingValidator(loanVal)
     .attachSpendingValidator(collateralVal)

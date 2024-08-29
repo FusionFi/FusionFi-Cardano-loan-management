@@ -95,13 +95,11 @@ validator(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
           )
         expect InlineDatum(datum) = colIn.output.datum
         expect cin: CollateralDatum = datum
-
         let adaOut = value.lovelace_of(collateral.value) + colDatum.yield
         let exchangeAdjustment = loanDatum.amount * 1000
         let expectedCollateral = exchangeAdjustment / exchangeRate
         let minCollateralValue = expectedCollateral * 2
         let expectedOracle = value.from_asset(p, loanDatum.oracle, 1)
-
         let interestCalc =
           if_then_else(
             utilisation <= iDatum.optimal,
@@ -121,15 +119,11 @@ validator(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
               rDatum.borrowed,
             ),
           )
-
         let interestTimeframe = rDatum.timestamp - lin.timestamp
-
         let interestRequirement =
           interestPayment(interestTimeframe, lin.amount, interestCalc)
-
         let interestPaymentValue = interestRequirement / exchangeRate
         trace string.from_int(interestPaymentValue)
-
         expect Some(_payment) =
           list.find(
             outputs,
@@ -148,6 +142,7 @@ validator(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
       r.a,
       outputs,
     )
+    // True
   }
 }
 
