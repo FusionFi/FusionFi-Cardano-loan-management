@@ -4,7 +4,32 @@ import { ownerAddress, ownerPKH } from "../owner.ts";
 import { rewardsMintAction, configUpdateAction, rewardsBurnAction } from "../redeemers.ts";
 import { rewardsCS, rewardsMint, configVal } from "../validators.ts";
 
+
 lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./owner.sk"));
+// STringify to fix maestro error
+
+// const toCborHex = (rawPrivateKey: string) => {
+//   const decoded = bech32.decode(rawPrivateKey);
+//   const words = bech32.fromWords(decoded.words);
+//   const hexStr = words
+//     .map((word) => word.toString(16).padStart(2, "0"))
+//     .join("");
+//   return "5820" + hexStr;
+// };
+
+// const toSkey = () => {
+//   return (
+//     JSON.stringify(
+//       {
+//         type: "PaymentSigningKeyShelley_ed25519",
+//         description: "Payment Signing Key",
+//         cborHex: toCborHex("582020b08d609d925d9106a49e1bcf68c2e4524c4ef25845828c393ff60ebc26d719"),
+//       },
+//       null,
+//       4
+//     ) + "\n"
+//   );
+// };
 
 // Rewards Transactions //
 
@@ -22,8 +47,8 @@ export async function mintRewards() {
     }, rewardsMintAction)
     .attachMintingPolicy(rewardsMint)
     .payToContract(
-      ownerAddress, 
-      { inline: configUpdateAction }, 
+      ownerAddress,
+      { inline: configUpdateAction },
       { rewardsUnit: 1 }
     )
     .addSignerKey(ownerPKH)

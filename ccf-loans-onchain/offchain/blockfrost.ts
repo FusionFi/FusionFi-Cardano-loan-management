@@ -3,12 +3,12 @@ import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 
 const env = await load();
 
-const BLOCKFROST = env["BLOCKFROST_API"]
- 
+const BLOCKFROST = env["previewuhHXgLJ4G4pVSzffCS8oNYfG3FegOiZ7"]
+
 export const lucid = await Lucid.new(
   new Blockfrost(
     "https://cardano-preview.blockfrost.io/api/v0",
-    BLOCKFROST,
+    "previewuhHXgLJ4G4pVSzffCS8oNYfG3FegOiZ7",
   ),
   "Preview",
 );

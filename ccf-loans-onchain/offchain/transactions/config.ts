@@ -23,8 +23,8 @@ export async function mintConfig() {
     }, configUpdateAction)
     .attachMintingPolicy(configMint)
     .payToContract(
-      configAddr, 
-      { inline: configDatum }, 
+      configAddr,
+      { inline: configDatum },
       { [configUnit]: 1n }
     )
     .addSignerKey(ownerPKH)
@@ -50,8 +50,8 @@ export async function updateConfig() {
     .collectFrom([utxo], configUpdateAction)
     .attachSpendingValidator(configVal)
     .payToContract(
-      configAddr, 
-      { inline: configDatum }, 
+      configAddr,
+      { inline: configDatum },
       { [configUnit]: 1n }
     )
     .addSignerKey(ownerPKH)
