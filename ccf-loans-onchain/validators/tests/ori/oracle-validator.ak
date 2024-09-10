@@ -1,65 +1,11 @@
-use aiken/dict.{to_pairs}
-use aiken/list.{has}
-use aiken/transaction.{
-  InlineDatum, Input, Output, ScriptContext, Spend, Transaction, find_input,
-  placeholder,
-}
-use aiken/transaction/value.{PolicyId, tokens, without_lovelace}
-use ccfl/helpers.{get_own_singleton_output, has_singleton_input}
-use ccfl/types.{
-  OracleAction, OracleClose, OracleDatum, OracleUpdate, VerificationKeyHash,
-}
+use cardano/transaction.{InlineDatum, Transaction, placeholder}
+use ori/oracle_validator
 use tests/tools as t
 use tests/transactions.{oracleAction, oracleDatum}
 
-//                  //
-// Oracle Validator //
-//                  //
-
-validator(o: VerificationKeyHash, p: PolicyId) {
-  fn oracleVault(d: OracleDatum, r: OracleAction, c: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } = c
-    expect Spend(ownRef) = purpose
-
-    expect has_singleton_input(transaction, ownRef)
-    when r is {
-      OracleUpdate { exchange, timestamp, supply, borrowed } -> {
-        let out = get_own_singleton_output(transaction, ownRef)
-
-        expect [Pair(_, 1)] =
-          without_lovelace(out.value)
-            |> tokens(p)
-            |> to_pairs()
-
-        expect InlineDatum(datum) = out.datum
-        expect datum: OracleDatum = datum
-
-        has(transaction.extra_signatories, o) && timestamp > d.timestamp && datum.currency == d.currency && datum.timestamp == timestamp && datum.supply == supply && datum.exchange == exchange && datum.borrowed == borrowed
-      }
-      OracleClose -> {
-        expect Some(input) = find_input(transaction.inputs, ownRef)
-
-        expect [Pair(inName, 1)] =
-          // get singleton name
-          without_lovelace(input.output.value)
-            |> tokens(p)
-            |> to_pairs()
-
-        expect [Pair(burnName, -2)] =
-          transaction.mint
-            |> value.from_minted_value()
-            |> value.tokens(p)
-            |> dict.to_pairs()
-
-        has(transaction.extra_signatories, o) && inName == burnName
-      }
-    }
-  }
-}
-
-//       //
-// Tests //
-//       //
+//                        //
+// Oracle Validator Tests //
+//                        //
 
 test oracle_vault() {
   let test_owner = #"face"
@@ -92,15 +38,20 @@ test oracle_vault() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [oracleInput],
       outputs: [oracleOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)
+  oracle_validator.oracleVault.spend(
+    test_owner,
+    t.oracleMintHash,
+    Some(oracleDatum1),
+    oracleAction,
+    oref,
+    tx,
+  )
 }
 
 test oracle_vault_datum_fail() fail {
@@ -134,15 +85,20 @@ test oracle_vault_datum_fail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [oracleInput],
       outputs: [oracleOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)
+  oracle_validator.oracleVault.spend(
+    test_owner,
+    t.oracleMintHash,
+    Some(oracleDatum1),
+    oracleAction,
+    oref,
+    tx,
+  )
 }
 
 test oracle_vault_redeemer_fail() fail {
@@ -176,15 +132,20 @@ test oracle_vault_redeemer_fail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [oracleInput],
       outputs: [oracleOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)
+  oracle_validator.oracleVault.spend(
+    test_owner,
+    t.oracleMintHash,
+    Some(oracleDatum1),
+    oracleAction,
+    oref,
+    tx,
+  )
 }
 
 test oracle_vault_sig_fail() fail {
@@ -218,15 +179,20 @@ test oracle_vault_sig_fail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [#"dead"],
       inputs: [oracleInput],
       outputs: [oracleOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)
+  oracle_validator.oracleVault.spend(
+    test_owner,
+    t.oracleMintHash,
+    Some(oracleDatum1),
+    oracleAction,
+    oref,
+    tx,
+  )
 }
 
 test oracle_vault_token_fail() fail {
@@ -260,13 +226,18 @@ test oracle_vault_token_fail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [oracleInput],
       outputs: [oracleOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  oracleVault(test_owner, t.oracleMintHash, oracleDatum1, oracleAction, ctx)
+  oracle_validator.oracleVault.spend(
+    test_owner,
+    t.oracleMintHash,
+    Some(oracleDatum1),
+    oracleAction,
+    oref,
+    tx,
+  )
 }

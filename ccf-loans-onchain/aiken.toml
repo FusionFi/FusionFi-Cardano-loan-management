@@ -1,5 +1,7 @@
 name = "rhystmorgan/ccf-loans-onchain"
 version = "0.0.0"
+compiler = "v1.1.0"
+plutus = "v3"
 license = "Apache-2.0"
 description = "Aiken contracts for project 'rhystmorgan/ccf-loans-onchain'"
 
@@ -10,10 +12,12 @@ platform = "github"
 
 [[dependencies]]
 name = "aiken-lang/stdlib"
-version = "1.9.0"
+version = "v2.0.0"
 source = "github"
 
 [[dependencies]]
-name = "aiken-lang/fortuna"
-version = "d2e5831f92b1b596bb2cc1ab801509da28650fcc"
+name = "aiken-lang/fuzz"
+version = "v2"
 source = "github"
+
+[config]

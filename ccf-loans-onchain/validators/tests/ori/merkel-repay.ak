@@ -1,150 +1,16 @@
 use aiken/builtin.{if_then_else}
-use aiken/list
-use aiken/string
-use aiken/transaction.{
-  InlineDatum, Input, Output, ScriptContext, Transaction, WithdrawFrom,
-  placeholder,
-}
-use aiken/transaction/credential.{ScriptCredential, VerificationKeyCredential}
-use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkelTx}
-use ccfl/interestcalcs.{
-  interestPayment, interestSlope1, interestSlope2, utilisationRatio,
-}
-use ccfl/types.{
-  CollateralDatum, InterestDatum, LoanDatum, MerkelConfigDatum, OracleDatum,
-  WithdrawRedeemer,
-}
+use aiken/primitive/string
+use cardano/address.{VerificationKey}
+use cardano/assets
+use cardano/transaction.{Transaction, placeholder}
+use ccfl/interestcalcs.{interestPayment, interestSlope1, interestSlope2}
+use ori/merkel_repay
 use tests/tools as t
 use tests/transactions as tx
 
-validator(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
-  fn repay(r: WithdrawRedeemer, c: ScriptContext) {
-    // True
-    expect ScriptContext {
-      transaction,
-      purpose: WithdrawFrom(_stake_credential),
-    } = c
-
-    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
-
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
-
-    expect Some(interestRef) =
-      list.find(
-        reference_inputs,
-        fn(input) {
-          list.has(value.policies(input.output.value), p) && input.output.address.payment_credential == ScriptCredential(
-            cDatum.interestVal,
-          )
-        },
-      )
-
-    expect InlineDatum(datum) = interestRef.output.datum
-    expect iDatum: InterestDatum = datum
-    expect Some(oracleOut) =
-      list.find(
-        outputs,
-        fn(output) {
-          list.has(value.policies(output.value), p) && output.address.payment_credential == ScriptCredential(
-            cDatum.oracleVal,
-          )
-        },
-      )
-
-    expect InlineDatum(datum) = oracleOut.datum
-    expect rDatum: OracleDatum = datum
-
-    let exchangeRate = rDatum.exchange
-
-    let utilisation = utilisationRatio(rDatum.borrowed, rDatum.supply)
-
-    merkelTx(
-      fn(collateral, loan) {
-        let loanToken = value.without_lovelace(loan.value)
-        expect InlineDatum(datum) = collateral.datum
-        expect colDatum: CollateralDatum = datum
-        expect InlineDatum(datum) = loan.datum
-        expect loanDatum: LoanDatum = datum
-        expect Some(loanIn) =
-          list.find(
-            inputs,
-            fn(in) {
-              in.output.address.payment_credential == loan.address.payment_credential && value.without_lovelace(
-                in.output.value,
-              ) == loanToken
-            },
-          )
-        expect InlineDatum(datum) = loanIn.output.datum
-        expect lin: LoanDatum = datum
-        expect Some(colIn) =
-          list.find(
-            inputs,
-            fn(in) {
-              in.output.address.payment_credential == collateral.address.payment_credential && value.without_lovelace(
-                in.output.value,
-              ) == loanToken
-            },
-          )
-        expect InlineDatum(datum) = colIn.output.datum
-        expect cin: CollateralDatum = datum
-        let adaOut = value.lovelace_of(collateral.value) + colDatum.yield
-        let exchangeAdjustment = loanDatum.amount * 1000
-        let expectedCollateral = exchangeAdjustment / exchangeRate
-        let minCollateralValue = expectedCollateral * 2
-        let expectedOracle = value.from_asset(p, loanDatum.oracle, 1)
-        let interestCalc =
-          if_then_else(
-            utilisation <= iDatum.optimal,
-            interestSlope1(
-              iDatum.base,
-              iDatum.optimal,
-              iDatum.slope1,
-              rDatum.supply,
-              rDatum.borrowed,
-            ),
-            interestSlope2(
-              iDatum.base,
-              iDatum.optimal,
-              iDatum.slope1,
-              iDatum.slope2,
-              rDatum.supply,
-              rDatum.borrowed,
-            ),
-          )
-        let interestTimeframe = rDatum.timestamp - lin.timestamp
-        let interestRequirement =
-          interestPayment(interestTimeframe, lin.amount, interestCalc)
-        let interestPaymentValue = interestRequirement / exchangeRate
-        trace string.from_int(interestPaymentValue)
-        expect Some(_payment) =
-          list.find(
-            outputs,
-            fn(output) {
-              // we need to validate the pkh here -> either param or configDatum
-              // times 10 to convert to lovelace value
-              output.address.payment_credential == VerificationKeyCredential(
-                pkh,
-              ) && value.lovelace_of(output.value) >= interestPaymentValue
-            },
-          )
-        (adaOut >= minCollateralValue)? && cin.yield == colDatum.yield && (value.without_lovelace(
-          oracleOut.value,
-        ) == expectedOracle)? && (loanDatum.amount <= lin.amount)? && colDatum.amount == loanDatum.amount * 2 && (loanDatum.timestamp == rDatum.timestamp)?
-      },
-      r.a,
-      outputs,
-    )
-    // True
-  }
-}
+//                       //
+// Repay Validator Tests //
+//                       //
 
 test repay_interest() {
   let inRatio = 500
@@ -209,7 +75,7 @@ test repay_interest() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn, interestIn],
       extra_signatories: [test_owner],
       inputs: [colIn1, loanIn1, oracleIn, userIn1],
@@ -217,9 +83,14 @@ test repay_interest() {
       withdrawals: withdraw0,
     }
 
-  let ctx = tx.wCtx(t.merkelRepay, tx)
-
-  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+  merkel_repay.repay.withdraw(
+    interestAddr,
+    t.oracleMintHash,
+    t.configMintHash,
+    bRedeemer,
+    VerificationKey(t.merkelRepay),
+    tx,
+  )?
 }
 
 test repay_colAmtFail() fail {
@@ -284,7 +155,7 @@ test repay_colAmtFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn, interestIn],
       extra_signatories: [test_owner],
       inputs: [colIn1, loanIn1, oracleIn, userIn1],
@@ -292,9 +163,14 @@ test repay_colAmtFail() fail {
       withdrawals: withdraw0,
     }
 
-  let ctx = tx.wCtx(t.merkelRepay, tx)
-
-  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+  merkel_repay.repay.withdraw(
+    interestAddr,
+    t.oracleMintHash,
+    t.configMintHash,
+    bRedeemer,
+    VerificationKey(t.merkelRepay),
+    tx,
+  )?
 }
 
 test repay_loanAmtFail() fail {
@@ -359,7 +235,7 @@ test repay_loanAmtFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn, interestIn],
       extra_signatories: [test_owner],
       inputs: [colIn1, loanIn1, oracleIn, userIn1],
@@ -367,13 +243,18 @@ test repay_loanAmtFail() fail {
       withdrawals: withdraw0,
     }
 
-  let ctx = tx.wCtx(t.merkelRepay, tx)
-
-  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+  merkel_repay.repay.withdraw(
+    interestAddr,
+    t.oracleMintHash,
+    t.configMintHash,
+    bRedeemer,
+    VerificationKey(t.merkelRepay),
+    tx,
+  )?
 }
 
 test repay_tokenSwap() fail {
-  let vulnToken = value.from_asset(t.loanMintHash, #"deaf", 1)
+  let vulnToken = assets.from_asset(t.loanMintHash, #"deaf", 1)
 
   let inRatio = 2
   let outRatio = 2
@@ -433,14 +314,14 @@ test repay_tokenSwap() fail {
   let loanOut1 =
     t.test_output(
       t.test_script_address(t.mLoan),
-      value.merge(value.from_lovelace(2000000), vulnToken),
+      assets.merge(assets.from_lovelace(2000000), vulnToken),
       tx.loanOutDatum(outLoanAmount),
     )
 
   let colOut1 =
     t.test_output(
       t.test_script_address(t.mCol),
-      value.merge(value.from_lovelace(outCollateralValue), vulnToken),
+      assets.merge(assets.from_lovelace(outCollateralValue), vulnToken),
       tx.collateralDatumOut(outCollateralAmount, 0),
     )
 
@@ -448,7 +329,7 @@ test repay_tokenSwap() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn, interestIn],
       extra_signatories: [test_owner],
       inputs: [colIn1, loanIn1, oracleIn, userIn1],
@@ -456,15 +337,20 @@ test repay_tokenSwap() fail {
       withdrawals: withdraw0,
     }
 
-  let ctx = tx.wCtx(t.merkelRepay, tx)
-
-  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+  merkel_repay.repay.withdraw(
+    interestAddr,
+    t.oracleMintHash,
+    t.configMintHash,
+    bRedeemer,
+    VerificationKey(t.merkelRepay),
+    tx,
+  )?
 }
 
 test repay_oracleSwap() fail {
-  let vulnToken = value.from_asset(t.oracleMintHash, #"1234", 1)
+  let vulnToken = assets.from_asset(t.oracleMintHash, #"1234", 1)
 
-  let vulnOracleValue = value.merge(value.from_lovelace(2000000), vulnToken)
+  let vulnOracleValue = assets.merge(assets.from_lovelace(2000000), vulnToken)
 
   let inRatio = 2
   let outRatio = 2
@@ -533,7 +419,7 @@ test repay_oracleSwap() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn, interestIn],
       extra_signatories: [test_owner],
       inputs: [colIn1, loanIn1, oracleIn, userIn1],
@@ -541,18 +427,23 @@ test repay_oracleSwap() fail {
       withdrawals: withdraw0,
     }
 
-  let ctx = tx.wCtx(t.merkelRepay, tx)
-
-  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+  merkel_repay.repay.withdraw(
+    interestAddr,
+    t.oracleMintHash,
+    t.configMintHash,
+    bRedeemer,
+    VerificationKey(t.merkelRepay),
+    tx,
+  )?
 }
 
 test repay_multi() {
   let inRatio = 1000
   let outRatio = 1000
 
-  let loanToken1 = value.from_asset(t.loanMintHash, #"aced", 1)
-  let loanToken2 = value.from_asset(t.loanMintHash, #"beef", 1)
-  let loanToken3 = value.from_asset(t.loanMintHash, #"ceed", 1)
+  let loanToken1 = assets.from_asset(t.loanMintHash, #"aced", 1)
+  let loanToken2 = assets.from_asset(t.loanMintHash, #"beef", 1)
+  let loanToken3 = assets.from_asset(t.loanMintHash, #"ceed", 1)
 
   let inLoanAmount1 = 1000
   let inCollateralAmount1 = 1000
@@ -648,37 +539,25 @@ test repay_multi() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn, interestIn],
       extra_signatories: [test_owner],
       inputs: [
-        colIn1,
-        loanIn1,
-        colIn2,
-        loanIn2,
-        colIn3,
-        loanIn3,
-        oracleIn,
-        userIn1,
+        colIn1, loanIn1, colIn2, loanIn2, colIn3, loanIn3, oracleIn, userIn1,
       ],
       outputs: [
-        colOut1,
-        loanOut1,
-        colOut2,
-        loanOut2,
-        colOut3,
-        loanOut3,
-        oracleOut,
-        interestOut1,
-        interestOut2,
-        interestOut3,
+        colOut1, loanOut1, colOut2, loanOut2, colOut3, loanOut3, oracleOut,
+        interestOut1, interestOut2, interestOut3,
       ],
       withdrawals: withdraw0,
     }
 
-  // interestOut2,
-  // interestOut3,
-  let ctx = tx.wCtx(t.merkelRepay, tx)
-
-  repay(interestAddr, t.oracleMintHash, t.configMintHash, bRedeemer, ctx)?
+  merkel_repay.repay.withdraw(
+    interestAddr,
+    t.oracleMintHash,
+    t.configMintHash,
+    bRedeemer,
+    VerificationKey(t.merkelRepay),
+    tx,
+  )?
 }

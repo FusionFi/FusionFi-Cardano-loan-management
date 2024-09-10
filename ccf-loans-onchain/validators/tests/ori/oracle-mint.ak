@@ -1,112 +1,13 @@
-use aiken/dict.{to_pairs}
-use aiken/list
-use aiken/transaction.{
-  InlineDatum, Mint, NoDatum, ScriptContext, Transaction, placeholder,
-}
-use aiken/transaction/credential.{ScriptCredential}
-use aiken/transaction/value.{PolicyId, from_minted_value, tokens}
-use ccfl/types.{
-  InterestDatum, MerkelConfigDatum, OBurn, OMint, OracleDatum, OracleMintAction,
-  VerificationKeyHash,
-}
+use cardano/assets
+use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
+use ccfl/types.{OMint}
+use ori/oracle_mint
 use tests/tools as t
 use tests/transactions.{configInput, interestDatum, oracleDatum}
 
-//oracleMintActionMint,
-
-//             //
-// Oracle Mint //
-//             //
-
-validator(o: VerificationKeyHash, cp: PolicyId) {
-  fn oracleMint(r: OracleMintAction, c: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } = c
-    expect Mint(policyId) = purpose
-
-    expect [Pair(_oName, oAmt)] =
-      transaction.mint
-        |> from_minted_value()
-        |> tokens(policyId)
-        |> to_pairs()
-
-    when r is {
-      OMint {
-        exchange,
-        timestamp,
-        currency,
-        supply,
-        borrowed,
-        base,
-        optimal,
-        slope1,
-        slope2,
-        term,
-      } -> {
-        expect Some(configIn) =
-          list.find(
-            transaction.reference_inputs,
-            fn(input) { list.has(value.policies(input.output.value), cp) },
-          )
-
-        expect InlineDatum(datum) = configIn.output.datum
-        expect cDatum: MerkelConfigDatum = datum
-
-        expect Some(out) =
-          list.find(
-            transaction.outputs,
-            fn(output) {
-              expect [Pair(_oName, 1)] =
-                output.value
-                  |> value.without_lovelace()
-                  |> value.tokens(policyId)
-                  |> dict.to_pairs()
-              output.address.payment_credential == ScriptCredential(
-                cDatum.oracleVal,
-              )
-            },
-          )
-        expect InlineDatum(datum) = out.datum
-        expect oracleDatum: OracleDatum = datum
-
-        expect oracleDatum.exchange == exchange
-        expect oracleDatum.timestamp == timestamp
-        expect oracleDatum.currency == currency
-        expect oracleDatum.supply == supply
-        expect oracleDatum.borrowed == borrowed
-
-        expect Some(interest) =
-          list.find(
-            transaction.outputs,
-            fn(output) {
-              expect [Pair(_oName, 1)] =
-                output.value
-                  |> value.without_lovelace()
-                  |> value.tokens(policyId)
-                  |> dict.to_pairs()
-              output.address.payment_credential == ScriptCredential(
-                cDatum.interestVal,
-              )
-            },
-          )
-        expect InlineDatum(datum) = interest.datum
-        expect interestDatum: InterestDatum = datum
-
-        expect interestDatum.base == base
-        expect interestDatum.optimal == optimal
-        expect interestDatum.slope1 == slope1
-        expect interestDatum.slope2 == slope2
-        expect interestDatum.term == term
-
-        list.has(transaction.extra_signatories, o) && oAmt == 2
-      }
-      OBurn -> list.has(transaction.extra_signatories, o) && oAmt == -2
-    }
-  }
-}
-
-//       //
-// Tests //
-//       //
+//                   //
+// Oracle Mint Tests //
+//                   //
 
 test oracle_mint() {
   let test_owner = #"face"
@@ -166,7 +67,7 @@ test oracle_mint() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: t.oracleMintedValue(),
       extra_signatories: [test_owner],
@@ -174,17 +75,19 @@ test oracle_mint() {
       outputs: [oracleOutput, interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
-
-  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+  oracle_mint.oracleMint.mint(
+    test_owner,
+    t.configMintHash,
+    oracleMintAction,
+    t.oracleMintHash,
+    tx,
+  )?
 }
 
 test mint_qtyFail() fail {
   let test_owner = #"face"
 
-  let mintedValue =
-    value.from_asset(t.oracleMintHash, #"beef", 3)
-      |> value.to_minted_value()
+  let mintedValue = assets.from_asset(t.oracleMintHash, #"beef", 3)
 
   let exchange = 500
   let timestamp = 11111111
@@ -241,7 +144,7 @@ test mint_qtyFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: mintedValue,
       extra_signatories: [test_owner],
@@ -249,9 +152,13 @@ test mint_qtyFail() fail {
       outputs: [oracleOutput, interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
-
-  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+  oracle_mint.oracleMint.mint(
+    test_owner,
+    t.configMintHash,
+    oracleMintAction,
+    t.oracleMintHash,
+    tx,
+  )?
 }
 
 test mint_datumFail() fail {
@@ -313,7 +220,7 @@ test mint_datumFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: t.oracleMintedValue(),
       extra_signatories: [test_owner],
@@ -321,15 +228,17 @@ test mint_datumFail() fail {
       outputs: [oracleOutput, interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
-
-  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+  oracle_mint.oracleMint.mint(
+    test_owner,
+    t.configMintHash,
+    oracleMintAction,
+    t.oracleMintHash,
+    tx,
+  )?
 }
 
 test mint_tokenFail() fail {
-  let mintedValue =
-    value.from_asset(t.oracleMintHash, #"beef", 3)
-      |> value.to_minted_value()
+  let mintedValue = assets.from_asset(t.oracleMintHash, #"beef", 3)
 
   let test_owner = #"face"
 
@@ -388,7 +297,7 @@ test mint_tokenFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: mintedValue,
       extra_signatories: [test_owner],
@@ -396,17 +305,20 @@ test mint_tokenFail() fail {
       outputs: [oracleOutput, interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
-
-  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+  oracle_mint.oracleMint.mint(
+    test_owner,
+    t.configMintHash,
+    oracleMintAction,
+    t.oracleMintHash,
+    tx,
+  )?
 }
 
 test mint_tokenMultiFail() fail {
-  let oracleToken = value.from_asset(t.oracleMintHash, #"cafe", 1)
+  let oracleToken = assets.from_asset(t.oracleMintHash, #"cafe", 1)
   let mintedValue =
-    value.from_asset(t.oracleMintHash, #"cafe", 2)
-      |> value.merge(t.oracleTokenValue())
-      |> value.to_minted_value()
+    assets.from_asset(t.oracleMintHash, #"cafe", 2)
+      |> assets.merge(t.oracleTokenValue())
 
   let test_owner = #"face"
 
@@ -466,20 +378,20 @@ test mint_tokenMultiFail() fail {
   let oracleOutput1 =
     t.test_output(
       t.test_script_address(t.oracleValHash),
-      value.merge(value.from_lovelace(2000000), oracleToken),
+      assets.merge(assets.from_lovelace(2000000), oracleToken),
       outDatum,
     )
 
   let interestOutput1 =
     t.test_output(
       t.test_script_address(t.interestValHash),
-      value.merge(value.from_lovelace(2000000), oracleToken),
+      assets.merge(assets.from_lovelace(2000000), oracleToken),
       InlineDatum(interestDatum),
     )
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: mintedValue,
       extra_signatories: [test_owner],
@@ -487,7 +399,11 @@ test mint_tokenMultiFail() fail {
       outputs: [oracleOutput, interestOutput, oracleOutput1, interestOutput1],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.oracleMintHash), transaction: tx }
-
-  oracleMint(test_owner, t.configMintHash, oracleMintAction, ctx)?
+  oracle_mint.oracleMint.mint(
+    test_owner,
+    t.configMintHash,
+    oracleMintAction,
+    t.oracleMintHash,
+    tx,
+  )?
 }

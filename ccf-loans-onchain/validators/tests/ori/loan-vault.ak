@@ -1,36 +1,11 @@
-use aiken/list
-use aiken/pairs
-use aiken/transaction.{
-  InlineDatum, NoDatum, ScriptContext, Spend, Transaction, placeholder,
-}
-use aiken/transaction/credential.{Inline, ScriptCredential}
-use aiken/transaction/value.{PolicyId}
-use ccfl/types.{LoanDatum, MerkelConfigDatum, MerkelLoanAction}
+use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
+use ori/loan_vault
 use tests/tools as t
 use tests/transactions as tx
 
-validator(cp: PolicyId) {
-  fn mLoan(_d: LoanDatum, r: MerkelLoanAction, c: ScriptContext) {
-    // True
-    let ScriptContext { transaction, .. } = c
-    let Transaction { reference_inputs, withdrawals, .. } = transaction
-
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
-
-    expect Some(stakeVal) =
-      cDatum.collateralRedeemers
-        |> list.at(r.i)
-
-    pairs.has_key(withdrawals, Inline(ScriptCredential(stakeVal)))
-  }
-}
+//                  //
+// Loan Vault Tests //
+//                  //
 
 test loan_vault() {
   let configInDatum = tx.configDatumIn()
@@ -77,17 +52,20 @@ test loan_vault() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       inputs: [userIn, loanIn],
       outputs: [loanOut],
       withdrawals: tx.withdrawal(t.merkelBalance),
     }
 
-  let scriptContext =
-    ScriptContext { purpose: Spend(tx.oref(#"bead", 1)), transaction: tx }
-
-  mLoan(t.configMintHash, loanInDatum, loanAction, scriptContext)?
+  loan_vault.loan.spend(
+    t.configMintHash,
+    Some(loanInDatum),
+    loanAction,
+    tx.oref(#"bead", 1),
+    tx,
+  )?
 }
 
 test loan_datumFail() {
@@ -135,15 +113,18 @@ test loan_datumFail() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       inputs: [userIn, loanIn],
       outputs: [loanOut],
       withdrawals: tx.withdrawal(t.merkelBalance),
     }
 
-  let scriptContext =
-    ScriptContext { purpose: Spend(tx.oref(#"bead", 1)), transaction: tx }
-
-  mLoan(t.configMintHash, loanInDatum, loanAction, scriptContext)?
+  loan_vault.loan.spend(
+    t.configMintHash,
+    Some(loanInDatum),
+    loanAction,
+    tx.oref(#"bead", 1),
+    tx,
+  )?
 }

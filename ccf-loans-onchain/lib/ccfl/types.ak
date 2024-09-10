@@ -1,13 +1,5 @@
-use aiken/hash.{Blake2b_224, Hash}
-use aiken/time.{PosixTime}
-use aiken/transaction/credential.{Script, VerificationKey}
-use aiken/transaction/value.{AssetName}
-
-pub type VerificationKeyHash =
-  Hash<Blake2b_224, VerificationKey>
-
-pub type ScriptHash =
-  Hash<Blake2b_224, Script>
+use aiken/crypto.{ScriptHash}
+use cardano/assets.{AssetName}
 
 //                    //
 // Datums & Redeemers //
@@ -57,7 +49,7 @@ pub type LoanAction {
 }
 
 pub type LoanMintAction {
-  AMint { amount: Int, rewards: Int, term: Int, timestamp: PosixTime }
+  AMint { amount: Int, rewards: Int, term: Int, timestamp: Int }
   ABurn
 }
 
@@ -65,7 +57,7 @@ pub type LoanDatum {
   amount: Int,
   rewards: Int,
   term: Int,
-  timestamp: PosixTime,
+  timestamp: Int,
   oracle: AssetName,
 }
 
@@ -87,12 +79,12 @@ pub type MerkelCollateralAction {
 
 pub type TCollateralDatum {
   amount: Int,
-  timestamp: PosixTime,
+  timestamp: Int,
 }
 
 pub type CollateralDatum {
   amount: Int,
-  timestamp: PosixTime,
+  timestamp: Int,
   yield: Int,
 }
 
@@ -103,26 +95,21 @@ pub type RewardsAction {
 
 pub type OracleDatum {
   exchange: Int,
-  timestamp: PosixTime,
+  timestamp: Int,
   currency: ByteArray,
   supply: Int,
   borrowed: Int,
 }
 
 pub type OracleAction {
-  OracleUpdate {
-    exchange: Int,
-    timestamp: PosixTime,
-    supply: Int,
-    borrowed: Int,
-  }
+  OracleUpdate { exchange: Int, timestamp: Int, supply: Int, borrowed: Int }
   OracleClose
 }
 
 pub type OracleMintAction {
   OMint {
     exchange: Int,
-    timestamp: PosixTime,
+    timestamp: Int,
     currency: ByteArray,
     supply: Int,
     borrowed: Int,

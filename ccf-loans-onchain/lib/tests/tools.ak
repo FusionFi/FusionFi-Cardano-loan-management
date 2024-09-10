@@ -1,13 +1,15 @@
-use aiken/hash.{Blake2b_224, Hash}
-use aiken/transaction.{
-  Datum, InlineDatum, Input, Mint, Output, OutputReference, ScriptContext,
-  ScriptPurpose, Spend, Transaction, TransactionId, WithdrawFrom,
+use aiken/crypto.{ScriptHash, VerificationKeyHash}
+use cardano/address.{
+  Address, Credential, Inline, Referenced, Script, StakeCredential,
+  VerificationKey,
 }
-use aiken/transaction/credential.{
-  Address, Credential, Inline, Referenced, Script, ScriptCredential,
-  StakeCredential, VerificationKey, VerificationKeyCredential,
+use cardano/assets.{AssetName, PolicyId, Value}
+use cardano/script_context.{
+  Minting, ScriptContext, ScriptInfo, Spending, Withdrawing,
 }
-use aiken/transaction/value.{AssetName, MintedValue, PolicyId, Value}
+use cardano/transaction.{
+  Datum, InlineDatum, Input, Output, OutputReference, Transaction, TransactionId,
+}
 
 pub const yieldIn = #"3c30a1becdf0b0f35e0f575031d793333200a13beb08a5afb35a5bc6"
 
@@ -89,9 +91,6 @@ pub const oracleValHash =
 pub const rewardsMintHash =
   #"769a73b2bc482bf87d1482597ef7826ad5bb9f80010a8013a2d98300"
 
-pub type ScriptHash =
-  Hash<Blake2b_224, Script>
-
 pub fn loanRedeemers() -> List<ScriptHash> {
   let list =
     [merkelLoanBalance, merkelLoanLiquidate, merkelLoanClose]
@@ -109,63 +108,63 @@ pub fn collateralRedeemers() -> List<ScriptHash> {
 //            //
 
 pub fn configValue() -> Value {
-  let lovelaceValue = value.from_lovelace(2)
+  let lovelaceValue = assets.from_lovelace(2)
   let configToken = configTokenValue()
 
-  value.merge(lovelaceValue, configToken)
+  assets.merge(lovelaceValue, configToken)
 }
 
 pub fn oracleValue() -> Value {
-  let lovelaceValue = value.from_lovelace(2)
+  let lovelaceValue = assets.from_lovelace(2)
   let oracleToken = oracleTokenValue()
 
-  value.merge(lovelaceValue, oracleToken)
+  assets.merge(lovelaceValue, oracleToken)
 }
 
 pub fn loanValue() -> Value {
-  let lovelaceValue = value.from_lovelace(2)
+  let lovelaceValue = assets.from_lovelace(2)
   let loanToken = loanTokenValue()
 
-  value.merge(lovelaceValue, loanToken)
+  assets.merge(lovelaceValue, loanToken)
 }
 
 pub fn collateralValue() -> Value {
-  let lovelaceValue = value.from_lovelace(2)
+  let lovelaceValue = assets.from_lovelace(2)
   let collateralToken = loanTokenValue()
 
-  value.merge(lovelaceValue, collateralToken)
+  assets.merge(lovelaceValue, collateralToken)
 }
 
 pub fn rewardsValue(i: Int) -> Value {
-  let lovelaceValue = value.from_lovelace(2)
+  let lovelaceValue = assets.from_lovelace(2)
   let rewardsValue = rewardsTokenValue(i)
-  value.merge(lovelaceValue, rewardsValue)
+  assets.merge(lovelaceValue, rewardsValue)
 }
 
-pub fn configMintedValue() -> MintedValue {
+pub fn configMintedValue() -> Value {
   let configToken = configTokenValue()
 
-  value.to_minted_value(configToken)
+  configToken
 }
 
-pub fn rewardsMintedValue(i: Int) -> MintedValue {
+pub fn rewardsMintedValue(i: Int) -> Value {
   let rewardsToken = rewardsTokenValue(i)
 
-  value.to_minted_value(rewardsToken)
+  rewardsToken
 }
 
-pub fn loanMintedValue() -> MintedValue {
+pub fn loanMintedValue() -> Value {
   let loanToken = loanTokenValue()
 
-  value.to_minted_value(loanToken)
+  loanToken
 }
 
-pub fn oracleMintedValue() -> MintedValue {
+pub fn oracleMintedValue() -> Value {
   let oracleToken = oracleTokenValue()
   let interestToken = oracleTokenValue()
-  let combinedValue = value.merge(oracleToken, interestToken)
+  let combinedValue = assets.merge(oracleToken, interestToken)
 
-  value.to_minted_value(combinedValue)
+  combinedValue
 }
 
 //        //
@@ -173,31 +172,31 @@ pub fn oracleMintedValue() -> MintedValue {
 //        //
 
 pub fn configTokenValue() -> Value {
-  let configToken = value.from_asset(configMintHash, #"face", 1)
+  let configToken = assets.from_asset(configMintHash, #"face", 1)
 
   configToken
 }
 
 pub fn loanTokenValue() -> Value {
-  let loanToken = value.from_asset(loanMintHash, #"cafe", 1)
+  let loanToken = assets.from_asset(loanMintHash, #"cafe", 1)
 
   loanToken
 }
 
 pub fn loanBurnValue() -> Value {
-  let loanBurn = value.from_asset(loanMintHash, #"cafe", -2)
+  let loanBurn = assets.from_asset(loanMintHash, #"cafe", -2)
 
   loanBurn
 }
 
 pub fn oracleTokenValue() -> Value {
-  let oracleToken = value.from_asset(oracleMintHash, #"beef", 1)
+  let oracleToken = assets.from_asset(oracleMintHash, #"beef", 1)
 
   oracleToken
 }
 
 pub fn rewardsTokenValue(i: Int) -> Value {
-  let rewardsValue = value.from_asset(rewardsMintHash, #"", i)
+  let rewardsValue = assets.from_asset(rewardsMintHash, #"", i)
 
   rewardsValue
 }
@@ -221,7 +220,7 @@ pub fn make_asset_name(tn: ByteArray) -> AssetName {
 // }
 
 pub fn makeAdaValue(l: Int) -> Value {
-  value.from_lovelace(l * 1000000)
+  assets.from_lovelace(l * 1000000)
 }
 
 pub fn test_input(oref: OutputReference, out: Output) -> Input {
@@ -229,7 +228,7 @@ pub fn test_input(oref: OutputReference, out: Output) -> Input {
   in
 }
 
-pub fn test_output(a: Address, v: value.Value, d: Datum) -> Output {
+pub fn test_output(a: Address, v: Value, d: Datum) -> Output {
   let out: Output =
     Output { address: a, value: v, datum: d, reference_script: None }
   out
@@ -238,26 +237,23 @@ pub fn test_output(a: Address, v: value.Value, d: Datum) -> Output {
 // Create an OutputReference
 pub fn test_oref(h: ByteArray, i: Int) -> OutputReference {
   let oref: OutputReference =
-    OutputReference {
-      transaction_id: TransactionId { hash: h },
-      output_index: i,
-    }
+    OutputReference { transaction_id: h, output_index: i }
   oref
 }
 
 // Create ScriptContext
-pub fn test_context(t: Transaction, p: ScriptPurpose) -> ScriptContext {
-  let ctx = ScriptContext { transaction: t, purpose: p }
+pub fn test_context(t: Transaction, r: Data, p: ScriptInfo) -> ScriptContext {
+  let ctx = ScriptContext { transaction: t, redeemer: r, info: p }
   ctx
 }
 
 // Create ScriptPurpose
-pub fn test_mint_purpose(p: value.PolicyId) -> ScriptPurpose {
-  Mint(p)
+pub fn test_mint_purpose(p: PolicyId) -> ScriptInfo {
+  Minting(p)
 }
 
-pub fn test_spend_purpose(o: OutputReference) -> ScriptPurpose {
-  Spend(o)
+pub fn test_spend_purpose(o: OutputReference, d: Option<Data>) -> ScriptInfo {
+  Spending(o, d)
 }
 
 pub fn testInlineDatum(d: Data) -> Datum {
@@ -265,17 +261,14 @@ pub fn testInlineDatum(d: Data) -> Datum {
   datum
 }
 
-pub fn test_address(pkh: Hash<Blake2b_224, VerificationKey>) -> Address {
+pub fn test_address(pkh: VerificationKeyHash) -> Address {
   let addr =
-    Address {
-      payment_credential: VerificationKeyCredential(pkh),
-      stake_credential: None,
-    }
+    Address { payment_credential: VerificationKey(pkh), stake_credential: None }
   addr
 }
 
-pub fn test_script_address(s: Hash<Blake2b_224, Script>) -> Address {
-  credential.from_script(s)
+pub fn test_script_address(s: ScriptHash) -> Address {
+  address.from_script(s)
 }
 
 pub fn test_signatories() -> List<ByteArray> {
@@ -283,14 +276,18 @@ pub fn test_signatories() -> List<ByteArray> {
 }
 
 pub fn test_tx_id(h: ByteArray) -> TransactionId {
-  let txid = TransactionId { hash: h }
+  let txid = h
   txid
 }
 
 // Testing Helper Functions //
 
-pub fn create_stake_credential(s: Hash<Blake2b_224, Script>) -> StakeCredential {
-  Inline(ScriptCredential(s))
+pub fn create_stake_credential(s: ScriptHash) -> StakeCredential {
+  Inline(Script(s))
+}
+
+pub fn create_script_credential(s: ScriptHash) -> Credential {
+  Script(s)
 }
 
 pub fn stakeCompare(
@@ -304,11 +301,12 @@ pub fn stakeCompare(
   }
 }
 
-pub fn scriptCompare(_left: ScriptPurpose, _right: ScriptPurpose) -> Ordering {
+pub fn scriptCompare(_left: ScriptInfo, _right: ScriptInfo) -> Ordering {
   Less
 }
 
-pub fn withPurpose(hash: ByteArray) -> ScriptPurpose {
-  let stake = create_stake_credential(hash)
-  WithdrawFrom(stake)
+pub fn withPurpose(hash: ByteArray) -> ScriptInfo {
+  // let stake = create_stake_credential(hash)
+  let cred = create_script_credential(hash)
+  Withdrawing(cred)
 }

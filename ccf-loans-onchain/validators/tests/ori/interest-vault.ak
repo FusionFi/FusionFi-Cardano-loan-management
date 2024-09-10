@@ -1,64 +1,12 @@
-use aiken/dict.{to_pairs}
-use aiken/list.{has}
-use aiken/transaction.{
-  InlineDatum, Input, Output, ScriptContext, Spend, Transaction, find_input,
-  placeholder,
-}
-use aiken/transaction/value.{PolicyId, tokens, without_lovelace}
-use ccfl/helpers.{get_own_singleton_output, has_singleton_input}
-use ccfl/types.{
-  InterestAction, InterestClose, InterestDatum, InterestUpdate,
-  VerificationKeyHash,
-}
+use cardano/assets
+use cardano/transaction.{InlineDatum, Transaction, placeholder}
+use ori/interest_vault
 use tests/tools as t
 use tests/transactions.{interestAction, interestDatum}
 
-// validator for handling updating and enforcing rates
-
-validator(op: PolicyId, o: VerificationKeyHash) {
-  fn interest(_d: InterestDatum, r: InterestAction, c: ScriptContext) {
-    let ScriptContext { transaction, purpose } = c
-    expect Spend(ownRef) = purpose
-
-    expect has_singleton_input(transaction, ownRef)
-    when r is {
-      InterestUpdate { base, optimal, slope1, slope2, term } -> {
-        let out = get_own_singleton_output(transaction, ownRef)
-
-        expect [Pair(_, 1)] =
-          without_lovelace(out.value)
-            |> tokens(op)
-            |> to_pairs()
-
-        expect InlineDatum(datum) = out.datum
-        expect datum: InterestDatum = datum
-
-        has(transaction.extra_signatories, o) && datum.base == base && datum.optimal == optimal && datum.slope1 == slope1 && datum.slope2 == slope2 && datum.term == term
-      }
-      InterestClose -> {
-        expect Some(ownIn) = find_input(transaction.inputs, ownRef)
-
-        expect [Pair(inName, 1)] =
-          // get singleton name
-          without_lovelace(ownIn.output.value)
-            |> tokens(op)
-            |> to_pairs()
-
-        expect [Pair(burnName, -2)] =
-          transaction.mint
-            |> value.from_minted_value()
-            |> value.tokens(op)
-            |> dict.to_pairs()
-
-        has(transaction.extra_signatories, o) && inName == burnName
-      }
-    }
-  }
-}
-
-//       //
-// Tests //
-//       //
+//                          //
+// Interest Validator Tests //
+//                          //
 
 test interestUpdate() {
   let test_owner = #"face"
@@ -91,15 +39,20 @@ test interestUpdate() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [interestInput],
       outputs: [interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+  interest_vault.interest.spend(
+    t.oracleMintHash,
+    test_owner,
+    Some(interestDatum1),
+    interestAction,
+    oref,
+    tx,
+  )?
 }
 
 test interest_sigFail() fail {
@@ -134,15 +87,20 @@ test interest_sigFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [vulnSig],
       inputs: [interestInput],
       outputs: [interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)
+  interest_vault.interest.spend(
+    t.oracleMintHash,
+    test_owner,
+    Some(interestDatum1),
+    interestAction,
+    oref,
+    tx,
+  )
 }
 
 test interest_datumFail() fail {
@@ -176,15 +134,20 @@ test interest_datumFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [interestInput],
       outputs: [interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)
+  interest_vault.interest.spend(
+    t.oracleMintHash,
+    test_owner,
+    Some(interestDatum1),
+    interestAction,
+    oref,
+    tx,
+  )
 }
 
 test interest_actionFail() fail {
@@ -218,15 +181,20 @@ test interest_actionFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [interestInput],
       outputs: [interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)
+  interest_vault.interest.spend(
+    t.oracleMintHash,
+    test_owner,
+    Some(interestDatum1),
+    interestAction,
+    oref,
+    tx,
+  )
 }
 
 test interest_outputFail() fail {
@@ -260,15 +228,20 @@ test interest_outputFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [interestInput],
       outputs: [vulnOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+  interest_vault.interest.spend(
+    t.oracleMintHash,
+    test_owner,
+    Some(interestDatum1),
+    interestAction,
+    oref,
+    tx,
+  )?
 }
 
 test interest_inputFail() fail {
@@ -312,15 +285,20 @@ test interest_inputFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [interestInput, vulnInput],
       outputs: [interestOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+  interest_vault.interest.spend(
+    t.oracleMintHash,
+    test_owner,
+    Some(interestDatum1),
+    interestAction,
+    oref,
+    tx,
+  )?
 }
 
 test interest_outTokenFail() fail {
@@ -354,15 +332,20 @@ test interest_outTokenFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [interestInput],
       outputs: [vulnOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
-
-  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+  interest_vault.interest.spend(
+    t.oracleMintHash,
+    test_owner,
+    Some(interestDatum1),
+    interestAction,
+    oref,
+    tx,
+  )?
 }
 
 test interest_tokenChange() {
@@ -388,9 +371,9 @@ test interest_tokenChange() {
   let vulnOutput =
     t.test_output(
       t.test_script_address(t.interestValHash),
-      value.merge(
-        value.from_lovelace(2),
-        value.from_asset(t.oracleMintHash, #"cece", 1),
+      assets.merge(
+        assets.from_lovelace(2),
+        assets.from_asset(t.oracleMintHash, #"cece", 1),
       ),
       outDatum,
     )
@@ -399,13 +382,19 @@ test interest_tokenChange() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       extra_signatories: [test_owner],
       inputs: [interestInput],
       outputs: [vulnOutput],
     }
 
-  let ctx = ScriptContext { purpose: Spend(oref), transaction: tx }
   trace @"VULNERABILITY"
-  interest(t.oracleMintHash, test_owner, interestDatum1, interestAction, ctx)?
+  interest_vault.interest.spend(
+    t.oracleMintHash,
+    test_owner,
+    Some(interestDatum1),
+    interestAction,
+    oref,
+    tx,
+  )?
 }

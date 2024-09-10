@@ -1,99 +1,13 @@
-use aiken/list
-use aiken/transaction.{
-  InlineDatum, Input, Output, ScriptContext, Transaction, WithdrawFrom,
-  placeholder,
-}
-use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkelTx}
-use ccfl/types.{
-  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawRedeemer,
-}
+use cardano/address.{Script}
+use cardano/assets
+use cardano/transaction.{Transaction, placeholder}
+use ori/merkel_liquidate
 use tests/tools as t
 use tests/transactions as tx
 
-//                              //
-// Merkel Liquidation Validator //
-//                              //
-
-validator(p: PolicyId, cp: PolicyId) {
-  fn liquidate(r: WithdrawRedeemer, c: ScriptContext) {
-    expect ScriptContext {
-      transaction,
-      purpose: WithdrawFrom(_stake_credential),
-    } = c
-
-    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
-
-    expect Some(oracleOut) =
-      list.find(
-        outputs,
-        fn(output) { list.has(value.policies(output.value), p) },
-      )
-    expect InlineDatum(datum) = oracleOut.datum
-    expect rDatum: OracleDatum = datum
-
-    let exchangeRate = rDatum.exchange
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-    expect InlineDatum(datum) = configIn.output.datum
-    expect _cDatum: MerkelConfigDatum = datum
-
-    merkelTx(
-      fn(collateral, loan) {
-        let loanToken = value.without_lovelace(loan.value)
-        expect InlineDatum(datum) = collateral.datum
-        expect colDatum: CollateralDatum = datum
-        expect InlineDatum(datum) = loan.datum
-        expect loanDatum: LoanDatum = datum
-        expect Some(loanIn) =
-          list.find(
-            inputs,
-            fn(in) {
-              in.output.address.payment_credential == loan.address.payment_credential && value.without_lovelace(
-                in.output.value,
-              ) == loanToken
-            },
-          )
-        expect InlineDatum(datum) = loanIn.output.datum
-        expect lin: LoanDatum = datum
-        expect Some(colIn) =
-          list.find(
-            inputs,
-            fn(in) {
-              in.output.address.payment_credential == collateral.address.payment_credential && value.without_lovelace(
-                in.output.value,
-              ) == loanToken
-            },
-          )
-        expect InlineDatum(datum) = colIn.output.datum
-        expect cin: CollateralDatum = datum
-
-        let expectedOracle = value.from_asset(p, lin.oracle, 1)
-
-        let exchangeAdjustment = lin.amount * 1000
-        let loanExpected = exchangeAdjustment / exchangeRate
-
-        // let adaOut = value.lovelace_of(collateral.value) / 1000000
-        let ratio = loanDatum.amount * 1000 / ( exchangeAdjustment / 100 )
-
-        value.lovelace_of(colIn.output.value) / 1000000 <= loanExpected * 85 / 100 && value.without_lovelace(
-          oracleOut.value,
-        ) == expectedOracle && value.lovelace_of(collateral.value) >= value.lovelace_of(
-          colIn.output.value,
-        ) * ratio && colDatum.amount == loanDatum.amount * 2 && cin.yield == colDatum.yield
-      },
-      r.a,
-      outputs,
-    )
-  }
-}
-
-//                 //
-// Validator Tests //
-//                 //
+//                             //
+// Liquidation Validator Tests //
+//                             //
 
 test merkel_liquidate_single() {
   let inRatio = 200
@@ -126,7 +40,7 @@ test merkel_liquidate_single() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       extra_signatories: [test_owner],
       inputs: [loanIn1, oracleIn, userIn1, colIn1],
@@ -136,9 +50,13 @@ test merkel_liquidate_single() {
 
   let redeemerList = tx.withdrawRedeemer([2])
 
-  let ctx1 = tx.wCtx(t.merkelLiquidate, tx)
-
-  liquidate(t.oracleMintHash, t.configMintHash, redeemerList, ctx1)?
+  merkel_liquidate.liquidate.withdraw(
+    t.oracleMintHash,
+    t.configMintHash,
+    redeemerList,
+    Script(t.merkelLiquidate),
+    tx,
+  )?
 }
 
 test liquidate_loanAmtFail() fail {
@@ -172,7 +90,7 @@ test liquidate_loanAmtFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       extra_signatories: [test_owner],
       inputs: [loanIn1, oracleIn, userIn1, colIn1],
@@ -182,9 +100,13 @@ test liquidate_loanAmtFail() fail {
 
   let redeemerList = tx.withdrawRedeemer([2])
 
-  let ctx1 = tx.wCtx(t.merkelLiquidate, tx)
-
-  liquidate(t.oracleMintHash, t.configMintHash, redeemerList, ctx1)?
+  merkel_liquidate.liquidate.withdraw(
+    t.oracleMintHash,
+    t.configMintHash,
+    redeemerList,
+    Script(t.merkelLiquidate),
+    tx,
+  )?
 }
 
 test liquidate_colAmtFail() fail {
@@ -218,7 +140,7 @@ test liquidate_colAmtFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       extra_signatories: [test_owner],
       inputs: [loanIn1, oracleIn, userIn1, colIn1],
@@ -228,9 +150,13 @@ test liquidate_colAmtFail() fail {
 
   let redeemerList = tx.withdrawRedeemer([2])
 
-  let ctx1 = tx.wCtx(t.merkelLiquidate, tx)
-
-  liquidate(t.oracleMintHash, t.configMintHash, redeemerList, ctx1)?
+  merkel_liquidate.liquidate.withdraw(
+    t.oracleMintHash,
+    t.configMintHash,
+    redeemerList,
+    Script(t.merkelLiquidate),
+    tx,
+  )?
 }
 
 test liquidate_tokenSwap() fail {
@@ -245,7 +171,7 @@ test liquidate_tokenSwap() fail {
   let outCollateralAmount = 0
   let outCollateralValue = 2
 
-  let vulnToken = value.from_asset(t.loanMintHash, #"deaf", 1)
+  let vulnToken = assets.from_asset(t.loanMintHash, #"deaf", 1)
 
   let test_owner = #"face"
 
@@ -264,20 +190,20 @@ test liquidate_tokenSwap() fail {
   let loanOut1 =
     t.test_output(
       t.test_script_address(t.mLoan),
-      value.merge(value.from_lovelace(2000000), vulnToken),
+      assets.merge(assets.from_lovelace(2000000), vulnToken),
       tx.loanOutDatum(outLoanAmount),
     )
 
   let colOut1 =
     t.test_output(
       t.test_script_address(t.mCol),
-      value.merge(value.from_lovelace(outCollateralValue), vulnToken),
+      assets.merge(assets.from_lovelace(outCollateralValue), vulnToken),
       tx.collateralDatumOut(outCollateralAmount, 0),
     )
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       extra_signatories: [test_owner],
       inputs: [loanIn1, oracleIn, userIn1, colIn1],
@@ -287,15 +213,19 @@ test liquidate_tokenSwap() fail {
 
   let redeemerList = tx.withdrawRedeemer([2])
 
-  let ctx1 = tx.wCtx(t.merkelLiquidate, tx)
-
-  liquidate(t.oracleMintHash, t.configMintHash, redeemerList, ctx1)?
+  merkel_liquidate.liquidate.withdraw(
+    t.oracleMintHash,
+    t.configMintHash,
+    redeemerList,
+    Script(t.merkelLiquidate),
+    tx,
+  )?
 }
 
 test liquidate_oracleSwap() fail {
-  let vulnToken = value.from_asset(t.oracleMintHash, #"1234", 1)
+  let vulnToken = assets.from_asset(t.oracleMintHash, #"1234", 1)
 
-  let vulnOracleValue = value.merge(value.from_lovelace(2000000), vulnToken)
+  let vulnOracleValue = assets.merge(assets.from_lovelace(2000000), vulnToken)
 
   let inRatio = 200
   let outRatio = 200
@@ -332,7 +262,7 @@ test liquidate_oracleSwap() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       extra_signatories: [test_owner],
       inputs: [loanIn1, oracleIn, userIn1, colIn1],
@@ -342,7 +272,11 @@ test liquidate_oracleSwap() fail {
 
   let redeemerList = tx.withdrawRedeemer([2])
 
-  let ctx1 = tx.wCtx(t.merkelLiquidate, tx)
-
-  liquidate(t.oracleMintHash, t.configMintHash, redeemerList, ctx1)?
+  merkel_liquidate.liquidate.withdraw(
+    t.oracleMintHash,
+    t.configMintHash,
+    redeemerList,
+    Script(t.merkelLiquidate),
+    tx,
+  )?
 }

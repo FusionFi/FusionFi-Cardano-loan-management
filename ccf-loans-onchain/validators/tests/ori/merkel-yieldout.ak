@@ -1,78 +1,16 @@
-use aiken/list
-use aiken/transaction.{
-  InlineDatum, Input, NoDatum, Output, ScriptContext, Transaction, WithdrawFrom,
-  placeholder,
+use cardano/address.{Address, Script, VerificationKey}
+use cardano/assets
+use cardano/transaction.{
+  InlineDatum, Input, NoDatum, Output, Transaction, placeholder,
 }
-use aiken/transaction/credential.{Address, ScriptCredential}
-use aiken/transaction/value.{PolicyId}
-use ccfl/helpers.{merkelYield}
-use ccfl/types.{CollateralDatum, MerkelConfigDatum, WithdrawRedeemer}
+use ccfl/types.{CollateralDatum}
+use ori/merkel_yieldout
 use tests/tools as t
 use tests/transactions as tx
 
-// type CYieldDatum {
-//   amount: Int,
-//   timestamp: Int,
-//   yield: Int,
-// }
-
-validator(cp: PolicyId) {
-  fn yieldWithdraw(r: WithdrawRedeemer, c: ScriptContext) {
-    expect ScriptContext {
-      transaction,
-      purpose: WithdrawFrom(_stake_credential),
-    } = c
-
-    let Transaction { inputs, outputs, reference_inputs, .. } = transaction
-
-    expect Some(configIn) =
-      list.find(
-        reference_inputs,
-        fn(input) { list.has(value.policies(input.output.value), cp) },
-      )
-
-    expect InlineDatum(datum) = configIn.output.datum
-    expect cDatum: MerkelConfigDatum = datum
-
-    merkelYield(
-      outputs,
-      r.a,
-      fn(collateral) {
-        let loanToken = value.without_lovelace(collateral.value)
-
-        expect InlineDatum(datum) = collateral.datum
-        expect outDatum: CollateralDatum = datum
-
-        expect Some(colIn) =
-          list.find(
-            inputs,
-            fn(in) {
-              in.output.address.payment_credential == collateral.address.payment_credential && value.without_lovelace(
-                in.output.value,
-              ) == loanToken
-            },
-          )
-
-        expect InlineDatum(datum) = colIn.output.datum
-        expect inDatum: CollateralDatum = datum
-
-        expect Some(_yieldIn) =
-          list.find(
-            inputs,
-            fn(in) {
-              in.output.address.payment_credential == ScriptCredential(
-                cDatum.yield,
-              ) && value.lovelace_of(in.output.value) >= outDatum.yield - inDatum.yield
-            },
-          )
-
-        outDatum.yield + value.lovelace_of(collateral.value) == inDatum.yield + value.lovelace_of(
-          colIn.output.value,
-        ) && inDatum.yield > outDatum.yield
-      },
-    )
-  }
-}
+//                      //
+// Yield Withdraw Tests //
+//                      //
 
 test yieldOut() {
   let inRatio = 1000
@@ -89,10 +27,10 @@ test yieldOut() {
   let output =
     Output {
       address: Address {
-        payment_credential: ScriptCredential(#"bebe"),
+        payment_credential: Script(#"bebe"),
         stake_credential: None,
       },
-      value: value.from_lovelace(outYield),
+      value: assets.from_lovelace(outYield),
       datum: NoDatum,
       reference_script: None,
     }
@@ -120,7 +58,10 @@ test yieldOut() {
       tx.oref(#"cafe", 1),
       t.test_output(
         t.test_script_address(t.mCol),
-        value.merge(value.from_lovelace(inCollateralValue), t.loanTokenValue()),
+        assets.merge(
+          assets.from_lovelace(inCollateralValue),
+          t.loanTokenValue(),
+        ),
         InlineDatum(inDatum),
       ),
     )
@@ -128,7 +69,7 @@ test yieldOut() {
   let colOut1 =
     t.test_output(
       t.test_script_address(t.mCol),
-      value.merge(value.from_lovelace(outCollateralValue), t.loanTokenValue()),
+      assets.merge(assets.from_lovelace(outCollateralValue), t.loanTokenValue()),
       InlineDatum(outDatum),
     )
 
@@ -140,16 +81,19 @@ test yieldOut() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       inputs: [colIn1, yieldIn, oracleIn, userIn1],
       outputs: [colOut1, oracleOut],
       withdrawals: withdraw0,
     }
 
-  let scriptContext = tx.wCtx(t.yieldIn, tx)
-
-  yieldWithdraw(t.configMintHash, withdrawRedeemer, scriptContext)?
+  merkel_yieldout.yieldWithdraw.withdraw(
+    t.configMintHash,
+    withdrawRedeemer,
+    VerificationKey(t.yieldIn),
+    tx,
+  )?
 }
 
 test yield_colFail() fail {
@@ -167,10 +111,10 @@ test yield_colFail() fail {
   let output =
     Output {
       address: Address {
-        payment_credential: ScriptCredential(#"bebe"),
+        payment_credential: Script(#"bebe"),
         stake_credential: None,
       },
-      value: value.from_lovelace(outYield),
+      value: assets.from_lovelace(outYield),
       datum: NoDatum,
       reference_script: None,
     }
@@ -198,7 +142,10 @@ test yield_colFail() fail {
       tx.oref(#"cafe", 1),
       t.test_output(
         t.test_script_address(t.mCol),
-        value.merge(value.from_lovelace(inCollateralValue), t.loanTokenValue()),
+        assets.merge(
+          assets.from_lovelace(inCollateralValue),
+          t.loanTokenValue(),
+        ),
         InlineDatum(inDatum),
       ),
     )
@@ -206,7 +153,7 @@ test yield_colFail() fail {
   let colOut1 =
     t.test_output(
       t.test_script_address(t.mCol),
-      value.merge(value.from_lovelace(outCollateralValue), t.loanTokenValue()),
+      assets.merge(assets.from_lovelace(outCollateralValue), t.loanTokenValue()),
       InlineDatum(outDatum),
     )
 
@@ -218,22 +165,25 @@ test yield_colFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       inputs: [colIn1, yieldIn, oracleIn, userIn1],
       outputs: [colOut1, oracleOut],
       withdrawals: withdraw0,
     }
 
-  let scriptContext = tx.wCtx(t.yieldIn, tx)
-
-  yieldWithdraw(t.configMintHash, withdrawRedeemer, scriptContext)?
+  merkel_yieldout.yieldWithdraw.withdraw(
+    t.configMintHash,
+    withdrawRedeemer,
+    VerificationKey(t.yieldIn),
+    tx,
+  )?
 }
 
 test yield_multi() {
-  let loanValue1 = value.from_asset(t.loanMintHash, "baba", 1)
-  let loanValue2 = value.from_asset(t.loanMintHash, "bbbb", 1)
-  let loanValue3 = value.from_asset(t.loanMintHash, "bcbc", 1)
+  let loanValue1 = assets.from_asset(t.loanMintHash, "baba", 1)
+  let loanValue2 = assets.from_asset(t.loanMintHash, "bbbb", 1)
+  let loanValue3 = assets.from_asset(t.loanMintHash, "bcbc", 1)
 
   let inRatio = 1000
   let outRatio = 1000
@@ -269,7 +219,7 @@ test yield_multi() {
       tx.oref(#"cafe", 1),
       t.test_output(
         t.test_script_address(t.mCol),
-        value.merge(value.from_lovelace(inCollateralValue), loanValue1),
+        assets.merge(assets.from_lovelace(inCollateralValue), loanValue1),
         InlineDatum(inDatum),
       ),
     )
@@ -279,7 +229,7 @@ test yield_multi() {
       tx.oref(#"cafe", 2),
       t.test_output(
         t.test_script_address(t.mCol),
-        value.merge(value.from_lovelace(inCollateralValue), loanValue2),
+        assets.merge(assets.from_lovelace(inCollateralValue), loanValue2),
         InlineDatum(inDatum),
       ),
     )
@@ -289,7 +239,7 @@ test yield_multi() {
       tx.oref(#"cafe", 3),
       t.test_output(
         t.test_script_address(t.mCol),
-        value.merge(value.from_lovelace(inCollateralValue), loanValue3),
+        assets.merge(assets.from_lovelace(inCollateralValue), loanValue3),
         InlineDatum(inDatum),
       ),
     )
@@ -297,21 +247,21 @@ test yield_multi() {
   let colOut1 =
     t.test_output(
       t.test_script_address(t.mCol),
-      value.merge(value.from_lovelace(outCollateralValue), loanValue1),
+      assets.merge(assets.from_lovelace(outCollateralValue), loanValue1),
       InlineDatum(outDatum),
     )
 
   let colOut2 =
     t.test_output(
       t.test_script_address(t.mCol),
-      value.merge(value.from_lovelace(outCollateralValue), loanValue2),
+      assets.merge(assets.from_lovelace(outCollateralValue), loanValue2),
       InlineDatum(outDatum),
     )
 
   let colOut3 =
     t.test_output(
       t.test_script_address(t.mCol),
-      value.merge(value.from_lovelace(outCollateralValue), loanValue3),
+      assets.merge(assets.from_lovelace(outCollateralValue), loanValue3),
       InlineDatum(outDatum),
     )
 
@@ -320,10 +270,10 @@ test yield_multi() {
       output_reference: tx.oref(#"abab", 1),
       output: Output {
         address: Address {
-          payment_credential: ScriptCredential(#"bebe"),
+          payment_credential: Script(#"bebe"),
           stake_credential: None,
         },
-        value: value.from_lovelace(inYield),
+        value: assets.from_lovelace(inYield),
         datum: NoDatum,
         reference_script: None,
       },
@@ -334,10 +284,10 @@ test yield_multi() {
       output_reference: tx.oref(#"abab", 2),
       output: Output {
         address: Address {
-          payment_credential: ScriptCredential(#"bebe"),
+          payment_credential: Script(#"bebe"),
           stake_credential: None,
         },
-        value: value.from_lovelace(inYield),
+        value: assets.from_lovelace(inYield),
         datum: NoDatum,
         reference_script: None,
       },
@@ -348,10 +298,10 @@ test yield_multi() {
       output_reference: tx.oref(#"abab", 3),
       output: Output {
         address: Address {
-          payment_credential: ScriptCredential(#"bebe"),
+          payment_credential: Script(#"bebe"),
           stake_credential: None,
         },
-        value: value.from_lovelace(inYield),
+        value: assets.from_lovelace(inYield),
         datum: NoDatum,
         reference_script: None,
       },
@@ -363,23 +313,19 @@ test yield_multi() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       inputs: [
-        colIn1,
-        colIn2,
-        colIn3,
-        yieldIn1,
-        yieldIn2,
-        yieldIn3,
-        oracleIn,
-        userIn1,
+        colIn1, colIn2, colIn3, yieldIn1, yieldIn2, yieldIn3, oracleIn, userIn1,
       ],
       outputs: [colOut1, colOut2, colOut3, oracleOut],
       withdrawals: withdraw0,
     }
 
-  let scriptContext = tx.wCtx(t.yieldOut, tx)
-
-  yieldWithdraw(t.configMintHash, withdrawRedeemer, scriptContext)?
+  merkel_yieldout.yieldWithdraw.withdraw(
+    t.configMintHash,
+    withdrawRedeemer,
+    VerificationKey(t.yieldOut),
+    tx,
+  )?
 }

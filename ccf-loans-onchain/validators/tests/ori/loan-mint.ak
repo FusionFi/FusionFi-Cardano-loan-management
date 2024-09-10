@@ -1,106 +1,9 @@
-use aiken/dict
-use aiken/list.{filter, find, has, head}
-use aiken/transaction.{
-  InlineDatum, Input, Mint, NoDatum, Output, ScriptContext, Transaction,
-  placeholder,
-}
-use aiken/transaction/credential.{ScriptCredential}
-use aiken/transaction/value.{PolicyId, lovelace_of, policies}
-use ccfl/types.{
-  ABurn, AMint, CollateralDatum, LoanDatum, LoanMintAction, MerkelConfigDatum,
-  OracleDatum,
-}
+use cardano/assets
+use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
+use ori/loan_mint
 use tests/tools as t
 use tests/transactions.{
   collateralDatum, configDatumIn, loanDatum, loanMintActionMint, oracleDatum,
-}
-
-//                    //
-// Separate Loan Mint //
-//                    //
-
-// Mints 2 tokens 
-// sends one to loan vault with datum
-// sends one to collateral vault with datum
-
-validator(op: PolicyId, cp: PolicyId) {
-  fn loanMint(r: LoanMintAction, c: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } = c
-    expect Mint(policyId) = purpose
-
-    let Transaction { mint, outputs, reference_inputs, .. } = transaction
-
-    expect [Pair(_tName, tAmt)] =
-      mint
-        |> value.from_minted_value()
-        |> value.tokens(policyId)
-        |> dict.to_pairs()
-
-    when r is {
-      AMint { amount, rewards, term, timestamp } -> {
-        // checks for Oracle ref in
-        expect Some(oracleOut) =
-          find(outputs, fn(output) { has(policies(output.value), op) })
-        expect [Pair(oracleTn, 1)] =
-          oracleOut.value
-            |> value.tokens(op)
-            |> dict.to_pairs()
-        // checks oracle datum
-        expect InlineDatum(datum) = oracleOut.datum
-        expect rDatum: OracleDatum = datum
-        // pulls exchange rate
-        let exchangeRate = rDatum.exchange
-        // checks for config input
-        expect Some(configIn) =
-          head(
-            filter(
-              reference_inputs,
-              fn(ref) { has(policies(ref.output.value), cp) },
-            ),
-          )
-        // checks config datum
-        expect InlineDatum(datum) = configIn.output.datum
-        expect cDatum: MerkelConfigDatum = datum
-
-        // sends to loan validator in config
-        expect Some(loanOut) =
-          find(
-            outputs,
-            fn(output) {
-              output.address.payment_credential == ScriptCredential(
-                cDatum.loanVal,
-              ) && has(policies(output.value), policyId)
-            },
-          )
-        // sends to collateral validator in config
-        expect Some(colOut) =
-          find(
-            outputs,
-            fn(output) {
-              output.address.payment_credential == ScriptCredential(
-                cDatum.colVal,
-              ) && has(policies(output.value), policyId)
-            },
-          )
-        // checks loan output datum
-        expect InlineDatum(datum) = loanOut.datum
-        expect lDatum: LoanDatum = datum
-        // checks collateral output datum
-        expect InlineDatum(datum) = colOut.datum
-        expect colDatum: CollateralDatum = datum
-        let decimalComp = lDatum.amount * 1000
-        let exchangeValue = decimalComp / exchangeRate
-        // checks loan values against redeemer && collateral && 2 tokens minted
-        lDatum.amount == amount && lDatum.term == term && colDatum.amount == amount * 2 && lovelace_of(
-          colOut.value,
-        ) >= exchangeValue * 1000000 && tAmt == 2 && lDatum.oracle == oracleTn && lDatum.rewards == rewards && lDatum.timestamp == timestamp && colDatum.yield == 0
-      }
-      // True
-      // always allows Burn -> This needs to be changed to only allow burning when the loan is 
-      // closed or there is no more loan value (ie liquidated)
-      ABurn -> True
-    }
-  }
 }
 
 //                 //
@@ -116,8 +19,7 @@ test loan_mint() {
 
   let mintAction = loanMintActionMint(1000, 12, 1111111114)
 
-  let loanMintedValue =
-    value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
+  let loanMintedValue = assets.merge(t.loanTokenValue(), t.loanTokenValue())
 
   let configInDatum = configDatumIn()
 
@@ -127,7 +29,7 @@ test loan_mint() {
 
   let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
-  let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
+  let colOutValue = assets.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
   let oracleInDatum = oracleDatum(2000, 11111112, 1000000, 200000, "USD")
   let oracleOutDatum = oracleDatum(1000, 11111114, 1000000, 200000, "USD")
@@ -185,7 +87,7 @@ test loan_mint() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: loanMintedValue,
       extra_signatories: [test_owner],
@@ -193,9 +95,13 @@ test loan_mint() {
       outputs: [loanOut, colOut, oracleOut],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.loanMintHash), transaction: tx }
-
-  loanMint(t.oracleMintHash, t.configMintHash, mintAction, ctx)?
+  loan_mint.loanMint.mint(
+    t.oracleMintHash,
+    t.configMintHash,
+    mintAction,
+    t.loanMintHash,
+    tx,
+  )?
 }
 
 test mint_loanDatumFail() fail {
@@ -207,8 +113,7 @@ test mint_loanDatumFail() fail {
 
   let mintAction = loanMintActionMint(1000, 12, 1111111114)
 
-  let loanMintedValue =
-    value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
+  let loanMintedValue = assets.merge(t.loanTokenValue(), t.loanTokenValue())
 
   let configInDatum = configDatumIn()
 
@@ -218,7 +123,7 @@ test mint_loanDatumFail() fail {
 
   let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
-  let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
+  let colOutValue = assets.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
   let oracleInDatum = oracleDatum(2000, 11111112, 1000000, 200000, "USD")
   let oracleOutDatum = oracleDatum(1000, 11111114, 1000000, 200000, "USD")
@@ -276,7 +181,7 @@ test mint_loanDatumFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: loanMintedValue,
       extra_signatories: [test_owner],
@@ -284,9 +189,13 @@ test mint_loanDatumFail() fail {
       outputs: [loanOut, colOut, oracleOut],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.loanMintHash), transaction: tx }
-
-  loanMint(t.oracleMintHash, t.configMintHash, mintAction, ctx)
+  loan_mint.loanMint.mint(
+    t.oracleMintHash,
+    t.configMintHash,
+    mintAction,
+    t.loanMintHash,
+    tx,
+  )
 }
 
 test mint_colDatumFail() fail {
@@ -298,8 +207,7 @@ test mint_colDatumFail() fail {
 
   let mintAction = loanMintActionMint(1000, 12, 1111111114)
 
-  let loanMintedValue =
-    value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
+  let loanMintedValue = assets.merge(t.loanTokenValue(), t.loanTokenValue())
 
   let configInDatum = configDatumIn()
 
@@ -309,7 +217,7 @@ test mint_colDatumFail() fail {
 
   let collateralDatum = collateralDatum(1000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
-  let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
+  let colOutValue = assets.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
   let oracleInDatum = oracleDatum(2000, 11111112, 1000000, 200000, "USD")
   let oracleOutDatum = oracleDatum(1000, 11111114, 1000000, 200000, "USD")
@@ -367,7 +275,7 @@ test mint_colDatumFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: loanMintedValue,
       extra_signatories: [test_owner],
@@ -375,9 +283,13 @@ test mint_colDatumFail() fail {
       outputs: [loanOut, colOut, oracleOut],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.loanMintHash), transaction: tx }
-
-  loanMint(t.oracleMintHash, t.configMintHash, mintAction, ctx)
+  loan_mint.loanMint.mint(
+    t.oracleMintHash,
+    t.configMintHash,
+    mintAction,
+    t.loanMintHash,
+    tx,
+  )
 }
 
 test mint_actionFail() fail {
@@ -389,8 +301,7 @@ test mint_actionFail() fail {
 
   let mintAction = loanMintActionMint(500, 12, 1111111114)
 
-  let loanMintedValue =
-    value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
+  let loanMintedValue = assets.merge(t.loanTokenValue(), t.loanTokenValue())
 
   let configInDatum = configDatumIn()
 
@@ -400,7 +311,7 @@ test mint_actionFail() fail {
 
   let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
-  let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
+  let colOutValue = assets.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
   let oracleInDatum = oracleDatum(2000, 11111112, 1000000, 200000, "USD")
   let oracleOutDatum = oracleDatum(1000, 11111114, 1000000, 200000, "USD")
@@ -458,7 +369,7 @@ test mint_actionFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: loanMintedValue,
       extra_signatories: [test_owner],
@@ -466,9 +377,13 @@ test mint_actionFail() fail {
       outputs: [loanOut, colOut, oracleOut],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.loanMintHash), transaction: tx }
-
-  loanMint(t.oracleMintHash, t.configMintHash, mintAction, ctx)
+  loan_mint.loanMint.mint(
+    t.oracleMintHash,
+    t.configMintHash,
+    mintAction,
+    t.loanMintHash,
+    tx,
+  )
 }
 
 test mint_oracleFail() fail {
@@ -480,8 +395,7 @@ test mint_oracleFail() fail {
 
   let mintAction = loanMintActionMint(1000, 12, 1111111114)
 
-  let loanMintedValue =
-    value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
+  let loanMintedValue = assets.merge(t.loanTokenValue(), t.loanTokenValue())
 
   let configInDatum = configDatumIn()
 
@@ -491,7 +405,7 @@ test mint_oracleFail() fail {
 
   let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
-  let colOutValue = value.merge(t.makeAdaValue(2002), t.loanTokenValue())
+  let colOutValue = assets.merge(t.makeAdaValue(2002), t.loanTokenValue())
 
   let oracleInDatum = oracleDatum(2000, 11111112, 1000000, 200000, "USD")
   let oracleOutDatum = oracleDatum(1000, 11111114, 1000000, 200000, "USD")
@@ -549,7 +463,7 @@ test mint_oracleFail() fail {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: loanMintedValue,
       extra_signatories: [test_owner],
@@ -557,9 +471,13 @@ test mint_oracleFail() fail {
       outputs: [loanOut, colOut, oracleOut],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.loanMintHash), transaction: tx }
-
-  loanMint(t.oracleMintHash, t.configMintHash, mintAction, ctx)
+  loan_mint.loanMint.mint(
+    t.oracleMintHash,
+    t.configMintHash,
+    mintAction,
+    t.loanMintHash,
+    tx,
+  )
 }
 
 test collateral_ValueFail() {
@@ -571,8 +489,7 @@ test collateral_ValueFail() {
 
   let mintAction = loanMintActionMint(1000, 12, 1111111114)
 
-  let loanMintedValue =
-    value.to_minted_value(value.merge(t.loanTokenValue(), t.loanTokenValue()))
+  let loanMintedValue = assets.merge(t.loanTokenValue(), t.loanTokenValue())
 
   let configInDatum = configDatumIn()
 
@@ -582,7 +499,7 @@ test collateral_ValueFail() {
 
   let collateralDatum = collateralDatum(2000, 12, 0)
   let colOutDatum = InlineDatum(collateralDatum)
-  let colOutValue = value.merge(t.makeAdaValue(1002), t.loanTokenValue())
+  let colOutValue = assets.merge(t.makeAdaValue(1002), t.loanTokenValue())
 
   let oracleInDatum = oracleDatum(2000, 11111112, 1000000, 200000, "USD")
   let oracleOutDatum = oracleDatum(1000, 11111114, 1000000, 200000, "USD")
@@ -640,7 +557,7 @@ test collateral_ValueFail() {
 
   let tx =
     Transaction {
-      ..placeholder(),
+      ..placeholder,
       reference_inputs: [configIn],
       mint: loanMintedValue,
       extra_signatories: [test_owner],
@@ -648,8 +565,13 @@ test collateral_ValueFail() {
       outputs: [loanOut, colOut, oracleOut],
     }
 
-  let ctx = ScriptContext { purpose: Mint(t.loanMintHash), transaction: tx }
   trace @"VULNERABILITY"
   trace @"We should be checking collateral matches expected collateral"
-  loanMint(t.oracleMintHash, t.configMintHash, mintAction, ctx)?
+  loan_mint.loanMint.mint(
+    t.oracleMintHash,
+    t.configMintHash,
+    mintAction,
+    t.loanMintHash,
+    tx,
+  )?
 }
