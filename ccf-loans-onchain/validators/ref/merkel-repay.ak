@@ -1,9 +1,8 @@
 use aiken/builtin.{if_then_else}
 use aiken/collection/list
-use aiken/primitive/string
-use cardano/address.{Credential, Script, VerificationKey}
+use cardano/address.{Credential, VerificationKey}
 use cardano/assets.{PolicyId}
-use cardano/transaction.{InlineDatum, Input, Output, Transaction}
+use cardano/transaction.{InlineDatum, Output, Transaction}
 use ccfl/helpers
 use ccfl/interestcalcs.{
   interestPayment, interestSlope1, interestSlope2, utilisationRatio,
@@ -39,7 +38,7 @@ validator repay(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
         expect InlineDatum(datum) = loan.datum
         expect loanDatum: LoanDatum = datum
 
-        let Pair(lin, cin) =
+        let (lin, cin) =
           helpers.get_loan_col_in_datum(
             inputs,
             loanToken,

@@ -11,26 +11,75 @@ use cardano/transaction.{
   Datum, InlineDatum, Input, Output, OutputReference, Transaction, TransactionId,
 }
 
-pub const yieldIn = #"3c30a1becdf0b0f35e0f575031d793333200a13beb08a5afb35a5bc6"
+pub const refCollateralSpend =
+  #"e7b19fcd79c6c08ca3a3be4f64683d4f2df442d743a89bcac8ffaa05"
 
-pub const yieldOut = #"0f9f51c83f607b8131e2d62ccf0cb9d7406d080e303478013914ac91"
+pub const refConfigMint =
+  #"a16c735c5d475021ec1705e54be108cca3d00dc10967044d2f99e056"
+
+pub const refConfigSpend =
+  #"a16c735c5d475021ec1705e54be108cca3d00dc10967044d2f99e056"
+
+pub const refInterestSpend =
+  #"102a28736ee8141cc74c99c2e89f5396d84854acd2e359537da3ecb9"
+
+pub const refLoanMint =
+  #"4b0552e32d8ccc1a60c40a2cf79cf257d8d842347076628d1795da7e"
+
+pub const refLoanSpend =
+  #"e7b19fcd79c6c08ca3a3be4f64683d4f2df442d743a89bcac8ffaa05"
+
+pub const refBalance =
+  #"33dc4568b0117965bd5cfac08ae55026a33d25a95e72a8d0740d1f1f"
+
+pub const refClose = #"b1fe76df6d688a7593cd0073d3ab1edb39883b2d9bf9e85419d617cc"
+
+pub const refLiquidate =
+  #"3f0dcd6861f9386b68e1d805a164b07908d91b415f6c112729201f13"
+
+pub const refRepay = #"688bcfcd072246ee9292f060319f3fd2c94c63de3106cb7cd306052f"
+
+pub const refYieldIn =
+  #"62252b72c3cf220388fd399f501215540f9dda321407e29b224e04a1"
+
+pub const refYieldOut =
+  #"94ff1b486f4a05754241f27c635f37219e258e5c1ec4c484531b6187"
+
+pub const refOracleMint =
+  #"af801486e4a94875536589f3ed919c46cb7eeacd38bad7798d3fc534"
+
+pub const refOracleSpend =
+  #"0c6813c37e200b21b9f71845a0ac67ee0d4be47b89e9984e89ed5239"
+
+pub const refRewardsMint =
+  #"42e3159a22e5123921d822b69e122ad2b8b44bd711f02192a5badf2b"
+
+pub const refYieldSpend =
+  #"e7b19fcd79c6c08ca3a3be4f64683d4f2df442d743a89bcac8ffaa05"
+
+pub const yieldVault =
+  #"4ab224562c1eb32a598374abec7cacd286a25ee46f23974d36ec9f15"
+
+pub const yieldIn = #"91d9d0e0adb9afa3cc46d38a5bf79f41cf14ba16b5c7b0cca9b3f192"
+
+pub const yieldOut = #"04c559ac2c8454682ddab0b9d630991ddc1bf426a7d1b4e3a1a405c1"
 
 pub const interestValHash =
-  #"8776cedf0c2677a95328e64f05de2c142a39f4ed9bf7ec877cc93352"
+  #"102a28736ee8141cc74c99c2e89f5396d84854acd2e359537da3ecb9"
 
 pub const merkelRepay =
-  #"1e356ca1c4624f748adbfd5b999a3a3c69b66bc94ed040ffefd639fc"
+  #"0d6b668668e8e4188b1bce4b798a6c22e089c74f722d43d79841e584"
 
 pub const merkelClose =
-  #"93fb1f13c199bdb5ec24cc6b171a7f57448c9cab20c5de7068619d4c"
+  #"0d6b668668e8e4188b1bce4b798a6c22e089c74f722d43d79841e584"
 
 pub const merkelLiquidate =
-  #"98d51e724cde8f5a8469eade0c945db6be1a286318a5746987f5f116"
+  #"d124f7244b69a2b3eca8ce0f09d6ec18ae65f3f58c19bb5adfb9cad5"
 
 pub const merkelBalance =
-  #"5a865ee240f36e9bbbadc6f7a6c11496635e194ec7e844d8b3fa8b13"
+  #"f80aed1df86acf38659b3b84e51d8005d1b63c4301143cefe6f577e2"
 
-pub const mCol = #"da4485829d7239913cb82a2153b96f241eb1a0949b2675acfe156c32"
+pub const mCol = #"4ab224562c1eb32a598374abec7cacd286a25ee46f23974d36ec9f15"
 
 pub const mLoan = #"2a702bed15ddca531904e15f445074bcb2c766f90bfe65848e636227"
 
@@ -41,13 +90,13 @@ pub const merkelCollateralSpend =
   #"43024cb7526901f7ff2de25361a13980cf0e468e19603559fa10307d"
 
 pub const merkelCollateralLiquidate =
-  #"b57379e419301de61c5c8c61691f201f3e4f6046b3f84d0fc017d923"
+  #"d124f7244b69a2b3eca8ce0f09d6ec18ae65f3f58c19bb5adfb9cad5"
 
 pub const merkelCollateralClose =
-  #"fa49216105e73d332940a48fc193649569a00e336966973a41f2654d"
+  #"362a57053cade772680fe737f377e37497930af8012978a66eaafccb"
 
 pub const merkelLoanBalance =
-  #"af19877e58beb387a1d385fa8b7179cf01372760af9b0478a01de4bf"
+  #"f80aed1df86acf38659b3b84e51d8005d1b63c4301143cefe6f577e2"
 
 pub const merkelLoanClose =
   #"85ae5150c9e0210cf0d53efea46ecc285814e4da35d26875520a65db"
@@ -59,7 +108,7 @@ pub const merkelLoanSpend =
   #"8ed9b99679a54c1bf93924cc0dc79768d93fd2d450943294a27c9c67"
 
 pub const merkelConfigHash =
-  #"d77f5ddbed7a4414fe8e67ec425ee535622ebcf3d4b13ba714665254"
+  #"303618d7bba47b7181398325281cf01641a69a54951cbc76afc31c05"
 
 pub const with2Hash =
   #"9c27818fc34b7a088a395cc09028359358810d1659a7379a7c8fd647"
@@ -71,25 +120,25 @@ pub const collateralValHash =
   #"b0269971c5f1cf4585d4eba416735cdc1d61007fef83c7efd5a3be8f"
 
 pub const configMintHash =
-  #"465b6d5e13a08408883d4d25989763b81225e651122e28c652fb21a3"
+  #"5f918d314f2c6dc85eda6d75fabd3cac6968577a51f72be927fd0918"
 
 pub const configValHash =
   #"dfd0433a8e973bcb26919d59bd0afa094f49eaeb81931022b67f64a1"
 
 pub const loanMintHash =
-  #"72665d1296a02de7a60c8c644aec48a14bb558b9507923f1b7641572"
+  #"d86cea3f277830bcd18238e2800d8fbec3cc6131166969a7be93a821"
 
 pub const loanValHash =
-  #"b99df998781a5ad58093daca046840f09754e67f69f5c19e2bc2a1b3"
+  #"4ab224562c1eb32a598374abec7cacd286a25ee46f23974d36ec9f15"
 
 pub const oracleMintHash =
-  #"4c81c3e1ab80ad6798a91aff70859fdadf8cf624ea9203539904e479"
+  #"af801486e4a94875536589f3ed919c46cb7eeacd38bad7798d3fc534"
 
 pub const oracleValHash =
-  #"61916fdcbf8e96ac8c9a144c0f98475d65d3b5ed3aa8f8ada8750b2b"
+  #"0c6813c37e200b21b9f71845a0ac67ee0d4be47b89e9984e89ed5239"
 
 pub const rewardsMintHash =
-  #"769a73b2bc482bf87d1482597ef7826ad5bb9f80010a8013a2d98300"
+  #"1fa867076dae742a37027eb2ed169455c32e183f621a525df69b85eb"
 
 pub fn loanRedeemers() -> List<ScriptHash> {
   let list =
@@ -100,6 +149,12 @@ pub fn loanRedeemers() -> List<ScriptHash> {
 pub fn collateralRedeemers() -> List<ScriptHash> {
   let list =
     [mCol, mLoan, merkelBalance, merkelLiquidate, merkelClose, merkelRepay]
+  list
+}
+
+pub fn refCollateralRedeemers() -> List<ScriptHash> {
+  let list =
+    [refBalance, refLiquidate, refClose, refRepay, refYieldIn, refYieldOut]
   list
 }
 
@@ -114,9 +169,23 @@ pub fn configValue() -> Value {
   assets.merge(lovelaceValue, configToken)
 }
 
+pub fn refConfigValue() -> Value {
+  let lovelaceValue = assets.from_lovelace(2)
+  let configToken = refConfigTokenValue()
+
+  assets.merge(lovelaceValue, configToken)
+}
+
 pub fn oracleValue() -> Value {
   let lovelaceValue = assets.from_lovelace(2)
   let oracleToken = oracleTokenValue()
+
+  assets.merge(lovelaceValue, oracleToken)
+}
+
+pub fn refOracleValue() -> Value {
+  let lovelaceValue = assets.from_lovelace(2)
+  let oracleToken = refOracleTokenValue()
 
   assets.merge(lovelaceValue, oracleToken)
 }
@@ -128,9 +197,23 @@ pub fn loanValue() -> Value {
   assets.merge(lovelaceValue, loanToken)
 }
 
+pub fn refLoanValue() -> Value {
+  let lovelaceValue = assets.from_lovelace(2)
+  let loanToken = refLoanTokenValue()
+
+  assets.merge(lovelaceValue, loanToken)
+}
+
 pub fn collateralValue() -> Value {
   let lovelaceValue = assets.from_lovelace(2)
   let collateralToken = loanTokenValue()
+
+  assets.merge(lovelaceValue, collateralToken)
+}
+
+pub fn refCollateralValue(l: Int) -> Value {
+  let lovelaceValue = makeAdaValue(l)
+  let collateralToken = refLoanTokenValue()
 
   assets.merge(lovelaceValue, collateralToken)
 }
@@ -141,13 +224,31 @@ pub fn rewardsValue(i: Int) -> Value {
   assets.merge(lovelaceValue, rewardsValue)
 }
 
+pub fn refRewardsValue(i: Int) -> Value {
+  let lovelaceValue = assets.from_lovelace(2)
+  let rewardsValue = refRewardsTokenValue(i)
+  assets.merge(lovelaceValue, rewardsValue)
+}
+
 pub fn configMintedValue() -> Value {
   let configToken = configTokenValue()
 
   configToken
 }
 
+pub fn refConfigMintedValue() -> Value {
+  let configToken = refConfigTokenValue()
+
+  configToken
+}
+
 pub fn rewardsMintedValue(i: Int) -> Value {
+  let rewardsToken = rewardsTokenValue(i)
+
+  rewardsToken
+}
+
+pub fn refRewardsMintedValue(i: Int) -> Value {
   let rewardsToken = rewardsTokenValue(i)
 
   rewardsToken
@@ -159,9 +260,23 @@ pub fn loanMintedValue() -> Value {
   loanToken
 }
 
+pub fn refLoanMintedValue() -> Value {
+  let loanToken = refLoanTokenValue()
+
+  loanToken
+}
+
 pub fn oracleMintedValue() -> Value {
   let oracleToken = oracleTokenValue()
   let interestToken = oracleTokenValue()
+  let combinedValue = assets.merge(oracleToken, interestToken)
+
+  combinedValue
+}
+
+pub fn refOracleMintedValue() -> Value {
+  let oracleToken = refOracleTokenValue()
+  let interestToken = refOracleTokenValue()
   let combinedValue = assets.merge(oracleToken, interestToken)
 
   combinedValue
@@ -177,8 +292,20 @@ pub fn configTokenValue() -> Value {
   configToken
 }
 
+pub fn refConfigTokenValue() -> Value {
+  let configToken = assets.from_asset(refConfigMint, #"face", 1)
+
+  configToken
+}
+
 pub fn loanTokenValue() -> Value {
   let loanToken = assets.from_asset(loanMintHash, #"cafe", 1)
+
+  loanToken
+}
+
+pub fn refLoanTokenValue() -> Value {
+  let loanToken = assets.from_asset(refLoanMint, #"cafe", 1)
 
   loanToken
 }
@@ -189,14 +316,32 @@ pub fn loanBurnValue() -> Value {
   loanBurn
 }
 
+pub fn refLoanBurnValue() -> Value {
+  let loanBurn = assets.from_asset(refLoanMint, #"cafe", -2)
+
+  loanBurn
+}
+
 pub fn oracleTokenValue() -> Value {
   let oracleToken = assets.from_asset(oracleMintHash, #"beef", 1)
 
   oracleToken
 }
 
+pub fn refOracleTokenValue() -> Value {
+  let oracleToken = assets.from_asset(refOracleMint, #"beef", 1)
+
+  oracleToken
+}
+
 pub fn rewardsTokenValue(i: Int) -> Value {
   let rewardsValue = assets.from_asset(rewardsMintHash, #"", i)
+
+  rewardsValue
+}
+
+pub fn refRewardsTokenValue(i: Int) -> Value {
+  let rewardsValue = assets.from_asset(refRewardsMint, #"", i)
 
   rewardsValue
 }

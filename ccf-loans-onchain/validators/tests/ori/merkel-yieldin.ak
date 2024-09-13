@@ -62,7 +62,7 @@ test yieldIn() {
   let yieldOut =
     Output {
       address: Address {
-        payment_credential: Script(#"bebe"),
+        payment_credential: Script(t.yieldVault),
         stake_credential: None,
       },
       value: assets.from_lovelace(outYield),
@@ -143,7 +143,7 @@ test yield_colFail() fail {
   let yieldOut =
     Output {
       address: Address {
-        payment_credential: Script(#"bebe"),
+        payment_credential: Script(t.yieldVault),
         stake_credential: None,
       },
       value: assets.from_lovelace(outYield),
@@ -260,7 +260,7 @@ test yield_multi() {
   let yieldOut1 =
     Output {
       address: Address {
-        payment_credential: Script(#"bebe"),
+        payment_credential: Script(t.yieldVault),
         stake_credential: None,
       },
       value: assets.from_lovelace(outYield),
@@ -271,7 +271,7 @@ test yield_multi() {
   let yieldOut2 =
     Output {
       address: Address {
-        payment_credential: Script(#"bebe"),
+        payment_credential: Script(t.yieldVault),
         stake_credential: None,
       },
       value: assets.from_lovelace(outYield),
@@ -282,7 +282,7 @@ test yield_multi() {
   let yieldOut3 =
     Output {
       address: Address {
-        payment_credential: Script(#"bebe"),
+        payment_credential: Script(t.yieldVault),
         stake_credential: None,
       },
       value: assets.from_lovelace(outYield),

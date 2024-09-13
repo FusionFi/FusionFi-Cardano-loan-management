@@ -4,10 +4,9 @@
 // use cardano/assets.{PolicyId}
 // use cardano/transaction.{InlineDatum, OutputReference, Transaction}
 // use ccfl/types.{MerkelConfigDatum, YieldAction, YieldDatum}
-
-// //                   //
-// // Yield Vault Tests //
-// //                   //
+//                   //
+// Yield Vault Tests //
+//                   //
 
 // validator yieldVault(cp: PolicyId) {
 //   spend(

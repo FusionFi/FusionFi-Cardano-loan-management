@@ -1,5 +1,4 @@
 use aiken/builtin.{if_then_else}
-use aiken/primitive/string
 use cardano/address.{VerificationKey}
 use cardano/assets
 use cardano/transaction.{Transaction, placeholder}
@@ -40,7 +39,6 @@ test repay_interest() {
 
   let timeframe = outTimestamp - inTimestamp
 
-  trace string.from_int(timeframe)
   let interest =
     if_then_else(
       utilisation <= optimal,
@@ -48,13 +46,10 @@ test repay_interest() {
       interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
     )
 
-  trace string.from_int(interest)
   let interestPayment = interestPayment(timeframe, inLoanAmount, interest)
 
-  trace string.from_int(interestPayment)
   let interestExchange = interestPayment / outRatio
 
-  trace string.from_int(interestExchange)
   // withdrawl
   let withdraw0 = tx.withdrawal(t.merkelRepay)
 
@@ -501,8 +496,8 @@ test repay_multi() {
   let interestExchange1 = interestPayment1 / outRatio
   let interestExchange2 = interestPayment2 / outRatio
   let interestExchange3 = interestPayment3 / outRatio
-  trace string.from_int(interestExchange1)
 
+  // trace string.from_int(interestExchange1)
   // withdrawl
   let withdraw0 = tx.withdrawal(t.merkelRepay)
 

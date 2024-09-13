@@ -1,7 +1,6 @@
-use aiken/collection/list
 use cardano/address.{Credential}
 use cardano/assets.{PolicyId}
-use cardano/transaction.{InlineDatum, Input, Output, Transaction}
+use cardano/transaction.{InlineDatum, Output, Transaction}
 use ccfl/helpers
 use ccfl/types.{
   CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawRedeemer,
@@ -29,7 +28,7 @@ validator liquidate(p: PolicyId, cp: PolicyId) {
         expect InlineDatum(datum) = loan.datum
         expect loanDatum: LoanDatum = datum
 
-        let (linValue, lin, cinValue, cin) =
+        let (_linValue, lin, cinValue, cin) =
           helpers.get_loan_col_in(
             tx.inputs,
             loanToken,

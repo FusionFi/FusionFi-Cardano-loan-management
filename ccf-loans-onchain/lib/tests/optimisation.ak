@@ -1,5 +1,5 @@
 use cardano/assets
-use cardano/transaction.{Input, NoDatum, Output, Transaction, placeholder}
+use cardano/transaction.{NoDatum, Transaction, placeholder}
 use ccfl/helpers
 use tests/tools as t
 
@@ -124,6 +124,5 @@ test oneIO_List() {
   let outList =
     [o1, o2, o3]
 
-  let tx = Transaction { ..placeholder, inputs: inList, outputs: outList }
   helpers.oneIO_List(oref, inList, outList) == Pair(i1, o1)
 }

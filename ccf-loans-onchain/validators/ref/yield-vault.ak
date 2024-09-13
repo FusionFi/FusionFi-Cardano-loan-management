@@ -2,7 +2,7 @@ use aiken/collection/list
 use aiken/collection/pairs
 use cardano/address.{Script}
 use cardano/assets.{PolicyId}
-use cardano/transaction.{InlineDatum, OutputReference, Transaction}
+use cardano/transaction.{OutputReference, Transaction}
 use ccfl/helpers
 use ccfl/types.{MerkelConfigDatum, YieldAction, YieldDatum}
 

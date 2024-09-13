@@ -1,7 +1,6 @@
-use aiken/collection/list
 use cardano/address.{Credential}
 use cardano/assets.{PolicyId}
-use cardano/transaction.{InlineDatum, Input, Output, Transaction}
+use cardano/transaction.{InlineDatum, Output, Transaction}
 use ccfl/helpers
 use ccfl/types.{
   CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawRedeemer,
@@ -22,24 +21,25 @@ validator balance(p: PolicyId, cp: PolicyId) {
 
     let exchangeRate = rDatum.exchange
 
-    helpers.merkelTx(
-      fn(collateral, loan) {
-        let loanToken = assets.without_lovelace(loan.value)
-        expect InlineDatum(datum) = collateral.datum
-        expect colDatum: CollateralDatum = datum
-        expect InlineDatum(datum) = loan.datum
-        expect loanDatum: LoanDatum = datum
-
-        let Pair(lin, cin) =
-          helpers.get_loan_col_in_datum(
-            tx.inputs,
-            loanToken,
-            cDatum.loanVal,
-            cDatum.colVal,
-          )
+    helpers.ioTx(
+      r.a,
+      cDatum.colVal,
+      cDatum.loanVal,
+      tx.inputs,
+      tx.outputs,
+      fn(inCol, inLoan, outCol, outLoan) {
+        let loanToken = assets.without_lovelace(outLoan.value)
+        expect InlineDatum(datum1) = outCol.datum
+        expect colDatum: CollateralDatum = datum1
+        expect InlineDatum(datum2) = outLoan.datum
+        expect loanDatum: LoanDatum = datum2
+        expect InlineDatum(datum3) = inCol.output.datum
+        expect cin: CollateralDatum = datum3
+        expect InlineDatum(datum4) = inLoan.output.datum
+        expect lin: LoanDatum = datum4
 
         let adaOut =
-          ( assets.lovelace_of(collateral.value) + colDatum.yield ) / 1000000
+          ( assets.lovelace_of(outCol.value) + colDatum.yield ) / 1000000
         let exchangeAdjustment = loanDatum.amount * 1000
         let expectedCollateral = exchangeAdjustment / exchangeRate
         let minCollateralValue = expectedCollateral * 2
@@ -52,8 +52,6 @@ validator balance(p: PolicyId, cp: PolicyId) {
           cin.yield == colDatum.yield,
         }
       },
-      r.a,
-      tx.outputs,
     )
   }
 

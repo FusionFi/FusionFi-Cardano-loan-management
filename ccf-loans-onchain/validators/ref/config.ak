@@ -4,7 +4,7 @@ use aiken/crypto.{VerificationKeyHash}
 use cardano/address.{Script}
 use cardano/assets.{PolicyId, policies}
 use cardano/transaction.{InlineDatum, Output, OutputReference, Transaction}
-use ccfl/helpers.{get_own_singleton_output}
+use ccfl/helpers
 use ccfl/types.{MConClose, MConUpdate, MerkelConfigAction, MerkelConfigDatum}
 
 //                  //

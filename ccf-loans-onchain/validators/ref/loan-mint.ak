@@ -1,8 +1,8 @@
 use aiken/collection/dict
-use aiken/collection/list.{filter, find, has, head}
+use aiken/collection/list.{find, has}
 use cardano/address.{Script}
 use cardano/assets.{PolicyId, lovelace_of, policies}
-use cardano/transaction.{InlineDatum, Input, Output, Transaction}
+use cardano/transaction.{InlineDatum, Output, Transaction}
 use ccfl/helpers
 use ccfl/types.{
   ABurn, AMint, CollateralDatum, LoanDatum, LoanMintAction, MerkelConfigDatum,
@@ -19,14 +19,12 @@ use ccfl/types.{
 
 validator loanMint(op: PolicyId, cp: PolicyId) {
   mint(r: LoanMintAction, policyId: PolicyId, tx: Transaction) {
-    let Transaction { mint, outputs, reference_inputs, .. } = tx
-
     // checks for config input
     let cDatum: MerkelConfigDatum =
       helpers.get_config_datum(tx.reference_inputs, cp)
 
     expect [Pair(tName, tAmt)] =
-      mint
+      tx.mint
         |> assets.tokens(policyId)
         |> dict.to_pairs()
 
@@ -34,7 +32,7 @@ validator loanMint(op: PolicyId, cp: PolicyId) {
       AMint { amount, rewards, term, timestamp } -> {
         // checks for Oracle ref in
         expect Some(oracleOut) =
-          find(outputs, fn(output) { has(policies(output.value), op) })
+          find(tx.outputs, fn(output) { has(policies(output.value), op) })
 
         expect [Pair(oracleTn, 1)] =
           oracleOut.value
@@ -51,7 +49,7 @@ validator loanMint(op: PolicyId, cp: PolicyId) {
         // sends to loan validator in config
         expect Some(loanOut) =
           find(
-            outputs,
+            tx.outputs,
             fn(output) {
               output.address.payment_credential == Script(cDatum.loanVal) && has(
                 policies(output.value),
@@ -63,7 +61,7 @@ validator loanMint(op: PolicyId, cp: PolicyId) {
         // sends to collateral validator in config
         expect Some(colOut) =
           find(
-            outputs,
+            tx.outputs,
             fn(output) {
               output.address.payment_credential == Script(cDatum.colVal) && has(
                 policies(output.value),
@@ -100,7 +98,7 @@ validator loanMint(op: PolicyId, cp: PolicyId) {
       // always allows Burn -> This needs to be changed to only allow burning when the loan is 
       // closed or there is no more loan value (ie liquidated)
       ABurn -> {
-        let Pair(lin, cin) =
+        let (lin, cin) =
           helpers.get_loan_col_in_datum(
             tx.inputs,
             assets.from_asset(policyId, tName, 1),

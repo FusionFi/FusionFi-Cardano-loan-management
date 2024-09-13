@@ -52,7 +52,7 @@ pub fn get_loan_col_in_datum(
   loanValue: Value,
   loanHash: ScriptHash,
   colHash: ScriptHash,
-) -> Pair<LoanDatum, CollateralDatum> {
+) -> (LoanDatum, CollateralDatum) {
   expect Some(loanIn) =
     list.find(
       ins,
@@ -76,7 +76,7 @@ pub fn get_loan_col_in_datum(
   expect InlineDatum(datum) = colIn.output.datum
   expect cin: CollateralDatum = datum
 
-  Pair(lin, cin)
+  (lin, cin)
 }
 
 pub fn get_config_datum(ref: List<Input>, policy: PolicyId) -> MerkelConfigDatum {
@@ -308,6 +308,72 @@ pub fn merkelTx(
     fn(pair) {
       let (col, loan) = pair
       validate(col, loan)
+    },
+  )
+}
+
+pub fn ioTx(
+  redeemer: List<Int>,
+  colHash: ScriptHash,
+  loanHash: ScriptHash,
+  inputs: List<Input>,
+  outputs: List<Output>,
+  validate: fn(Input, Input, Output, Output) -> Bool,
+) -> Bool {
+  let outList =
+    list.map(
+      redeemer,
+      fn(index) {
+        let l = index
+        expect Some(col) = list.at(outputs, l)
+        expect col.address.payment_credential == Script(colHash)
+
+        expect Some(loan) =
+          list.find(
+            outputs,
+            fn(output) {
+              assets.without_lovelace(output.value) == assets.without_lovelace(
+                col.value,
+              ) && output.address.payment_credential == Script(loanHash)
+            },
+          )
+        (col, loan)
+      },
+    )
+
+  let inList =
+    list.map(
+      outList,
+      fn(index) {
+        expect (col, loan) = index
+        expect Some(colIn) =
+          list.find(
+            inputs,
+            fn(input) {
+              input.output.address.payment_credential == Script(colHash) && assets.without_lovelace(
+                input.output.value,
+              ) == assets.without_lovelace(col.value)
+            },
+          )
+
+        expect Some(loanIn) =
+          list.find(
+            inputs,
+            fn(input) {
+              input.output.address.payment_credential == Script(loanHash) && assets.without_lovelace(
+                input.output.value,
+              ) == assets.without_lovelace(loan.value)
+            },
+          )
+        (colIn, loanIn, col, loan)
+      },
+    )
+
+  list.all(
+    inList,
+    fn(pair) {
+      let (cin, lin, cout, lout) = pair
+      validate(cin, lin, cout, lout)
     },
   )
 }

@@ -1,6 +1,5 @@
 use aiken/builtin.{if_then_else}
 use aiken/collection/list
-use aiken/primitive/string
 use cardano/address.{Credential, Script, VerificationKey}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, Input, Output, Transaction}
@@ -112,7 +111,6 @@ validator repay(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
         let interestRequirement =
           interestPayment(interestTimeframe, lin.amount, interestCalc)
         let interestPaymentValue = interestRequirement / exchangeRate
-        trace string.from_int(interestPaymentValue)
         expect Some(_payment) =
           list.find(
             outputs,
