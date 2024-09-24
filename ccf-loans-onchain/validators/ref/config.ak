@@ -71,8 +71,7 @@ validator config(o: VerificationKeyHash) {
         collateralRedeemers,
       } -> {
         // checks single val IO & returns those as a pair
-        let Pair(ownIn, ownOut) =
-          helpers.oneIO_List(oref, tx.inputs, tx.outputs)
+        let (ownIn, ownOut) = helpers.oneIO_List(oref, tx.inputs, tx.outputs)
 
         expect Script(cp) = ownIn.output.address.payment_credential
 

@@ -22,7 +22,7 @@ validator repay(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
     let iDatum: InterestDatum =
       helpers.get_interest_datum(reference_inputs, p, cDatum.interestVal)
 
-    let Pair(oracleValue, rDatum) =
+    let (oracleValue, rDatum) =
       helpers.get_oracle_datum_value(outputs, p, cDatum.oracleVal)
 
     let exchangeRate = rDatum.exchange

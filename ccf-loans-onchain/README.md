@@ -2,55 +2,9 @@
 
 ---
 
-Transaction Checklist:
+Currently working on potential exploits
 
-Config Token Transactions:
-
-[x] - Mint Config
-
-[x] - Update Config
-
-[] - Burn Config
-
-Oracle Transactions:
-
-[x] - Mint Oracle
-
-[x] - Update Oracle
-
-[x] - Burn Oracle
-
-Interest Transactions:
-
-[x] - Update Interest
-
-Loan Transactions:
-
-[x] - Mint Loan
-
-[x] - Balance Loan
-
-[x] - Repay Loan 
-
-[x] - Liquidate Loan
-
-[x] - Close Loan
-
-Rewards Transactions: 
-
-[x] - Mint Rewards
-
-[] - Burn Rewards
-
----
-
-Currently finalising `validators/merkel-close.ak` 
-
-I have refactored the offchain code into `offchain`
-
-Variables for loans and oracle can be set in `offchain/variables.ts`
-
-When you mint an oracle or a loan, you will need to record the tokens (Units) in 
+NOTE - When you mint an oracle or a loan, you will need to record the tokens (Units) in 
 `offchain/variables.ts` to be used for later transactions.
 
 ## Running Your Own Tests
@@ -445,5 +399,5 @@ I have some work to do on the periferal utility validators like `oracle` and `re
 
 There are some validation checks i need to address - as highlighted in the tests
 
-I also need to refactore the tests in those validators
+I also need to refactor the tests in those validators
 

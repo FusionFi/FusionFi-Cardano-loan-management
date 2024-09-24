@@ -64,7 +64,7 @@ test oneIO_Tx() {
     [o1, o2, o3]
 
   let tx = Transaction { ..placeholder, inputs: inList, outputs: outList }
-  helpers.oneIO_Tx(oref, tx) == Pair(i1, o1)
+  helpers.oneIO_Tx(oref, tx) == (i1, o1)
 }
 
 test oneIO_List() {
@@ -124,5 +124,5 @@ test oneIO_List() {
   let outList =
     [o1, o2, o3]
 
-  helpers.oneIO_List(oref, inList, outList) == Pair(i1, o1)
+  helpers.oneIO_List(oref, inList, outList) == (i1, o1)
 }

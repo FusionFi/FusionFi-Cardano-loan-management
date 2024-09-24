@@ -14,7 +14,7 @@ use ccfl/types.{
 // Helpers //
 //         //
 
-// List<Pair<Value, LoanDatum>, Pair<Value, CollateralDatum>>
+// returns (loanIn Value, loanIn Datum, colIn Value, colIn Datum)
 pub fn get_loan_col_in(
   ins: List<Input>,
   loanValue: Value,
@@ -47,6 +47,7 @@ pub fn get_loan_col_in(
   (loanIn.output.value, lin, colIn.output.value, cin)
 }
 
+// returns (loanIn Datum, colIn Datum)
 pub fn get_loan_col_in_datum(
   ins: List<Input>,
   loanValue: Value,
@@ -79,6 +80,7 @@ pub fn get_loan_col_in_datum(
   (lin, cin)
 }
 
+// returns configDatum or errors
 pub fn get_config_datum(ref: List<Input>, policy: PolicyId) -> MerkelConfigDatum {
   expect Some(configIn) =
     list.find(
@@ -92,6 +94,7 @@ pub fn get_config_datum(ref: List<Input>, policy: PolicyId) -> MerkelConfigDatum
   cDatum
 }
 
+// returns interestDatum or errors
 pub fn get_interest_datum(
   ref: List<Input>,
   policy: PolicyId,
@@ -113,6 +116,7 @@ pub fn get_interest_datum(
   iDatum
 }
 
+// returns oracleOut Datum or errors
 pub fn get_oracle_datum(
   outs: List<Output>,
   policy: PolicyId,
@@ -134,11 +138,12 @@ pub fn get_oracle_datum(
   rDatum
 }
 
+// returns (oracleValue, oracleDatum) or errors
 pub fn get_oracle_datum_value(
   outs: List<Output>,
   policy: PolicyId,
   script: ScriptHash,
-) -> Pair<Value, OracleDatum> {
+) -> (Value, OracleDatum) {
   expect Some(oracleOut) =
     list.find(
       outs,
@@ -153,14 +158,15 @@ pub fn get_oracle_datum_value(
   expect InlineDatum(datum) = oracleOut.datum
   expect rDatum: OracleDatum = datum
 
-  Pair(assets.without_lovelace(oracleOut.value), rDatum)
+  (assets.without_lovelace(oracleOut.value), rDatum)
 }
 
+// returns non-staking single validator (input, output)
 pub fn oneIO_List(
   oref: OutputReference,
   inputs: List<Input>,
   outputs: List<Output>,
-) -> Pair<Input, Output> {
+) -> (Input, Output) {
   expect Some(in) = inputs |> find_input(oref)
 
   let cred = in.output.address.payment_credential
@@ -186,12 +192,12 @@ pub fn oneIO_List(
   expect Some(i) = list.head(ownInputs)
   expect Some(o) = list.head(ownOutputs)
 
-  Pair(i, o)
+  (i, o)
 }
 
 // Don't use this function, it was an optimisation test for the above
 // used to benchmark mem & cpu efficiencies for the optim of other functions
-pub fn oneIO_Tx(oref: OutputReference, tx: Transaction) -> Pair<Input, Output> {
+pub fn oneIO_Tx(oref: OutputReference, tx: Transaction) -> (Input, Output) {
   expect Some(in) = tx.inputs |> find_input(oref)
 
   let cred = in.output.address.payment_credential
@@ -217,9 +223,10 @@ pub fn oneIO_Tx(oref: OutputReference, tx: Transaction) -> Pair<Input, Output> {
   expect Some(i) = list.head(ownInputs)
   expect Some(o) = list.head(ownOutputs)
 
-  Pair(i, o)
+  (i, o)
 }
 
+// checks for only one validator input
 pub fn has_singleton_input(tx: Transaction, oref: OutputReference) -> Bool {
   expect Some(input) =
     tx.inputs
@@ -237,6 +244,7 @@ pub fn has_singleton_input(tx: Transaction, oref: OutputReference) -> Bool {
   ) == 1
 }
 
+// checks for single validator Output and returns it
 pub fn get_own_singleton_output(
   tx: Transaction,
   oref: OutputReference,
@@ -312,6 +320,7 @@ pub fn merkelTx(
   )
 }
 
+// sorts Ins and Outs into pairs by tokenValue and validates them together
 pub fn ioTx(
   redeemer: List<Int>,
   colHash: ScriptHash,

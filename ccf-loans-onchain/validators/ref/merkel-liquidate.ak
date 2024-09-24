@@ -15,7 +15,7 @@ validator liquidate(p: PolicyId, cp: PolicyId) {
     let cDatum: MerkelConfigDatum =
       helpers.get_config_datum(tx.reference_inputs, cp)
 
-    let Pair(oracleValue, rDatum) =
+    let (oracleValue, rDatum) =
       helpers.get_oracle_datum_value(tx.outputs, p, cDatum.oracleVal)
 
     let exchangeRate = rDatum.exchange
