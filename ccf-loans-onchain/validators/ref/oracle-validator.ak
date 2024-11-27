@@ -40,7 +40,8 @@ validator oracleVault(o: VerificationKeyHash, p: PolicyId) {
           datum.timestamp == timestamp,
           datum.supply == supply,
           datum.exchange == exchange,
-          datum.borrowed == borrowed,
+          // outputDatum.borrowed needs to be updated according to any loan mints or repayments
+          datum.borrowed == d.borrowed + borrowed,
         }
       }
       OracleClose -> {

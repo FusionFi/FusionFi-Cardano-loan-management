@@ -14,7 +14,7 @@ use ccfl/types.{
 
 validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
   mint(r: OracleMintAction, policyId: PolicyId, tx: Transaction) {
-    expect [Pair(_oName, oAmt)] =
+    expect [Pair(oName, oAmt)] =
       tx.mint
         |> tokens(policyId)
         |> to_pairs()
@@ -45,43 +45,47 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
           list.find(
             tx.outputs,
             fn(output) {
-              expect [Pair(_oName, 1)] =
+              expect [Pair(tName, 1)] =
                 output.value
                   |> assets.tokens(policyId)
                   |> dict.to_pairs()
               output.address.payment_credential == Script(cDatum.oracleVal)
             },
           )
+
         expect InlineDatum(datum) = out.datum
         expect oracleDatum: OracleDatum = datum
-
-        expect oracleDatum.exchange == exchange
-        expect oracleDatum.timestamp == timestamp
-        expect oracleDatum.currency == currency
-        expect oracleDatum.supply == supply
-        expect oracleDatum.borrowed == borrowed
 
         expect Some(interest) =
           list.find(
             tx.outputs,
             fn(output) {
-              expect [Pair(_oName, 1)] =
+              expect [Pair(iName, 1)] =
                 output.value
                   |> assets.tokens(policyId)
                   |> dict.to_pairs()
               output.address.payment_credential == Script(cDatum.interestVal)
             },
           )
+
         expect InlineDatum(datum) = interest.datum
         expect interestDatum: InterestDatum = datum
 
-        expect interestDatum.base == base
-        expect interestDatum.optimal == optimal
-        expect interestDatum.slope1 == slope1
-        expect interestDatum.slope2 == slope2
-        expect interestDatum.term == term
-
-        list.has(tx.extra_signatories, o) && oAmt == 2
+        and {
+          oracleDatum.exchange == exchange,
+          oracleDatum.timestamp == timestamp,
+          oracleDatum.currency == currency,
+          oracleDatum.supply == supply,
+          oracleDatum.borrowed == borrowed,
+          interestDatum.base == base,
+          interestDatum.optimal == optimal,
+          interestDatum.slope1 == slope1,
+          interestDatum.slope2 == slope2,
+          interestDatum.term == term,
+          oName == iName,
+          oName == tName,
+          list.has(tx.extra_signatories, o) && oAmt == 2,
+        }
       }
       OBurn -> list.has(tx.extra_signatories, o) && oAmt == -2
     }
