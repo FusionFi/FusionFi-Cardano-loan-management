@@ -1,5 +1,5 @@
 use aiken/crypto.{ScriptHash}
-use cardano/assets.{AssetName}
+use cardano/assets.{AssetName, PolicyId}
 
 //                    //
 // Datums & Redeemers //
@@ -147,4 +147,22 @@ pub type YieldDatum {
 
 pub type YieldAction {
   i: Int,
+}
+
+pub type SupplyAction {
+  SSupply { value: Int }
+  SLend { value: Int }
+  SWithdraw { value: Int }
+  SClose
+}
+
+pub type SupplyDatum {
+  policy: PolicyId,
+  asset: AssetName,
+  oracle: ByteArray,
+}
+
+pub type SupplyMintAction {
+  LPMint { value: Int }
+  LPBurn
 }
