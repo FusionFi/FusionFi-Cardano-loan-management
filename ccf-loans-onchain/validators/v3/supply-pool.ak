@@ -76,6 +76,23 @@ validator supplyPool(owner: ByteArray, op: PolicyId) {
 
     let supplyToken = d.policy
 
+    expect Some(oracleIn) =
+      list.find(
+        tx.inputs,
+        fn(input) { list.has(assets.policies(input.output.value), op) },
+      )
+
+    expect InlineDatum(datum) = oracleIn.output.datum
+    expect oIn: OracleDatum = datum
+
+    expect Some(oracleOut) =
+      list.find(
+        tx.outputs,
+        fn(output) { output.address == oracleIn.output.address },
+      )
+    expect InlineDatum(datum) = oracleOut.datum
+    expect oOut: OracleDatum = datum
+
     when r is {
       SSupply { value } -> {
         expect [Pair(lpName, lpAmt)] =
@@ -100,22 +117,6 @@ validator supplyPool(owner: ByteArray, op: PolicyId) {
         expect InlineDatum(datum) = ownOut.datum
         expect outDatum: SupplyDatum = datum
 
-        expect Some(oracleIn) =
-          list.find(
-            tx.inputs,
-            fn(input) { list.has(assets.policies(input.output.value), op) },
-          )
-
-        expect InlineDatum(datum) = oracleIn.output.datum
-        expect oIn: OracleDatum = datum
-
-        expect Some(oracleOut) =
-          list.find(
-            tx.outputs,
-            fn(output) { output.address == oracleIn.output.address },
-          )
-        expect InlineDatum(datum) = oracleOut.datum
-        expect oOut: OracleDatum = datum
         and {
           newValue == ownOut.value,
           d.policy == outDatum.policy,
@@ -147,34 +148,20 @@ validator supplyPool(owner: ByteArray, op: PolicyId) {
           tx.mint
             |> assets.tokens(ownHash)
             |> dict.to_pairs()
+
         expect Some(loanOut) =
           list.find(
             tx.outputs,
+            // need to access loanHash from ConfigDatum OR Params
             fn(output) { output.address.payment_credential == loanHash },
           )
+
         expect [Pair(lOutName, lOutAmt)] =
           loanOut.value
             |> assets.tokens(ownHash)
             |> dict.to_pairs()
         expect InlineDatum(datum) = loanOut.datum
         expect lDatum: LoanDatum = datum
-
-        expect Some(oracleIn) =
-          list.find(
-            tx.inputs,
-            fn(input) { list.has(assets.policies(input.output.value), op) },
-          )
-
-        expect InlineDatum(datum) = oracleIn.output.datum
-        expect oIn: OracleDatum = datum
-
-        expect Some(oracleOut) =
-          list.find(
-            tx.outputs,
-            fn(output) { output.address == oracleIn.output.address },
-          )
-        expect InlineDatum(datum) = oracleOut.datum
-        expect oOut: OracleDatum = datum
 
         expect Some(userOut) =
           list.find(
@@ -195,41 +182,43 @@ validator supplyPool(owner: ByteArray, op: PolicyId) {
           tx.mint
             |> assets.tokens(ownHash)
             |> dict.to_pairs()
-        // removes value and burns LP tokens
-        expect Some(oracleIn) =
+
+        expect Some(userIn) = 
           list.find(
             tx.inputs,
-            fn(input) { list.has(assets.policies(input.output.value), op) },
+            fn(input) {
+              list.has(assets.policies(input.output.value), ownHash) && 
+              input.output.address.payment_credential == VerificationKey(_)
+            }
           )
+        
+        expect [Pair(inName, inAmt)] =
+          userIn.output.value
+            |> assets.tokens(ownHash)
+            |> dict.to_pairs()
 
-        expect InlineDatum(datum) = oracleIn.output.datum
-        expect oIn: OracleDatum = datum
-
-        expect Some(oracleOut) =
+        expect Some(userOut) = 
           list.find(
             tx.outputs,
-            fn(output) { output.address == oracleIn.output.address },
+            fn(output) {
+              output.address.payment_credential == userIn.output.payment_credential
+            }
           )
-        expect InlineDatum(datum) = oracleOut.datum
-        expect oOut: OracleDatum = datum
 
+        // removes value and burns LP tokens
         and {
           lpName == "",
           lpAmt == 0 - value,
           oIn.supply == oOut.supply + value,
+          inName == "",
+          inAmt >= value,
+          outName == "",
+          outAmt == inAmt - value
         }
       }
       SClose -> {
         expect tokenValue =
           assets.quantity_of(ownInput.output.value, d.policy, d.asset)
-        expect Some(oracleIn) =
-          list.find(
-            tx.inputs,
-            fn(input) { list.has(assets.policies(input.output.value), op) },
-          )
-
-        expect InlineDatum(datum) = oracleIn.output.datum
-        expect oIn: OracleDatum = datum
 
         expect [Pair(oName, oAmt)] =
           tx.mint
