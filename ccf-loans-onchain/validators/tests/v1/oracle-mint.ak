@@ -1,9 +1,9 @@
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
 use ccfl/types.{OMint}
-use ori/oracle_mint
 use tests/tools as t
 use tests/transactions.{configInput, interestDatum, oracleDatum}
+use v1/oracle_mint
 
 //                   //
 // Oracle Mint Tests //

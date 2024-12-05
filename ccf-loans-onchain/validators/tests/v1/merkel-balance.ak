@@ -1,9 +1,9 @@
 use cardano/address.{Script}
 use cardano/assets
 use cardano/transaction.{Transaction, placeholder}
-use ori/merkel_balance
 use tests/tools as t
 use tests/transactions as tx
+use v1/merkel_balance
 
 //                         //
 // Balance Validator Tests //

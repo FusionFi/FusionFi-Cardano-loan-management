@@ -1,9 +1,9 @@
 use cardano/assets
 use cardano/transaction.{InlineDatum, Transaction, placeholder}
-use ori/merkel_config_validator
 use tests/tools as t
 // use tests/tools as t
 use tests/transactions as tx
+use v1/merkel_config_validator
 
 // use tests/transactions.{configActionUpdate, configDatum, oracleDatum}
 

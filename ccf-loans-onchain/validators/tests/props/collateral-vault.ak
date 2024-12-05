@@ -1,9 +1,9 @@
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
-use ori/collateral_vault
 use tests/prop
 use tests/tools as t
 use tests/transactions as tx
+use v1/collateral_vault
 
 //                        //
 // Collateral Valut Tests //

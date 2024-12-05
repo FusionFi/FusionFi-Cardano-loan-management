@@ -1,10 +1,10 @@
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
-use ori/loan_mint
 use tests/tools as t
 use tests/transactions.{
   collateralDatum, configDatumIn, loanDatum, loanMintActionMint, oracleDatum,
 }
+use v1/loan_mint
 
 //                 //
 // Loan Mint Tests //

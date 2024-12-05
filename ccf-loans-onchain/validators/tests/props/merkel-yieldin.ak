@@ -2,10 +2,10 @@ use cardano/address.{Address, Script}
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Output, Transaction, placeholder}
 use ccfl/types.{CollateralDatum}
-use ori/merkel_yieldin
 use tests/prop
 use tests/tools as t
 use tests/transactions as tx
+use v1/merkel_yieldin
 
 //                     //
 // Yield Deposit Tests //

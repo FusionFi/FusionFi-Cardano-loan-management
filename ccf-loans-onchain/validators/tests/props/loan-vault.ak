@@ -1,7 +1,7 @@
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
-use ori/loan_vault
 use tests/tools as t
 use tests/transactions as tx
+use v1/loan_vault
 
 //                  //
 // Loan Vault Tests //

@@ -1,11 +1,12 @@
 use aiken/collection/dict
 use aiken/collection/list
+use aiken/crypto.{ScriptHash}
 use cardano/address.{Script}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, OutputReference, Transaction}
 use ccfl/types.{
-  LPBurn, LPMint, OracleDatum, SClose, SLend, SSupply, SWithdraw, SupplyAction,
-  SupplyDatum, SupplyMintAction,
+  LPBurn, LPMint, LoanDatum, OracleDatum, SClose, SLend, SSupply, SWithdraw,
+  SupplyAction, SupplyDatum, SupplyMintAction,
 }
 
 // Supply Pool //
@@ -19,7 +20,7 @@ use ccfl/types.{
 // we could use a more complex design pattern like a linked list
 // for now we will use a single thread, and we will need to implement chaining
 
-validator supplyPool(owner: ByteArray, op: PolicyId) {
+validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
   mint(r: SupplyMintAction, p: PolicyId, tx: Transaction) {
     expect [Pair(lpName, lpAmt)] =
       tx.mint
@@ -118,13 +119,13 @@ validator supplyPool(owner: ByteArray, op: PolicyId) {
         expect outDatum: SupplyDatum = datum
 
         and {
+          lpName == "",
+          lpAmt == value,
           newValue == ownOut.value,
           d.policy == outDatum.policy,
           d.asset == outDatum.asset,
           d.oracle == outDatum.oracle,
           oOut.supply == oIn.supply + value,
-          lpName == "",
-          lpAmt == value,
         }
       }
       SLend { value } -> {
@@ -144,34 +145,30 @@ validator supplyPool(owner: ByteArray, op: PolicyId) {
             assets.from_asset(d.policy, d.asset, 0 - value),
           )
 
-        expect [Pair(loanName, loanAmt)] =
-          tx.mint
-            |> assets.tokens(ownHash)
-            |> dict.to_pairs()
-
         expect Some(loanOut) =
           list.find(
             tx.outputs,
             // need to access loanHash from ConfigDatum OR Params
-            fn(output) { output.address.payment_credential == loanHash },
+            fn(output) { output.address.payment_credential == Script(loanHash) },
           )
 
         expect [Pair(lOutName, lOutAmt)] =
           loanOut.value
-            |> assets.tokens(ownHash)
+            |> assets.tokens(loanHash)
             |> dict.to_pairs()
+
         expect InlineDatum(datum) = loanOut.datum
         expect lDatum: LoanDatum = datum
 
-        expect Some(userOut) =
-          list.find(
-            tx.outputs,
-            fn(output) { output.address.payment_credential == lDatum.user },
-          )
-
+        // expect Some(userOut) =
+        //   list.find(
+        //     tx.outputs,
+        //     fn(output) { output.address.payment_credential == lDatum.user },
+        //   )
         and {
           oOut.borrowed == oIn.borrowed + value,
           lDatum.amount == value,
+          lOutAmt == 1,
         }
       }
       // Sends to recipientAddress -> verified by mLoanMint
@@ -183,39 +180,56 @@ validator supplyPool(owner: ByteArray, op: PolicyId) {
             |> assets.tokens(ownHash)
             |> dict.to_pairs()
 
-        expect Some(userIn) = 
+        expect Some(userIn) =
           list.find(
             tx.inputs,
-            fn(input) {
-              list.has(assets.policies(input.output.value), ownHash) && 
-              input.output.address.payment_credential == VerificationKey(_)
-            }
+            fn(input) { list.has(assets.policies(input.output.value), ownHash) },
           )
-        
+        // input.output.address.payment_credential == VerificationKey(_)
         expect [Pair(inName, inAmt)] =
           userIn.output.value
             |> assets.tokens(ownHash)
             |> dict.to_pairs()
 
-        expect Some(userOut) = 
+        expect Some(userOut) =
           list.find(
             tx.outputs,
             fn(output) {
-              output.address.payment_credential == userIn.output.payment_credential
-            }
+              output.address.payment_credential == userIn.output.address.payment_credential
+            },
           )
 
-        // removes value and burns LP tokens
-        and {
-          lpName == "",
-          lpAmt == 0 - value,
-          oIn.supply == oOut.supply + value,
-          inName == "",
-          inAmt >= value,
-          outName == "",
-          outAmt == inAmt - value
+        trace inAmt
+        trace value
+
+        if inAmt > value {
+          expect [Pair(outName, outAmt)] =
+            userOut.value
+              |> assets.tokens(ownHash)
+              |> dict.to_pairs()
+
+          and {
+            outName == "",
+            outAmt == inAmt - value,
+            lpName == "",
+            lpAmt == 0 - value,
+            oIn.supply == oOut.supply + value,
+            inName == "",
+            inAmt >= value,
+          }
+        } else if inAmt == value {
+          and {
+            lpName == "",
+            lpAmt == 0 - value,
+            oIn.supply == oOut.supply + value,
+            inName == "",
+            inAmt >= value,
+          }
+        } else {
+          fail
         }
       }
+      // removes value and burns LP tokens
       SClose -> {
         expect tokenValue =
           assets.quantity_of(ownInput.output.value, d.policy, d.asset)

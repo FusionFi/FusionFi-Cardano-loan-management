@@ -354,7 +354,7 @@ pub fn ioTx(
     list.map(
       outList,
       fn(index) {
-        expect (col, loan) = index
+        let (col, loan) = index
         expect Some(colIn) =
           list.find(
             inputs,

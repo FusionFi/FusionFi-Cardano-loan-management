@@ -1,8 +1,8 @@
 use cardano/assets
 use cardano/transaction.{InlineDatum, Transaction, placeholder}
-use ori/interest_vault
 use tests/tools as t
 use tests/transactions.{interestAction, interestDatum}
+use v1/interest_vault
 
 //                          //
 // Interest Validator Tests //

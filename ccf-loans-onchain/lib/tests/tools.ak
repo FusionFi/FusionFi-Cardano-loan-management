@@ -11,6 +11,9 @@ use cardano/transaction.{
   Datum, InlineDatum, Input, Output, OutputReference, Transaction, TransactionId,
 }
 
+pub const supplyHash =
+  #"e8f2fe5432f242c70494d3fb3cc879f256c0f15d77a6419c18b89a60"
+
 pub const refCollateralSpend =
   #"e7b19fcd79c6c08ca3a3be4f64683d4f2df442d743a89bcac8ffaa05"
 
@@ -141,8 +144,7 @@ pub const rewardsMintHash =
   #"1fa867076dae742a37027eb2ed169455c32e183f621a525df69b85eb"
 
 pub fn loanRedeemers() -> List<ScriptHash> {
-  let list =
-    [merkelLoanBalance, merkelLoanLiquidate, merkelLoanClose]
+  let list = [merkelLoanBalance, merkelLoanLiquidate, merkelLoanClose]
   list
 }
 

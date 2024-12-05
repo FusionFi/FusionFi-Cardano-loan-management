@@ -4,9 +4,9 @@ use cardano/transaction.{
   InlineDatum, Input, NoDatum, Output, Transaction, placeholder,
 }
 use ccfl/types.{CollateralDatum}
-use ori/merkel_yieldout
 use tests/tools as t
 use tests/transactions as tx
+use v1/merkel_yieldout
 
 //                      //
 // Yield Withdraw Tests //

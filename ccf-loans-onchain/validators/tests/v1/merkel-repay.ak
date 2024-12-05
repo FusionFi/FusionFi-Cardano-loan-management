@@ -3,9 +3,9 @@ use cardano/address.{VerificationKey}
 use cardano/assets
 use cardano/transaction.{Transaction, placeholder}
 use ccfl/interestcalcs.{interestPayment, interestSlope1, interestSlope2}
-use ori/merkel_repay
 use tests/tools as t
 use tests/transactions as tx
+use v1/merkel_repay
 
 //                       //
 // Repay Validator Tests //

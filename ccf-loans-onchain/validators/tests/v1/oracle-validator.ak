@@ -1,7 +1,7 @@
 use cardano/transaction.{InlineDatum, Transaction, placeholder}
-use ori/oracle_validator
 use tests/tools as t
 use tests/transactions.{oracleAction, oracleDatum}
+use v1/oracle_validator
 
 //                        //
 // Oracle Validator Tests //
