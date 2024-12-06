@@ -1,6 +1,6 @@
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
-use ccfl/types.{OracleDatum, SLend, SSupply, SWithdraw, SupplyDatum}
+use ccfl/types.{OracleDatum, SClose, SLend, SSupply, SWithdraw, SupplyDatum}
 use tests/tools as tl
 use tests/transactions as t
 use v3/supply_pool
@@ -272,23 +272,25 @@ test close() {
   let lpPolicy = tl.supplyHash
   let oref = t.oref(#"dddd", 2)
 
-  let supplyAction = SSupply { value: 10 }
+  let supplyAction = SClose
 
   let inDatum = SupplyDatum { policy: #"deaf", asset: "", oracle: #"beef" }
 
   let outDatum = SupplyDatum { policy: #"deaf", asset: "", oracle: #"beef" }
 
   let lpMintValue = assets.from_asset(lpPolicy, "", 10)
+  let oracleBurnValue = assets.from_asset(tl.oracleMintHash, #"beef", -2)
 
-  let oracleIn = t.oracleInput(1000)
-  let oracleOutDatum =
-    t.oracleDatum(1000, 2222222222222, 1000010, 200000, "USD")
+  let oracleInDatum = t.oracleDatum(1000, 2222222222222, 0, 0, "USD")
 
-  let oracleOut =
-    tl.test_output(
-      tl.test_script_address(tl.oracleValHash),
-      tl.oracleValue(),
-      InlineDatum(oracleOutDatum),
+  let oracleIn =
+    tl.test_input(
+      t.oref(#"dddd", 3),
+      tl.test_output(
+        tl.test_script_address(tl.oracleValHash),
+        tl.oracleValue(),
+        InlineDatum(oracleInDatum),
+      ),
     )
 
   let supplyIn =
@@ -296,10 +298,7 @@ test close() {
       oref,
       tl.test_output(
         tl.test_script_address(#"face"),
-        assets.merge(
-          assets.from_asset(#"deaf", "", 1000000),
-          tl.makeAdaValue(2),
-        ),
+        assets.merge(assets.from_asset(#"deaf", "", 0), tl.makeAdaValue(2)),
         InlineDatum(inDatum),
       ),
     )
@@ -307,32 +306,15 @@ test close() {
   let supplyOut =
     tl.test_output(
       tl.test_script_address(#"face"),
-      assets.merge(assets.from_asset(#"deaf", "", 1000010), tl.makeAdaValue(2)),
+      assets.merge(assets.from_asset(#"deaf", "", 0), tl.makeAdaValue(2)),
       InlineDatum(outDatum),
-    )
-
-  let userIn =
-    tl.test_input(
-      t.oref(#"2222", 2),
-      tl.test_output(
-        tl.test_address(#"cafe"),
-        assets.merge(assets.from_asset(#"deaf", "", 10), tl.makeAdaValue(2)),
-        NoDatum,
-      ),
-    )
-
-  let userOut =
-    tl.test_output(
-      tl.test_address(#"cafe"),
-      assets.merge(lpMintValue, tl.makeAdaValue(2)),
-      NoDatum,
     )
 
   let tx =
     Transaction {
       ..placeholder,
-      inputs: [supplyIn, oracleIn, userIn],
-      outputs: [supplyOut, oracleOut, userOut],
+      inputs: [supplyIn, oracleIn],
+      outputs: [supplyOut],
       mint: oracleBurnValue,
     }
 
@@ -344,5 +326,5 @@ test close() {
     supplyAction,
     oref,
     tx,
-  )
+  )?
 }

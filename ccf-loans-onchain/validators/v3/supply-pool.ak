@@ -86,16 +86,16 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
     expect InlineDatum(datum) = oracleIn.output.datum
     expect oIn: OracleDatum = datum
 
-    expect Some(oracleOut) =
-      list.find(
-        tx.outputs,
-        fn(output) { output.address == oracleIn.output.address },
-      )
-    expect InlineDatum(datum) = oracleOut.datum
-    expect oOut: OracleDatum = datum
-
     when r is {
       SSupply { value } -> {
+        expect Some(oracleOut) =
+          list.find(
+            tx.outputs,
+            fn(output) { output.address == oracleIn.output.address },
+          )
+        expect InlineDatum(datum) = oracleOut.datum
+        expect oOut: OracleDatum = datum
+
         expect [Pair(lpName, lpAmt)] =
           tx.mint
             |> assets.tokens(ownHash)
@@ -129,6 +129,14 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
         }
       }
       SLend { value } -> {
+        expect Some(oracleOut) =
+          list.find(
+            tx.outputs,
+            fn(output) { output.address == oracleIn.output.address },
+          )
+        expect InlineDatum(datum) = oracleOut.datum
+        expect oOut: OracleDatum = datum
+
         expect Some(ownOut) =
           list.find(
             tx.outputs,
@@ -175,6 +183,14 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
       // matches loanMintValue
       // returns the rest of the value to validator
       SWithdraw { value } -> {
+        expect Some(oracleOut) =
+          list.find(
+            tx.outputs,
+            fn(output) { output.address == oracleIn.output.address },
+          )
+        expect InlineDatum(datum) = oracleOut.datum
+        expect oOut: OracleDatum = datum
+
         expect [Pair(lpName, lpAmt)] =
           tx.mint
             |> assets.tokens(ownHash)
