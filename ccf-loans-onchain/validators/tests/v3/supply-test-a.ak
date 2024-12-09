@@ -17,11 +17,23 @@ test supply() {
 
   let outDatum = SupplyDatum { policy: #"deaf", asset: "", oracle: #"beef" }
 
-  let lpMintValue = assets.from_asset(lpPolicy, "", 10)
+  let lpMintValue = assets.from_asset(lpPolicy, #"deaf", 10)
 
-  let oracleIn = t.oracleInput(1000)
+  let oracleInDatum =
+    t.oracleDatum(1000, 2222222222222, 1000000, 200000, #"deaf")
+
+  let oracleIn =
+    tl.test_input(
+      t.oref(#"1111", 1),
+      tl.test_output(
+        tl.test_script_address(tl.oracleValHash),
+        tl.oracleValue(),
+        InlineDatum(oracleInDatum),
+      ),
+    )
+
   let oracleOutDatum =
-    t.oracleDatum(1000, 2222222222222, 1000010, 200000, "USD")
+    t.oracleDatum(1000, 2222222222222, 1000010, 200000, #"deaf")
 
   let oracleOut =
     tl.test_output(
@@ -94,9 +106,10 @@ test withdraw() {
 
   let outDatum = SupplyDatum { policy: #"deaf", asset: "", oracle: #"beef" }
 
-  let lpMintValue = assets.from_asset(lpPolicy, "", -10)
+  let lpMintValue = assets.from_asset(lpPolicy, #"deaf", -10)
 
-  let oracleInDatum = t.oracleDatum(1000, 2222222222222, 1000010, 200000, "USD")
+  let oracleInDatum =
+    t.oracleDatum(1000, 2222222222222, 1000010, 200000, #"deaf")
 
   let oracleIn =
     tl.test_input(
@@ -108,7 +121,7 @@ test withdraw() {
       ),
     )
   let oracleOutDatum =
-    t.oracleDatum(1000, 2222222222222, 1000000, 200000, "USD")
+    t.oracleDatum(1000, 2222222222222, 1000000, 200000, #"deaf")
 
   let oracleOut =
     tl.test_output(
@@ -142,7 +155,10 @@ test withdraw() {
       t.oref(#"2222", 2),
       tl.test_output(
         tl.test_address(#"cafe"),
-        assets.merge(assets.from_asset(lpPolicy, "", 10), tl.makeAdaValue(2)),
+        assets.merge(
+          assets.from_asset(lpPolicy, #"deaf", 10),
+          tl.makeAdaValue(2),
+        ),
         NoDatum,
       ),
     )
@@ -278,7 +294,7 @@ test close() {
 
   let outDatum = SupplyDatum { policy: #"deaf", asset: "", oracle: #"beef" }
 
-  let lpMintValue = assets.from_asset(lpPolicy, "", 10)
+  let lpMintValue = assets.from_asset(lpPolicy, #"deaf", 10)
   let oracleBurnValue = assets.from_asset(tl.oracleMintHash, #"beef", -2)
 
   let oracleInDatum = t.oracleDatum(1000, 2222222222222, 0, 0, "USD")

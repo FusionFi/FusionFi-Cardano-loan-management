@@ -20,13 +20,16 @@ use ccfl/types.{
 // we could use a more complex design pattern like a linked list
 // for now we will use a single thread, and we will need to implement chaining
 
+// V1
 validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
   mint(r: SupplyMintAction, p: PolicyId, tx: Transaction) {
+    // only mints single asset class with token name that matches the supply policy
     expect [Pair(lpName, lpAmt)] =
       tx.mint
         |> assets.tokens(p)
         |> dict.to_pairs()
 
+    // requires an input present to add to
     expect Some(ownInput) =
       list.find(
         tx.inputs,
@@ -52,12 +55,12 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
 
     when r is {
       LPMint { value } -> and {
-          lpName == "",
+          lpName == oIn.currency,
           lpAmt == value,
           oOut.supply == oIn.supply + value,
         }
       LPBurn -> and {
-          lpName == "",
+          lpName == oIn.currency,
           lpAmt == oOut.supply - oIn.supply,
         }
     }
@@ -119,7 +122,7 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
         expect outDatum: SupplyDatum = datum
 
         and {
-          lpName == "",
+          lpName == oOut.currency,
           lpAmt == value,
           newValue == ownOut.value,
           d.policy == outDatum.policy,
@@ -225,21 +228,19 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
               |> dict.to_pairs()
 
           and {
-            outName == "",
+            outName == oOut.currency,
             outAmt == inAmt - value,
-            lpName == "",
+            lpName == oOut.currency,
             lpAmt == 0 - value,
             oIn.supply == oOut.supply + value,
-            inName == "",
-            inAmt >= value,
+            inName == oOut.currency,
           }
         } else if inAmt == value {
           and {
-            lpName == "",
+            lpName == oOut.currency,
             lpAmt == 0 - value,
             oIn.supply == oOut.supply + value,
-            inName == "",
-            inAmt >= value,
+            inName == oOut.currency,
           }
         } else {
           fail

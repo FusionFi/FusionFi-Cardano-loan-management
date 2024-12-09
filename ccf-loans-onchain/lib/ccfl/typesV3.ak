@@ -9,43 +9,27 @@ pub type WithdrawRedeemer {
   Withdraw { a: List<Int> }
 }
 
-pub type ConfigDatum {
-  loanVal: ScriptHash,
-  colVal: ScriptHash,
-  rewardsVal: ScriptHash,
-}
-
 pub type MerkelConfigDatum {
   loanVal: ScriptHash,
   colVal: ScriptHash,
-  rewardsVal: ScriptHash,
   oracleVal: ScriptHash,
   interestVal: ScriptHash,
-  yield: ScriptHash,
+  supplyVal: ScriptHash,
   collateralRedeemers: List<ScriptHash>,
-}
-
-pub type ConfigAction {
-  ConUpdate { loanVal: ScriptHash, colVal: ScriptHash, rewardsVal: ScriptHash }
-  ConClose
+  supplyRedeemers: List<ScriptHash>,
 }
 
 pub type MerkelConfigAction {
   MConUpdate {
     loanVal: ScriptHash,
     colVal: ScriptHash,
-    rewardsVal: ScriptHash,
     oracleVal: ScriptHash,
     interestVal: ScriptHash,
+    supplyVal: ScriptHash,
     collateralRedeemers: List<ScriptHash>,
+    supplyRedeemers: List<ScriptHash>,
   }
   MConClose
-}
-
-pub type LoanAction {
-  SLBalance
-  SLLiquidate
-  SLClose
 }
 
 pub type LoanMintAction {
@@ -67,30 +51,13 @@ pub type MerkelLoanAction {
   i: Int,
 }
 
-pub type CollateralAction {
-  SCBalance
-  SCLiquidate
-  SCClose
-}
-
 pub type MerkelCollateralAction {
   i: Int,
-}
-
-pub type TCollateralDatum {
-  amount: Int,
-  timestamp: Int,
 }
 
 pub type CollateralDatum {
   amount: Int,
   timestamp: Int,
-  yield: Int,
-}
-
-pub type RewardsAction {
-  RewardMint
-  RewardBurn
 }
 
 pub type OracleDatum {
@@ -141,14 +108,6 @@ pub type InterestAction {
   InterestClose
 }
 
-pub type YieldDatum {
-  loan: ByteArray,
-}
-
-pub type YieldAction {
-  i: Int,
-}
-
 pub type SupplyAction {
   SSupply { value: Int }
   SLend { value: Int }
@@ -157,14 +116,14 @@ pub type SupplyAction {
 }
 
 // V1
-pub type SupplyDatum {
+pub type SupplyDatum1 {
   policy: PolicyId,
   asset: AssetName,
   oracle: ByteArray,
 }
 
 // V2
-pub type SupplyDatum1 {
+pub type SupplyDatum {
   policy: PolicyId,
   asset: AssetName,
 }

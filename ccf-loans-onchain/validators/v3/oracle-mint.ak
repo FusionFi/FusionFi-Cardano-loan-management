@@ -12,6 +12,10 @@ use ccfl/types.{
 // Oracle Mint //
 //             //
 
+// Because we want to supply assets as part of a P2P protocol, we need to create
+// an additional OralceToken to be used as a Beacon token for the supply pool
+// it will be sent to the supply pool to create a new supply feed that users
+// can add their own assets to.
 validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
   mint(r: OracleMintAction, policyId: PolicyId, tx: Transaction) {
     expect [Pair(oName, oAmt)] =
@@ -73,6 +77,17 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
         expect InlineDatum(datum) = interest.datum
         expect interestDatum: InterestDatum = datum
 
+        expect Some(supply) =
+          list.find(
+            tx.outputs,
+            fn(output) {
+              output.address.payment_credential == Script(cDatum.supply)
+            },
+          )
+
+        expect InlineDatum(datum) = supply.datum
+        expect supplyDatum: SupplyDatum = datum
+
         and {
           oracleDatum.exchange == exchange,
           oracleDatum.timestamp == timestamp,
@@ -84,12 +99,14 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
           interestDatum.slope1 == slope1,
           interestDatum.slope2 == slope2,
           interestDatum.term == term,
+          supplyDatum.policy == currency,
+          supplyDatum.asset == "",
           oName == iName,
           oName == tName,
-          list.has(tx.extra_signatories, o) && oAmt == 2,
+          list.has(tx.extra_signatories, o) && oAmt == 3,
         }
       }
-      OBurn -> list.has(tx.extra_signatories, o) && oAmt == -2
+      OBurn -> list.has(tx.extra_signatories, o) && oAmt == -3
     }
   }
 

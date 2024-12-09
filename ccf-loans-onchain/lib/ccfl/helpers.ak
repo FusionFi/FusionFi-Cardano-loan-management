@@ -14,6 +14,49 @@ use ccfl/types.{
 // Helpers //
 //         //
 
+pub fn getSupplyIO(
+  ins: List<Input>,
+  outs: List<Output>,
+  policy: PolicyId,
+  name: ByteArray,
+  qty: Int,
+) -> (Value, SupplyDatum, Value, SupplyDatum) {
+  expect Some(in) = list.head(ins)
+  expect Some(out) = list.head(outs)
+
+  let flatIn = assets.flatten(in.output.value)
+  let flatOut = assets.flatten(out.value)
+
+  expect InlineDatum(datum) = in.output.datum
+  expect inDatum: SupplyDatum = datum
+
+  expect InlineDatum(datum) = out.datum
+  expect outDatum: SupplyDatum = datum
+  and {
+    list.length(ins) == 1,
+    list.length(outs) == 1,
+    list.has(flatIn, (policy, name, qty)),
+    list.has(flatOut, (policy, name, qty)),
+    qty == 1,
+  }
+
+  (in.output.value, inDatum, out.value, outDatum)
+}
+
+pub fn getUserIO(
+  ins: List<Input>,
+  out: Output,
+  policy: PolicyId,
+) -> (Value, Value) {
+  let inValue =
+    list.foldl(
+      ins,
+      assets.zero,
+      fn(in, acc) { assets.merge(in.output.value, acc) },
+    )
+  (assets.without_lovelace(inValue), assets.without_lovelace(out.value))
+}
+
 // returns (loanIn Value, loanIn Datum, colIn Value, colIn Datum)
 pub fn get_loan_col_in(
   ins: List<Input>,
@@ -136,6 +179,54 @@ pub fn get_oracle_datum(
   expect rDatum: OracleDatum = datum
 
   rDatum
+}
+
+pub fn getOracleIO(
+  ins: List<Input>,
+  outs: List<Output>,
+) -> (Value, OracleDatum, Value, OracleDatum) {
+  expect Some(in) = list.head(ins)
+  let inValue = assets.without_lovelace(in.output.value)
+  expect Some(out) = list.head(outs)
+
+  let outValue = assets.without_lovelace(out.value)
+
+  expect InlineDatum(datum) = in.output.datum
+  expect inDatum: OracleDatum = datum
+
+  expect InlineDatum(datum) = out.datum
+  expect outDatum: OracleDatum = datum
+
+  and {
+    inValue == outValue,
+    list.length(ins) == 1,
+    list.length(outs) == 1,
+  }
+
+  (inValue, inDatum, outValue, outDatum)
+}
+
+// returns (oracleValue, oracleDatum) or errors
+pub fn get_oracleIn_datum_value(
+  ins: List<Input>,
+  policy: PolicyId,
+  script: ScriptHash,
+) -> (Value, OracleDatum) {
+  expect Some(oracleIn) =
+    list.find(
+      ins,
+      fn(output) {
+        output.address.payment_credential == Script(script) && list.has(
+          assets.policies(output.value),
+          policy,
+        )
+      },
+    )
+
+  expect InlineDatum(datum) = oracleOut.datum
+  expect rDatum: OracleDatum = datum
+
+  (assets.without_lovelace(oracleOut.value), rDatum)
 }
 
 // returns (oracleValue, oracleDatum) or errors
