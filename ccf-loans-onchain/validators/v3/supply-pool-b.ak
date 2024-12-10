@@ -6,7 +6,7 @@ use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, OutputReference, Transaction}
 use ccfl/types.{
   LPBurn, LPMint, LoanDatum, OracleDatum, SClose, SLend, SSupply, SWithdraw,
-  SupplyAction, SupplyDatum1, SupplyMintAction,
+  SupplyAction, SupplyDatum, SupplyMintAction,
 }
 
 // Supply Pool V2 //
@@ -53,7 +53,7 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
         tx.outputs,
         fn(output) {
           output.address.payment_credential == Script(p) && list.has(
-            assets.policies(input.output.value),
+            assets.policies(output.value),
             op,
           )
         },

@@ -1,12 +1,14 @@
 use aiken/collection/dict
 use aiken/collection/list
+use aiken/collection/pairs
 use aiken/crypto.{ScriptHash}
 use cardano/address.{Script}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, OutputReference, Transaction}
-use ccfl/types.{
-  LPBurn, LPMint, LoanDatum, OracleDatum, SClose, SLend, SSupply, SWithdraw,
-  SupplyAction, SupplyDatum1, SupplyMintAction,
+use ccfl/helpersv3 as h
+use ccfl/typesv3.{
+  LPBurn, LPMint, LoanDatum, MSupplyAction, MerkelConfigDatum, OracleDatum,
+  SClose, SLend, SSupply, SWithdraw, SupplyAction, SupplyDatum, SupplyMintAction,
 }
 
 // Supply Pool V2 //
@@ -54,7 +56,7 @@ validator supplyPool(owner: ByteArray, op: PolicyId, cp: PolicyId) {
         tx.outputs,
         fn(output) {
           output.address.payment_credential == Script(p) && list.has(
-            assets.policies(input.output.value),
+            assets.policies(output.value),
             op,
           )
         },
@@ -102,8 +104,7 @@ validator supplyPool(owner: ByteArray, op: PolicyId, cp: PolicyId) {
     _oref: OutputReference,
     tx: Transaction,
   ) {
-    let cDatum: MerkelConfigDatum =
-      helpers.get_config_datum(tx.reference_inputs, cp)
+    let cDatum: MerkelConfigDatum = h.get_config_datum(tx.reference_inputs, cp)
 
     expect Some(stakeVal) =
       cDatum.supplyRedeemers

@@ -1,5 +1,3 @@
-use aiken/collection/list
-use aiken/fuzz as f
 use cardano/assets
 use cardano/transaction.{InlineDatum, Input, NoDatum}
 use ccfl/helpers as h
@@ -314,7 +312,7 @@ test get_oracle_datum(props via p.intHashList()) {
 }
 
 test oneIO_List(props via p.intHashList()) {
-  expect [(h1, i1), (h2, i2), (h3, i3), (h4, i4), (h5, i5)] = props
+  expect [(h1, i1), (h2, i2), (h3, i3), (_h4, i4), (h5, _i5)] = props
 
   let oracleToken = assets.from_asset(h1, h2, 1)
 
@@ -373,10 +371,8 @@ test oneIO_List(props via p.intHashList()) {
       NoDatum,
     )
 
-  let inList =
-    [input1, input2, input3]
-  let outList =
-    [output1, output2, output3]
+  let inList = [input1, input2, input3]
+  let outList = [output1, output2, output3]
 
   h.oneIO_List(oref, inList, outList) == (input1, output1)
 }

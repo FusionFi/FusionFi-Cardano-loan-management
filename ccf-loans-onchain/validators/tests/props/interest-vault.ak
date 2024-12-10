@@ -1,4 +1,3 @@
-use cardano/assets
 use cardano/transaction.{InlineDatum, Transaction, placeholder}
 use tests/tools as t
 use tests/transactions.{interestAction, interestDatum}

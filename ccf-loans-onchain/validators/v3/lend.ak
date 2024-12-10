@@ -2,22 +2,24 @@ use aiken/collection/dict
 use aiken/collection/list
 use cardano/address.{Credential, Script}
 use cardano/assets.{PolicyId}
-use cardano/transaction.{InlineDatum, Output, Transaction}
+use cardano/transaction.{InlineDatum, Transaction}
 use ccfl/helpersv3 as h
-use ccfl/typesv3.{CollateralDatum, LoanDatum, MerkelConfigDatum}
+use ccfl/typesv3.{LoanDatum, MerkelConfigDatum}
 
-//                             //
-// Supply Withdrawal Validator //
-//                             //
+//                               //
+// Lending From Supply Validator //
+//                               //
+
+// This validator only gets uped when lending assets from the supply pools, not fiat.
+// It has been made separate to loan minting but relies on it, and may need to take 
+// a more controlling role in the future to manage fiat in the future.
 
 pub type WithdrawAction {
   a: Int,
   value: Int,
 }
 
-// this is an index of the user output so we can access it easily
-
-validator withdraw(cp: PolicyId, op: PolicyId) {
+validator lend(cp: PolicyId, op: PolicyId) {
   withdraw(r: WithdrawAction, cred: Credential, tx: Transaction) {
     expect Script(_own_validator) = cred
 
@@ -48,13 +50,8 @@ validator withdraw(cp: PolicyId, op: PolicyId) {
     let (oracleIn, oIn, oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
 
     expect [Pair(oracleName, oracleQty)] =
-      oracleIn
+      oracleOut
         |> assets.tokens(op)
-        |> dict.to_pairs()
-
-    expect [Pair(lpName, lpAmt)] =
-      tx.mint
-        |> assets.tokens(cDatum.supplyVal)
         |> dict.to_pairs()
 
     let supplyIns =
@@ -83,57 +80,38 @@ validator withdraw(cp: PolicyId, op: PolicyId) {
     let (supplyIn, sIn, supplyOut, sOut) =
       h.getSupplyIO(supplyIns, supplyOuts, op, oracleName, oracleQty)
 
-    expect Some(userOut) = list.at(tx.outputs, r.a)
+    let newValue =
+      assets.merge(
+        supplyIn,
+        assets.from_asset(sIn.policy, sIn.asset, 0 - r.value),
+      )
 
-    let userIns =
-      list.filter(
-        tx.inputs,
-        fn(input) {
-          input.output.address.payment_credential == userOut.address.payment_credential
+    expect Some(loanOut) =
+      list.find(
+        tx.outputs,
+        // need to access loanHash from ConfigDatum OR Params
+        fn(output) {
+          output.address.payment_credential == Script(cDatum.loanVal)
         },
       )
 
-    let (userInValue, userOutValue) =
-      h.getUserIO(userIns, userOut, cDatum.supplyVal)
-
-    expect [Pair(inName, inAmt)] =
-      userInValue
-        |> assets.tokens(cDatum.supplyVal)
+    expect [Pair(lOutName, lOutAmt)] =
+      loanOut.value
+        |> assets.tokens(cDatum.loanVal)
         |> dict.to_pairs()
 
-    if inAmt > r.value {
-      expect [Pair(outName, outAmt)] =
-        userOutValue
-          |> assets.tokens(cDatum.supplyVal)
-          |> dict.to_pairs()
+    expect InlineDatum(datum) = loanOut.datum
+    expect lDatum: LoanDatum = datum
 
-      and {
-        outName == oOut.currency,
-        outAmt == inAmt - r.value,
-        lpName == oOut.currency,
-        lpAmt == 0 - r.value,
-        oIn.supply == oOut.supply + r.value,
-        inName == oOut.currency,
-        sOut == sIn,
-        supplyIn == assets.merge(
-          supplyOut,
-          assets.from_asset(sIn.policy, sIn.asset, r.value),
-        ),
-      }
-    } else if inAmt == r.value {
-      and {
-        (lpName == sIn.policy)?,
-        (lpAmt == 0 - r.value)?,
-        (oIn.supply == oOut.supply + r.value)?,
-        (inName == oOut.currency)?,
-        (sOut == sIn)?,
-        (supplyIn == assets.merge(
-          supplyOut,
-          assets.from_asset(sIn.policy, sIn.asset, r.value),
-        ))?,
-      }
-    } else {
-      fail
+    // expect Some(userOut) =
+    //   list.find(
+    //     tx.outputs,
+    //     fn(output) { output.address.payment_credential == lDatum.user },
+    //   )
+    and {
+      oOut.borrowed == oIn.borrowed + r.value,
+      lDatum.amount == r.value,
+      lOutAmt == 1,
     }
   }
 

@@ -1,5 +1,4 @@
 use cardano/address.{Script}
-use cardano/assets
 use cardano/transaction.{Transaction, placeholder}
 use tests/prop
 use tests/tools as t
@@ -10,7 +9,7 @@ use v1/merkel_liquidate
 // Liquidation Validator Tests //
 //                             //
 
-test liquidateFail((a, b, c, d) via prop.fourInts()) {
+test liquidateFail((a, b, c, _d) via prop.fourInts()) {
   let inRatio = a * 100
   let outRatio = a * 100
 

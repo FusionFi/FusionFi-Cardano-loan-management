@@ -5,7 +5,7 @@ use cardano/assets.{AssetName, PolicyId}
 // Datums & Redeemers //
 //                    //
 
-pub type WithdrawRedeemer {
+pub type WithdrawAction {
   Withdraw { a: List<Int> }
 }
 
@@ -131,4 +131,8 @@ pub type SupplyDatum {
 pub type SupplyMintAction {
   LPMint { value: Int }
   LPBurn
+}
+
+pub type MSupplyAction {
+  i: Int,
 }

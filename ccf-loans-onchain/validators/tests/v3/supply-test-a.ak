@@ -1,9 +1,9 @@
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
-use ccfl/types.{OracleDatum, SClose, SLend, SSupply, SWithdraw, SupplyDatum}
+use ccfl/types.{SClose, SLend, SSupply, SWithdraw, SupplyDatum}
 use tests/tools as tl
 use tests/transactions as t
-use v3/supply_pool
+use v3/supply_pool_a
 
 test supply() {
   let loanHash = #"eeee"
@@ -83,7 +83,7 @@ test supply() {
       mint: lpMintValue,
     }
 
-  supply_pool.supplyPool.spend(
+  supply_pool_a.supplyPool.spend(
     #"face",
     tl.oracleMintHash,
     loanHash,
@@ -96,7 +96,6 @@ test supply() {
 
 test withdraw() {
   let loanHash = #"eeee"
-  let oPolicy = #"0000"
   let lpPolicy = tl.supplyHash
   let oref = t.oref(#"dddd", 2)
 
@@ -178,7 +177,7 @@ test withdraw() {
       mint: lpMintValue,
     }
 
-  supply_pool.supplyPool.spend(
+  supply_pool_a.supplyPool.spend(
     #"face",
     tl.oracleMintHash,
     loanHash,
@@ -191,7 +190,6 @@ test withdraw() {
 
 test lend() {
   let loanHash = #"eeee"
-  let oPolicy = #"0000"
   let lpPolicy = tl.supplyHash
   let oref = t.oref(#"dddd", 2)
   let loanTokenValue = assets.from_asset(loanHash, #"bbbb", 1)
@@ -271,7 +269,7 @@ test lend() {
       mint: loanTokenMint,
     }
 
-  supply_pool.supplyPool.spend(
+  supply_pool_a.supplyPool.spend(
     #"face",
     tl.oracleMintHash,
     loanHash,
@@ -284,7 +282,6 @@ test lend() {
 
 test close() {
   let loanHash = #"eeee"
-  let oPolicy = #"0000"
   let lpPolicy = tl.supplyHash
   let oref = t.oref(#"dddd", 2)
 
@@ -294,7 +291,7 @@ test close() {
 
   let outDatum = SupplyDatum { policy: #"deaf", asset: "", oracle: #"beef" }
 
-  let lpMintValue = assets.from_asset(lpPolicy, #"deaf", 10)
+  // let lpMintValue = assets.from_asset(lpPolicy, #"deaf", 10)
   let oracleBurnValue = assets.from_asset(tl.oracleMintHash, #"beef", -2)
 
   let oracleInDatum = t.oracleDatum(1000, 2222222222222, 0, 0, "USD")
@@ -334,7 +331,7 @@ test close() {
       mint: oracleBurnValue,
     }
 
-  supply_pool.supplyPool.spend(
+  supply_pool_a.supplyPool.spend(
     #"face",
     tl.oracleMintHash,
     loanHash,

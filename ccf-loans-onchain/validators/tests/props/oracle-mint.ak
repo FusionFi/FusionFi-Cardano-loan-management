@@ -1,4 +1,3 @@
-use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
 use ccfl/types.{OMint}
 use tests/tools as t

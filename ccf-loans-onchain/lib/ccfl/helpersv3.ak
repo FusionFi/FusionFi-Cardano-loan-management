@@ -6,10 +6,10 @@ use cardano/transaction.{
   InlineDatum, Input, Output, OutputReference, Transaction, find_input,
   find_script_outputs,
 }
-use ccfl/types.{
+use ccfl/typesv3.{
   CollateralDatum, InterestDatum, LoanDatum, MerkelConfigDatum, OracleDatum,
+  SupplyDatum,
 }
-use ccfl/typesv3.{SupplyDatum}
 
 //         //
 // Helpers //
@@ -57,6 +57,31 @@ pub fn getUserIO(
       fn(in, acc) { assets.merge(in.output.value, acc) },
     )
   (assets.without_lovelace(inValue), assets.without_lovelace(out.value))
+}
+
+pub fn getOracleIO(
+  ins: List<Input>,
+  outs: List<Output>,
+) -> (Value, OracleDatum, Value, OracleDatum) {
+  expect Some(in) = list.head(ins)
+  let inValue = assets.without_lovelace(in.output.value)
+  expect Some(out) = list.head(outs)
+
+  let outValue = assets.without_lovelace(out.value)
+
+  expect InlineDatum(datum) = in.output.datum
+  expect inDatum: OracleDatum = datum
+
+  expect InlineDatum(datum) = out.datum
+  expect outDatum: OracleDatum = datum
+
+  expect and {
+      inValue == outValue,
+      list.length(ins) == 1,
+      list.length(outs) == 1,
+    }
+
+  (inValue, inDatum, outValue, outDatum)
 }
 
 // returns (loanIn Value, loanIn Datum, colIn Value, colIn Datum)
@@ -181,31 +206,6 @@ pub fn get_oracle_datum(
   expect rDatum: OracleDatum = datum
 
   rDatum
-}
-
-pub fn getOracleIO(
-  ins: List<Input>,
-  outs: List<Output>,
-) -> (Value, OracleDatum, Value, OracleDatum) {
-  expect Some(in) = list.head(ins)
-  let inValue = assets.without_lovelace(in.output.value)
-  expect Some(out) = list.head(outs)
-
-  let outValue = assets.without_lovelace(out.value)
-
-  expect InlineDatum(datum) = in.output.datum
-  expect inDatum: OracleDatum = datum
-
-  expect InlineDatum(datum) = out.datum
-  expect outDatum: OracleDatum = datum
-
-  expect and {
-      inValue == outValue,
-      list.length(ins) == 1,
-      list.length(outs) == 1,
-    }
-
-  (inValue, inDatum, outValue, outDatum)
 }
 
 // returns (oracleValue, oracleDatum) or errors

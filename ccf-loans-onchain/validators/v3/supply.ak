@@ -2,45 +2,44 @@ use aiken/collection/dict
 use aiken/collection/list
 use cardano/address.{Credential, Script}
 use cardano/assets.{PolicyId}
-use cardano/transaction.{InlineDatum, Output, Transaction}
-use ccfl/helpers.{merkelBurn}
-use ccfl/types.{CollateralDatum, LoanDatum, WithdrawRedeemer}
+use cardano/transaction.{Output, Transaction}
+use ccfl/helpersv3 as h
+use ccfl/types.{WithdrawRedeemer}
+use ccfl/typesv3.{MerkelConfigDatum}
 
 //                         //
 // Supply Assets Validator //
 //                         //
 
-validator supply(op: PolicyId) {
-  withdraw(r: WithdrawRedeemer, cred: Credential, tx: Transaction) {
+validator supply(cp: PolicyId, op: PolicyId) {
+  withdraw(_r: WithdrawRedeemer, cred: Credential, tx: Transaction) {
     expect Script(_own_validator) = cred
 
-    let cDatum: MerkelConfigDatum =
-      helpers.get_config_datum(reference_inputs, cp)
+    let cDatum: MerkelConfigDatum = h.get_config_datum(tx.reference_inputs, cp)
 
-    expect oracleIns =
+    let oracleIns =
       list.filter(
         tx.inputs,
         fn(input) {
-          input.output.address.payment_credential == cDatum.oracleVal && list.has(
+          input.output.address.payment_credential == Script(cDatum.oracleVal) && list.has(
             assets.policies(input.output.value),
             op,
           )
         },
       )
 
-    expect oracleOuts =
+    let oracleOuts =
       list.filter(
         tx.outputs,
-        fn(outputs) {
-          output.address.payment_credential == cDatum.oracleVal && list.has(
-            assets.policies(input.output.value),
+        fn(output) {
+          output.address.payment_credential == Script(cDatum.oracleVal) && list.has(
+            assets.policies(output.value),
             op,
           )
         },
       )
 
-    let (oracleIn, oIn, oracleOut, oOut) =
-      helpers.getOracleIO(oracleIns, oracleOuts)
+    let (oracleIn, oIn, oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
 
     expect [Pair(oracleName, oracleQty)] =
       oracleIn
@@ -52,23 +51,23 @@ validator supply(op: PolicyId) {
         |> assets.tokens(cDatum.supplyVal)
         |> dict.to_pairs()
 
-    expect supplyIns =
+    let supplyIns =
       list.filter(
         tx.inputs,
-        fn(inputs) {
-          input.output.address.payment_credential == cDatum.supplyVal && list.has(
+        fn(input) {
+          input.output.address.payment_credential == Script(cDatum.supplyVal) && list.has(
             assets.policies(input.output.value),
             op,
           )
         },
       )
 
-    expect supplyOuts =
+    let supplyOuts =
       list.filter(
         tx.outputs,
-        fn(inputs) {
-          output.address.payment_credential == cDatum.supplyVal && list.has(
-            assets.policies(input.output.value),
+        fn(output) {
+          output.address.payment_credential == Script(cDatum.supplyVal) && list.has(
+            assets.policies(output.value),
             op,
           )
         },
@@ -76,10 +75,10 @@ validator supply(op: PolicyId) {
 
     // (Value, SupplyDatum, Value, SupplyDatum)
     let (supplyIn, sIn, supplyOut, sOut) =
-      helpers.getSupplyIO(supplyIns, supplyOuts, op, oracleName, oracleQty)
+      h.getSupplyIO(supplyIns, supplyOuts, op, oracleName, oracleQty)
 
     // merge lpAmt of supplyAsset to compare with supplyOut
-    expect newValue =
+    let newValue =
       assets.merge(supplyIn, assets.from_asset(sIn.policy, sIn.asset, lpAmt))
 
     and {

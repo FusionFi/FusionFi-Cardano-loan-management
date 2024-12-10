@@ -1,5 +1,4 @@
 use cardano/address.{Script}
-use cardano/assets
 use cardano/transaction.{Transaction, placeholder}
 use tests/prop
 use tests/tools as t

@@ -4,9 +4,8 @@ use aiken/crypto.{VerificationKeyHash}
 use cardano/address.{Script}
 use cardano/assets.{PolicyId, tokens}
 use cardano/transaction.{InlineDatum, Transaction}
-use ccfl/types.{
-  InterestDatum, MerkelConfigDatum, OBurn, OMint, OracleDatum, OracleMintAction,
-}
+use ccfl/types.{InterestDatum, OBurn, OMint, OracleDatum, OracleMintAction}
+use ccfl/typesv3.{MerkelConfigDatum, SupplyDatum}
 
 //             //
 // Oracle Mint //
@@ -77,15 +76,15 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
         expect InlineDatum(datum) = interest.datum
         expect interestDatum: InterestDatum = datum
 
-        expect Some(supply) =
+        expect Some(supplyOut) =
           list.find(
             tx.outputs,
             fn(output) {
-              output.address.payment_credential == Script(cDatum.supply)
+              output.address.payment_credential == Script(cDatum.supplyVal)
             },
           )
 
-        expect InlineDatum(datum) = supply.datum
+        expect InlineDatum(datum) = supplyOut.datum
         expect supplyDatum: SupplyDatum = datum
 
         and {

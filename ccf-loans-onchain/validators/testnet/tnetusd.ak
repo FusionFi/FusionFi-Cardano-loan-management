@@ -9,7 +9,7 @@ pub type USDMintAction {
   USDBurn
 }
 
-validator usdR(pkh: ByteArray) {
+validator usdR(_pkh: ByteArray) {
   mint(r: USDMintAction, p: PolicyId, tx: Transaction) {
     expect [Pair(tokenName, tokenQty)] =
       tx.mint
@@ -17,7 +17,7 @@ validator usdR(pkh: ByteArray) {
         |> dict.to_pairs()
     when r is {
       USDMint { qty } -> {
-        expect Some(out) =
+        expect Some(_out) =
           list.find(
             tx.outputs,
             fn(output) {
