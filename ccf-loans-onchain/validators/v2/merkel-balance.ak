@@ -28,7 +28,7 @@ validator balance(p: PolicyId, cp: PolicyId) {
       tx.inputs,
       tx.outputs,
       fn(inCol, inLoan, outCol, outLoan) {
-        let loanToken = assets.without_lovelace(outLoan.value)
+        // let loanToken = assets.without_lovelace(outLoan.value)
         expect InlineDatum(datum1) = outCol.datum
         expect colDatum: CollateralDatum = datum1
         expect InlineDatum(datum2) = outLoan.datum

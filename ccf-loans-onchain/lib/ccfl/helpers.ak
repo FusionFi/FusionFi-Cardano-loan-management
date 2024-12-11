@@ -48,7 +48,7 @@ pub fn getSupplyIO(
 pub fn getUserIO(
   ins: List<Input>,
   out: Output,
-  policy: PolicyId,
+  _policy: PolicyId,
 ) -> (Value, Value) {
   let inValue =
     list.foldl(

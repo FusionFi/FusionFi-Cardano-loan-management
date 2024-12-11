@@ -47,7 +47,7 @@ validator lend(cp: PolicyId, op: PolicyId) {
         },
       )
 
-    let (oracleIn, oIn, oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
+    let (_oracleIn, oIn, oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
 
     expect [Pair(oracleName, oracleQty)] =
       oracleOut
@@ -77,10 +77,10 @@ validator lend(cp: PolicyId, op: PolicyId) {
       )
 
     // (Value, SupplyDatum, Value, SupplyDatum)
-    let (supplyIn, sIn, supplyOut, sOut) =
+    let (supplyIn, sIn, _supplyOut, _sOut) =
       h.getSupplyIO(supplyIns, supplyOuts, op, oracleName, oracleQty)
 
-    let newValue =
+    expect _newValue =
       assets.merge(
         supplyIn,
         assets.from_asset(sIn.policy, sIn.asset, 0 - r.value),
@@ -95,7 +95,7 @@ validator lend(cp: PolicyId, op: PolicyId) {
         },
       )
 
-    expect [Pair(lOutName, lOutAmt)] =
+    expect [Pair(_lOutName, lOutAmt)] =
       loanOut.value
         |> assets.tokens(cDatum.loanVal)
         |> dict.to_pairs()

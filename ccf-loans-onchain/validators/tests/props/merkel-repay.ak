@@ -1,6 +1,5 @@
 use aiken/builtin.{if_then_else}
 use cardano/address.{VerificationKey}
-use cardano/assets
 use cardano/transaction.{Transaction, placeholder}
 use ccfl/interestcalcs.{interestPayment, interestSlope1, interestSlope2}
 use tests/prop
@@ -39,18 +38,14 @@ test repayFail((t, a) via prop.loanTime()) fail {
   let outTimestamp = t + 1111111111
 
   let timeframe = outTimestamp - inTimestamp
-
   let interest =
     if_then_else(
       utilisation <= optimal,
       interestSlope1(base, optimal, slope1, supply, borrowed),
       interestSlope2(base, optimal, slope1, slope2, supply, borrowed),
     )
-
   let interestPayment = interestPayment(timeframe, inLoanAmount, interest)
-
   let interestExchange = interestPayment / outRatio
-
   // withdrawl
   let withdraw0 = tx.withdrawal(t.merkelRepay)
 

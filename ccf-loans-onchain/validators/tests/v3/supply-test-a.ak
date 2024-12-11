@@ -7,7 +7,7 @@ use v3/supply_pool_a
 
 test supply() {
   let loanHash = #"eeee"
-  let oPolicy = #"0000"
+  // let oPolicy = #"0000"
   let lpPolicy = tl.supplyHash
   let oref = t.oref(#"dddd", 2)
 
@@ -282,7 +282,7 @@ test lend() {
 
 test close() {
   let loanHash = #"eeee"
-  let lpPolicy = tl.supplyHash
+  // let lpPolicy = tl.supplyHash
   let oref = t.oref(#"dddd", 2)
 
   let supplyAction = SClose

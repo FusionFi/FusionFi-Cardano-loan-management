@@ -32,7 +32,12 @@ validator usdR(_pkh: ByteArray) {
     }
   }
 
-  spend(_d: Option<Datum>, _r: Redeemer, oref: OutputReference, tx: Transaction) {
+  spend(
+    _d: Option<Datum>,
+    _r: Redeemer,
+    _oref: OutputReference,
+    _tx: Transaction,
+  ) {
     True
   }
 

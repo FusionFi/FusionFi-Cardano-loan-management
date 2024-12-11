@@ -1,10 +1,7 @@
 use cardano/address.{Script}
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
-use ccfl/types
-use ccfl/typesv3.{
-  MerkelConfigDatum, SClose, SLend, SSupply, SWithdraw, SupplyDatum,
-}
+use ccfl/typesv3.{MerkelConfigDatum, SupplyDatum}
 use tests/tools as t
 use tests/transactions as tx
 use v3/withdraw
@@ -13,10 +10,7 @@ test withdraw() {
   let loanHash = #"eeee"
   let lpPolicy = t.supplyHash
   let configPolicy = t.configMintHash
-  let wHash = #"bbbb"
   let oref = tx.oref(#"dddd", 2)
-
-  let supplyAction = SWithdraw { value: 10 }
 
   let inDatum = SupplyDatum { policy: #"deaf", asset: "" }
 

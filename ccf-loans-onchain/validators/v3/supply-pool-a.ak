@@ -21,7 +21,7 @@ use ccfl/types.{
 // for now we will use a single thread, and we will need to implement chaining
 
 // V1
-validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
+validator supplyPool(_owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
   mint(r: SupplyMintAction, p: PolicyId, tx: Transaction) {
     // only mints single asset class with token name that matches the supply policy
     expect [Pair(lpName, lpAmt)] =
@@ -30,7 +30,7 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
         |> dict.to_pairs()
 
     // requires an input present to add to
-    expect Some(ownInput) =
+    expect Some(_ownInput) =
       list.find(
         tx.inputs,
         fn(input) { input.output.address.payment_credential == Script(p) },
@@ -78,8 +78,7 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
 
     expect Script(ownHash) = ownInput.output.address.payment_credential
 
-    let supplyToken = d.policy
-
+    // let supplyToken = d.policy
     expect Some(oracleIn) =
       list.find(
         tx.inputs,
@@ -112,7 +111,7 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
             },
           )
 
-        expect newValue =
+        let newValue =
           assets.merge(
             ownInput.output.value,
             assets.from_asset(d.policy, d.asset, value),
@@ -148,9 +147,9 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
             },
           )
         expect InlineDatum(datum) = ownOut.datum
-        expect outDatum: SupplyDatum = datum
+        expect _outDatum: SupplyDatum = datum
 
-        expect newValue =
+        expect _newValue =
           assets.merge(
             ownInput.output.value,
             assets.from_asset(d.policy, d.asset, 0 - value),
@@ -163,7 +162,7 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
             fn(output) { output.address.payment_credential == Script(loanHash) },
           )
 
-        expect [Pair(lOutName, lOutAmt)] =
+        expect [Pair(_lOutName, lOutAmt)] =
           loanOut.value
             |> assets.tokens(loanHash)
             |> dict.to_pairs()
@@ -248,10 +247,10 @@ validator supplyPool(owner: ByteArray, op: PolicyId, loanHash: ScriptHash) {
       }
       // removes value and burns LP tokens
       SClose -> {
-        expect tokenValue =
+        let tokenValue =
           assets.quantity_of(ownInput.output.value, d.policy, d.asset)
 
-        expect [Pair(oName, oAmt)] =
+        expect [Pair(_oName, oAmt)] =
           tx.mint
             |> assets.tokens(op)
             |> dict.to_pairs()

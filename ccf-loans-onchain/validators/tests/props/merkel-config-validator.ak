@@ -1,5 +1,5 @@
-use cardano/assets
-use cardano/transaction.{InlineDatum, Transaction, placeholder}
+// use cardano/assets
+use cardano/transaction.{Transaction, placeholder}
 use tests/tools as t
 // use tests/tools as t
 use tests/transactions as tx

@@ -39,7 +39,7 @@ validator supply(cp: PolicyId, op: PolicyId) {
         },
       )
 
-    let (oracleIn, oIn, oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
+    let (oracleIn, oIn, _oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
 
     expect [Pair(oracleName, oracleQty)] =
       oracleIn

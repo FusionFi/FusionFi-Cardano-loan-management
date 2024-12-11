@@ -2,9 +2,9 @@ use aiken/collection/dict
 use aiken/collection/list
 use cardano/address.{Credential, Script}
 use cardano/assets.{PolicyId}
-use cardano/transaction.{InlineDatum, Output, Transaction}
+use cardano/transaction.{Output, Transaction}
 use ccfl/helpersv3 as h
-use ccfl/typesv3.{CollateralDatum, LoanDatum, MerkelConfigDatum}
+use ccfl/typesv3.{MerkelConfigDatum}
 
 //                             //
 // Supply Withdrawal Validator //
@@ -45,7 +45,7 @@ validator withdraw(cp: PolicyId, op: PolicyId) {
         },
       )
 
-    let (oracleIn, oIn, oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
+    let (oracleIn, oIn, _oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
 
     expect [Pair(oracleName, oracleQty)] =
       oracleIn

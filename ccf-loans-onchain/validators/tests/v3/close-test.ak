@@ -1,10 +1,7 @@
 use cardano/address.{Script}
 use cardano/assets
-use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
-use ccfl/typesv3.{
-  LoanDatum, MerkelConfigDatum, OracleDatum, SClose, SLend, SSupply, SWithdraw,
-  SupplyDatum,
-}
+use cardano/transaction.{InlineDatum, Transaction, placeholder}
+use ccfl/typesv3.{MerkelConfigDatum, SupplyDatum}
 use tests/tools as t
 use tests/transactions as tx
 use v3/close
@@ -13,18 +10,16 @@ test close() {
   let loanHash = #"eeee"
   let lpPolicy = t.supplyHash
   let configPolicy = t.configMintHash
-  let wHash = #"bbbb"
+  // let wHash = #"bbbb"
   let oref = tx.oref(#"dddd", 2)
-  let loanTokenValue = assets.from_asset(loanHash, #"bbbb", 1)
+  // let loanTokenValue = assets.from_asset(loanHash, #"bbbb", 1)
   let oracleTokenMint = assets.from_asset(t.oracleMintHash, #"beef", -3)
 
-  let supplyAction = SLend { value: 10 }
-
+  // let supplyAction = SLend { value: 10 }
   let inDatum = SupplyDatum { policy: #"deaf", asset: "" }
-  let outDatum = SupplyDatum { policy: #"deaf", asset: "" }
 
-  let loanDatum = tx.loanDatum(10, 10, 0, 2222222222222, #"beef")
-
+  // let outDatum = SupplyDatum { policy: #"deaf", asset: "" }
+  // let loanDatum = tx.loanDatum(10, 10, 0, 2222222222222, #"beef")
   let configValue = assets.from_asset(configPolicy, "", 1)
 
   let configDatum =

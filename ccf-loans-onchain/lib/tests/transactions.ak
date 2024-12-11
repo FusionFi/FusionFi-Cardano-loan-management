@@ -1,4 +1,4 @@
-use aiken/crypto.{ScriptHash, VerificationKeyHash}
+use aiken/crypto.{ScriptHash}
 use cardano/assets.{AssetName, Value}
 use cardano/script_context.{ScriptContext}
 use cardano/transaction.{
@@ -691,8 +691,7 @@ pub fn refMultiCollateralOut(
 }
 
 pub fn withdrawal(script: ScriptHash) {
-  let withdraw0 =
-    [Pair(t.create_script_credential(script), 0)]
+  let withdraw0 = [Pair(t.create_script_credential(script), 0)]
   // dict.from_ascending_pairs(
   //   [Pair(t.create_stake_credential(script), 0)],
   //   t.stakeCompare,

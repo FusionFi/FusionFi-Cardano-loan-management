@@ -48,7 +48,7 @@ pub fn getSupplyIO(
 pub fn getUserIO(
   ins: List<Input>,
   out: Output,
-  policy: PolicyId,
+  _policy: PolicyId,
 ) -> (Value, Value) {
   let inValue =
     list.foldl(
@@ -56,6 +56,7 @@ pub fn getUserIO(
       assets.zero,
       fn(in, acc) { assets.merge(in.output.value, acc) },
     )
+
   (assets.without_lovelace(inValue), assets.without_lovelace(out.value))
 }
 
