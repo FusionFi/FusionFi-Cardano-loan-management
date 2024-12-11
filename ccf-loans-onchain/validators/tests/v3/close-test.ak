@@ -2,20 +2,21 @@ use cardano/address.{Script}
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
 use ccfl/typesv3.{
-  MerkelConfigDatum, OracleDatum, SClose, SLend, SSupply, SWithdraw, SupplyDatum,
+  LoanDatum, MerkelConfigDatum, OracleDatum, SClose, SLend, SSupply, SWithdraw,
+  SupplyDatum,
 }
 use tests/tools as t
 use tests/transactions as tx
-use v3/lend
+use v3/close
 
-test lend() {
+test close() {
   let loanHash = #"eeee"
   let lpPolicy = t.supplyHash
   let configPolicy = t.configMintHash
   let wHash = #"bbbb"
   let oref = tx.oref(#"dddd", 2)
   let loanTokenValue = assets.from_asset(loanHash, #"bbbb", 1)
-  let loanTokenMint = assets.from_asset(loanHash, #"bbbb", 2)
+  let oracleTokenMint = assets.from_asset(t.oracleMintHash, #"beef", -3)
 
   let supplyAction = SLend { value: 10 }
 
@@ -47,8 +48,7 @@ test lend() {
       ),
     )
 
-  let oracleInDatum =
-    tx.oracleDatum(1000, 2222222222222, 1000000, 200000, "USD")
+  let oracleInDatum = tx.oracleDatum(1000, 2222222222222, 0, 0, "USD")
 
   let oracleIn =
     t.test_input(
@@ -59,14 +59,17 @@ test lend() {
         InlineDatum(oracleInDatum),
       ),
     )
-  let oracleOutDatum =
-    tx.oracleDatum(1000, 2222222222222, 1000000, 200010, "USD")
 
-  let oracleOut =
-    t.test_output(
-      t.test_script_address(t.oracleValHash),
-      t.oracleValue(),
-      InlineDatum(oracleOutDatum),
+  let interestDatum = tx.interestDatum(55, 70, 40, 300, 12)
+
+  let interestIn =
+    t.test_input(
+      tx.oref(#"eeee", 4),
+      t.test_output(
+        t.test_script_address(t.interestValHash),
+        t.oracleValue(),
+        InlineDatum(interestDatum),
+      ),
     )
 
   let supplyIn =
@@ -74,52 +77,25 @@ test lend() {
       oref,
       t.test_output(
         t.test_script_address(lpPolicy),
-        assets.merge(assets.from_asset(#"deaf", "", 1000010), t.oracleValue()),
+        t.oracleValue(),
         InlineDatum(inDatum),
       ),
     )
 
-  let supplyOut =
-    t.test_output(
-      t.test_script_address(lpPolicy),
-      assets.merge(assets.from_asset(#"deaf", "", 1000000), t.oracleValue()),
-      InlineDatum(outDatum),
-    )
-
-  let userIn =
-    t.test_input(
-      tx.oref(#"2222", 2),
-      t.test_output(t.test_address(#"cafe"), t.makeAdaValue(2), NoDatum),
-    )
-
-  let userOut =
-    t.test_output(
-      t.test_address(#"cafe"),
-      assets.merge(assets.from_asset(#"deaf", "", 10), t.makeAdaValue(2)),
-      NoDatum,
-    )
-  let loanOut =
-    t.test_output(
-      t.test_script_address(loanHash),
-      loanTokenValue,
-      InlineDatum(loanDatum),
-    )
-
   let withdraw0 = tx.withdrawal(#"bebe")
 
-  let redeemer = lend.WithdrawAction { a: 2, value: 10 }
+  let redeemer = close.CloseWithdraw { asset: #"beef" }
 
   let tx =
     Transaction {
       ..placeholder,
-      inputs: [supplyIn, oracleIn, userIn],
-      outputs: [supplyOut, oracleOut, userOut, loanOut],
-      mint: loanTokenMint,
+      inputs: [supplyIn, oracleIn, interestIn],
+      mint: oracleTokenMint,
       reference_inputs: [configIn],
       withdrawals: withdraw0,
     }
 
-  lend.lend.withdraw(
+  close.close.withdraw(
     configPolicy,
     t.oracleMintHash,
     redeemer,

@@ -1,7 +1,7 @@
-use cardano/assets
+// use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
 use tests/tools as t
-use tests/transactions.{mConUpdate, mConfigDatum, oracleDatumIn}
+use tests/transactions.{mConUpdate, mConfigDatum}
 use v1/config_mint
 
 //                      //

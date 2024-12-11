@@ -1,4 +1,4 @@
-use aiken/fuzz as f
+// use aiken/fuzz as f
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
 use tests/prop
