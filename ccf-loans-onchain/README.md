@@ -85,25 +85,39 @@ For scope of contracts and documentation please refer to `notes`
 ├── lib
 │   ├── ccfl
 │   │   ├── helpers.ak # validator helper functions
-│   │   └── types.ak # datums redeemers
-│   ├── mockups # contract mockups
+│   │   ├── helpersv3.ak # helper utils for V3 validators
+│   │   ├── interestcalcs.ak # interest calculations
+│   │   ├── types.ak # datums & redeemers
+│   │   └── types3.ak # datums & redeemers for V3 validators
 │   └── tests
+│       ├── helpers.ak # testing helpers
+│       ├── optimisation # optimisation tests for helper functions
+│       ├── prop.ak # property test utils
 │       ├── tools.ak # Test types and values
 │       └── transactions.ak # Test Transaction helpers
 ├── notes # conceptual notes on validators
 ├── plutus.json # validator blueprint
 ├── README.md # You Are Here
 └── validators
-    ├── collateral-vault.ak # Collateral Spend
-    ├── config-mint.ak # initial validators w/ tests
-    ├── loan-vault.ak # Loan Spend
-    ├── merkel-balance.ak # w/ tests
-    ├── merkel-config-vault.ak # Config Ref Input w/ tests
-    ├── merkel-close.ak # w/ tests
-    ├── merkel-liquidate.ak # w/ tests
-    ├── oracle-mint.ak # w/ tests
-    ├── oracle-validator.ak # w/ tests
-    └── rewards-mint.ak # TODO Test Transactions
+    ├── testnet # dummy Stablecoin validator for testing
+    ├── tests # validator tests for V1, V2, V3
+    │     └── ...
+    ├── V1 # Currently in use in dapp
+    ├── V2 # First layer of optimisation
+    └── V3 # Implementation Of Supply Pools
+        ├── balance.ak # Balance Collateral to Loan value
+        ├── close.ak # Close an Oracle and Supply Pool
+        ├── collateral.ak # Collateral Vault
+        ├── config.ak # initial validators w/ tests
+        ├── interest.ak # locks oracle token with interest datum
+        ├── lend.ak # validates new loan
+        ├── liquidate.ak # validates loan liquidation
+        ├── loan.ak # loan minting & loan datum lock
+        ├── oracle.ak # mints oracleTuple and locks oracle datum
+        ├── pool.ak # mints pool LP and locks supply
+        ├── repay.ak # repay loan + interest
+        ├── supply.ak # supply assets & mint lp
+        └── withdraw.ak # remove supply & burn lp
 ```
 
 ## Building
@@ -244,7 +258,84 @@ isn't an issue here.
 The tests verify several levels of validation, i have 2 fails here and comments in the 
 test explaining why
 
-## Validator Architecture
+---
+
+## Validator Architecture - V3
+
+This is a description of the latest version of the validators (V3)
+
+This iteration was aimed at adding a P2P supply pool for assets to allow the community
+to lend out their own assets.
+
+### Supply Pool
+
+There are several different functions that we need to enable users to make for this
+feature set: 
+
+- Supply assets to a pool
+- Withdraw assets from a pool
+- Borrow assets from a pool
+- Close a pool 
+
+Pools have a matching oracle token so we can track the interest rates and price feeds for
+the pool. This also helps us match the real pools to the oracles as well.
+
+### Oracle
+
+Oracles are now comprised of 3 matching tokens: 
+
+- Oracle Price
+- Interest Rates
+- Supply Pool
+
+If the price feed is for Fiat there will be an ompty supply pool, but it will still have
+an oracle token in it as we will use it for validation.
+
+The `oracle` validator mints/burns and locks the oracle price feed, this is what will be
+used in most transactions as it will have the main datum. The other tokens are special
+use tokens used for specific functions.
+
+When an oracle is deployed, it mints 3 tokens and attaches the relevant data to each 
+datum, locked in the relevant validator.
+
+### Config
+
+The Dapp state token validator.
+
+There will only be one config token used as the state manager for the validators.
+
+This token/validator will manage the updating or addition of features to the dapp.
+
+It will be used as a reference input for all of the transactions to supply the script
+hashes to the validators dynamically.
+
+### Loan / Collateral 
+
+These validators ar responsible for storing the loan data and the collateral
+
+A loan token pair is minted when a user takes a loan out, this is done using `loan`. 
+The `loan` validator holds the loan Datum and the collateral is sent to `collateral`.
+
+### Withdrawal Validators
+
+All of the other validators are used to manage the various actions users may want to take
+during the lifetime of their loan/supply.
+
+- Balance -> balances `LTV` ratio according to the oracle
+- Close -> Closes an Oracle ( can only be donbe by team )
+- Lend -> Take a loan from supply pool
+- Liquidate -> Liquidate a loan that has passed `LTV` threshold
+- Repay -> Repay a loan ++ interest ( closes loan if 0 )
+- Supply -> Supply assets to a pool
+- Withdraw -> withdraws supplied assets
+
+Each of these validators checks multiple IO's from the various vaults ( above validators )
+and checks the full state of the transaction according to the various datums & values
+at each UTxO.
+
+---
+
+## Validator Architecture - V1
 
 Here is a brief description of the validators and their roles.
 

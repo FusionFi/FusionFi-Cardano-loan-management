@@ -33,7 +33,7 @@ pub type MerkelConfigAction {
 }
 
 pub type LoanMintAction {
-  AMint { amount: Int, rewards: Int, term: Int, timestamp: Int }
+  AMint { amount: Int, rewards: Int, term: Int, timestamp: Int, pkh: ByteArray }
   ABurn
 }
 
@@ -43,6 +43,7 @@ pub type LoanDatum {
   term: Int,
   timestamp: Int,
   oracle: AssetName,
+  pkh: ByteArray,
 }
 
 pub type MerkelLoanAction {

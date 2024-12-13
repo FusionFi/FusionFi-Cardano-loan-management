@@ -14,7 +14,7 @@ pub type CloseWithdraw {
   asset: ByteArray,
 }
 
-validator close(cp: PolicyId, op: PolicyId) {
+validator close(cp: PolicyId, op: PolicyId, lp: PolicyId) {
   withdraw(r: CloseWithdraw, cred: Credential, tx: Transaction) {
     expect Script(_own_validator) = cred
 

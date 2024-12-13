@@ -4,8 +4,10 @@ use aiken/crypto.{VerificationKeyHash}
 use cardano/address.{Script}
 use cardano/assets.{PolicyId, tokens}
 use cardano/transaction.{InlineDatum, Transaction}
-use ccfl/types.{InterestDatum, OBurn, OMint, OracleDatum, OracleMintAction}
-use ccfl/typesv3.{MerkelConfigDatum, SupplyDatum}
+use ccfl/typesv3.{
+  InterestDatum, MerkelConfigDatum, OBurn, OMint, OracleDatum, OracleMintAction,
+  SupplyDatum,
+}
 
 //             //
 // Oracle Mint //
@@ -47,9 +49,7 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
         expect Some(out) =
           list.find(
             tx.outputs,
-            fn(output) {
-              output.address.payment_credential == Script(cDatum.oracleVal)
-            },
+            fn(output) { output.address.payment_credential == Script(p) },
           )
 
         expect [Pair(tName, 1)] =
@@ -106,6 +106,61 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
         }
       }
       OBurn -> list.has(tx.extra_signatories, o) && oAmt == -3
+    }
+  }
+
+  spend(
+    datum: Option<OracleDatum>,
+    r: OracleAction,
+    ownRef: OutputReference,
+    tx: Transaction,
+  ) {
+    expect Some(d) = datum
+    expect Some(ownIn) =
+      list.find(tx.inputs, fn(input) { input.output_reference == oref })
+    expect Script(ownHash) = ownIn.output.address.payment_credential
+
+    expect has_singleton_input(tx, ownRef)
+
+    when r is {
+      OracleUpdate { exchange, timestamp, supply, borrowed } -> {
+        let out = get_own_singleton_output(tx, ownRef)
+
+        expect [Pair(_, 1)] =
+          without_lovelace(out.value)
+            |> tokens(p)
+            |> to_pairs()
+
+        expect InlineDatum(datum) = out.datum
+        expect datum: OracleDatum = datum
+
+        and {
+          has(tx.extra_signatories, o),
+          timestamp > d.timestamp,
+          datum.currency == d.currency,
+          datum.timestamp == timestamp,
+          datum.supply == supply,
+          datum.exchange == exchange,
+          // outputDatum.borrowed needs to be updated according to any loan mints or repayments
+          datum.borrowed == d.borrowed + borrowed,
+        }
+      }
+      OracleClose -> {
+        expect Some(input) = find_input(tx.inputs, ownRef)
+
+        expect [Pair(inName, 1)] =
+          // get singleton name
+          without_lovelace(input.output.value)
+            |> tokens(p)
+            |> to_pairs()
+
+        expect [Pair(burnName, -3)] =
+          tx.mint
+            |> assets.tokens(p)
+            |> dict.to_pairs()
+
+        has(tx.extra_signatories, o) && inName == burnName
+      }
     }
   }
 

@@ -11,20 +11,21 @@ use ccfl/types.{
 // Merkel Balance validates the whole transaction for the Balance redeemer case
 // it combines both the merkel-loan && merkel-collateral cases together
 
-validator balance(p: PolicyId, cp: PolicyId) {
+validator balance(op: PolicyId, cp: PolicyId, lp: PolicyId) {
   withdraw(r: WithdrawRedeemer, _cred: Credential, tx: Transaction) {
     let cDatum: MerkelConfigDatum =
       helpers.get_config_datum(tx.reference_inputs, cp)
 
     let (oracleValue, rDatum) =
-      helpers.get_oracle_datum_value(tx.outputs, p, cDatum.oracleVal)
+      helpers.get_oracle_datum_value(tx.outputs, op, cDatum.oracleVal)
 
     let exchangeRate = rDatum.exchange
 
+    // For V3 we want to go by Policy not Hashes to save space on the configDatum.
     helpers.ioTx(
       r.a,
       cDatum.colVal,
-      cDatum.loanVal,
+      lp,
       tx.inputs,
       tx.outputs,
       fn(inCol, inLoan, outCol, outLoan) {
@@ -43,7 +44,7 @@ validator balance(p: PolicyId, cp: PolicyId) {
         let exchangeAdjustment = loanDatum.amount * 1000
         let expectedCollateral = exchangeAdjustment / exchangeRate
         let minCollateralValue = expectedCollateral * 2
-        let expectedOracle = assets.from_asset(p, loanDatum.oracle, 1)
+        let expectedOracle = assets.from_asset(op, loanDatum.oracle, 1)
 
         and {
           adaOut >= minCollateralValue,

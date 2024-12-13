@@ -21,7 +21,7 @@ validator supply(cp: PolicyId, op: PolicyId) {
       list.filter(
         tx.inputs,
         fn(input) {
-          input.output.address.payment_credential == Script(cDatum.oracleVal) && list.has(
+          input.output.address.payment_credential == Script(op) && list.has(
             assets.policies(input.output.value),
             op,
           )
@@ -32,7 +32,7 @@ validator supply(cp: PolicyId, op: PolicyId) {
       list.filter(
         tx.outputs,
         fn(output) {
-          output.address.payment_credential == Script(cDatum.oracleVal) && list.has(
+          output.address.payment_credential == Script(op) && list.has(
             assets.policies(output.value),
             op,
           )

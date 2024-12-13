@@ -34,66 +34,14 @@ validator supplyPool(_owner: ByteArray, op: PolicyId, cp: PolicyId) {
         |> assets.tokens(p)
         |> dict.to_pairs()
 
-    // requires an input present to add to
-    expect Some(ownInput) =
-      list.find(
-        tx.inputs,
-        fn(input) {
-          input.output.address.payment_credential == Script(p) && list.has(
-            assets.policies(input.output.value),
-            op,
-          )
-        },
-      )
+    let cDatum: MerkelConfigDatum = h.get_config_datum(tx.reference_inputs, cp)
 
-    let ownOracle =
-      ownInput.output.value
-        |> assets.tokens(p)
+    expect Some(stakeVal) =
+      cDatum.supplyRedeemers
+        |> list.at(r.i)
 
-    expect Some(ownOutput) =
-      list.find(
-        tx.outputs,
-        fn(output) {
-          output.address.payment_credential == Script(p) && list.has(
-            assets.policies(output.value),
-            op,
-          )
-        },
-      )
-
-    expect ownOracle == ( ownOutput.value |> assets.tokens(p) )
-
-    expect Some(oracleIn) =
-      list.find(
-        tx.inputs,
-        fn(input) { list.has(assets.policies(input.output.value), op) },
-      )
-    expect ownOracle == ( oracleIn.output.value |> assets.tokens(p) )
-
-    expect InlineDatum(datum) = oracleIn.output.datum
-    expect oIn: OracleDatum = datum
-
-    expect Some(oracleOut) =
-      list.find(
-        tx.outputs,
-        fn(output) { output.address == oracleIn.output.address },
-      )
-
-    expect ownOracle == ( oracleOut.value |> assets.tokens(p) )
-
-    expect InlineDatum(datum) = oracleOut.datum
-    expect oOut: OracleDatum = datum
-
-    when r is {
-      LPMint { value } -> and {
-          lpName == oIn.currency,
-          lpAmt == value,
-          oOut.supply == oIn.supply + value,
-        }
-      LPBurn -> and {
-          lpName == oIn.currency,
-          lpAmt == oOut.supply - oIn.supply,
-        }
+    pairs.has_key(tx.withdrawals, Script(stakeVal))
+    // list.length(tx.withdrawals) == 1
     }
   }
 
@@ -110,8 +58,7 @@ validator supplyPool(_owner: ByteArray, op: PolicyId, cp: PolicyId) {
         |> list.at(r.i)
 
     pairs.has_key(tx.withdrawals, Script(stakeVal))
-    // has no tokens in pool
-    // oracle is burned
+    // list.length(tx.withdrawals) == 1
   }
 
   else(_) {

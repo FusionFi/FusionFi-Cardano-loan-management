@@ -19,7 +19,7 @@ pub type WithdrawAction {
   value: Int,
 }
 
-validator lend(cp: PolicyId, op: PolicyId) {
+validator lend(cp: PolicyId, op: PolicyId, lp: PolicyId) {
   withdraw(r: WithdrawAction, cred: Credential, tx: Transaction) {
     expect Script(_own_validator) = cred
 
@@ -29,7 +29,7 @@ validator lend(cp: PolicyId, op: PolicyId) {
       list.filter(
         tx.inputs,
         fn(input) {
-          input.output.address.payment_credential == Script(cDatum.oracleVal) && list.has(
+          input.output.address.payment_credential == Script(op) && list.has(
             assets.policies(input.output.value),
             op,
           )
@@ -40,7 +40,7 @@ validator lend(cp: PolicyId, op: PolicyId) {
       list.filter(
         tx.outputs,
         fn(output) {
-          output.address.payment_credential == Script(cDatum.oracleVal) && list.has(
+          output.address.payment_credential == Script(op) && list.has(
             assets.policies(output.value),
             op,
           )
@@ -77,10 +77,10 @@ validator lend(cp: PolicyId, op: PolicyId) {
       )
 
     // (Value, SupplyDatum, Value, SupplyDatum)
-    let (supplyIn, sIn, _supplyOut, _sOut) =
+    let (supplyIn, sIn, supplyOut, _sOut) =
       h.getSupplyIO(supplyIns, supplyOuts, op, oracleName, oracleQty)
 
-    expect _newValue =
+    expect newValue =
       assets.merge(
         supplyIn,
         assets.from_asset(sIn.policy, sIn.asset, 0 - r.value),
@@ -109,6 +109,9 @@ validator lend(cp: PolicyId, op: PolicyId) {
     //     fn(output) { output.address.payment_credential == lDatum.user },
     //   )
     and {
+      assets.without_lovelace(oracleIn) == assets.without_lovelace(oracleOut),
+      sIn == sOut,
+      supplyOut == newValue,
       oOut.borrowed == oIn.borrowed + r.value,
       lDatum.amount == r.value,
       lOutAmt == 1,

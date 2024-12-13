@@ -12,7 +12,7 @@ use ccfl/types.{
   WithdrawRedeemer,
 }
 
-validator repay(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
+validator repay(pkh: ByteArray, op: PolicyId, cp: PolicyId) {
   withdraw(r: WithdrawRedeemer, _cred: Credential, tx: Transaction) {
     let Transaction { inputs, outputs, reference_inputs, .. } = tx
 
@@ -20,10 +20,10 @@ validator repay(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
       helpers.get_config_datum(reference_inputs, cp)
 
     let iDatum: InterestDatum =
-      helpers.get_interest_datum(reference_inputs, p, cDatum.interestVal)
+      helpers.get_interest_datum(reference_inputs, op, cDatum.interestVal)
 
     let (oracleValue, rDatum) =
-      helpers.get_oracle_datum_value(outputs, p, cDatum.oracleVal)
+      helpers.get_oracle_datum_value(outputs, op, cDatum.oracleVal)
 
     let exchangeRate = rDatum.exchange
 
@@ -50,7 +50,7 @@ validator repay(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
         let exchangeAdjustment = loanDatum.amount * 1000
         let expectedCollateral = exchangeAdjustment / exchangeRate
         let minCollateralValue = expectedCollateral * 2
-        let expectedOracle = assets.from_asset(p, loanDatum.oracle, 1)
+        let expectedOracle = assets.from_asset(op, loanDatum.oracle, 1)
 
         let interestCalc =
           if_then_else(
@@ -89,7 +89,13 @@ validator repay(pkh: ByteArray, p: PolicyId, cp: PolicyId) {
             },
           )
 
+        expect InlineDatum(datum) = payment.datum
+        expect pDatum: AssetName = datum
+
+        expect [Pair(loanName, 1)] = loanToken |> assets.tokens(lp)
+
         and {
+          pDatum == loanName,
           adaOut >= minCollateralValue,
           cin.yield == colDatum.yield,
           oracleValue == expectedOracle,

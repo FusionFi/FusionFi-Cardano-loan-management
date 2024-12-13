@@ -10,7 +10,7 @@ use ccfl/types.{
 // Merkel Liquidation Validator //
 //                              //
 
-validator liquidate(p: PolicyId, cp: PolicyId) {
+validator liquidate(p: PolicyId, cp: PolicyId, lp: PolicyId) {
   withdraw(r: WithdrawRedeemer, _cred: Credential, tx: Transaction) {
     let cDatum: MerkelConfigDatum =
       helpers.get_config_datum(tx.reference_inputs, cp)
