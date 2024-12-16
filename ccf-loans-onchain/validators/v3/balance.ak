@@ -11,7 +11,7 @@ use ccfl/typesv3.{
 // Merkel Balance validates the whole transaction for the Balance redeemer case
 // it combines both the merkel-loan && merkel-collateral cases together
 
-validator balance(op: PolicyId, cp: PolicyId, lp: PolicyId) {
+validator balance(op: PolicyId, cp: PolicyId) {
   withdraw(r: WithdrawAction, _cred: Credential, tx: Transaction) {
     let cDatum: MerkelConfigDatum = h.get_config_datum(tx.reference_inputs, cp)
 
@@ -24,7 +24,7 @@ validator balance(op: PolicyId, cp: PolicyId, lp: PolicyId) {
     h.ioTx(
       r.a,
       cDatum.colVal,
-      lp,
+      cDatum.loanVal,
       tx.inputs,
       tx.outputs,
       fn(inCol, inLoan, outCol, outLoan) {

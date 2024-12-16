@@ -125,9 +125,12 @@ pub type SupplyDatum1 {
 
 // V2
 pub type SupplyDatum {
-  policy: PolicyId,
-  asset: AssetName,
+  policy: ByteArray,
+  // USDM
+  asset: ByteArray,
 }
+
+// SupplyPolicy.USDM
 
 pub type SupplyMintAction {
   LPMint { value: Int }
