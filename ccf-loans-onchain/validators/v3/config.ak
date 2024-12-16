@@ -4,8 +4,8 @@ use aiken/crypto.{VerificationKeyHash}
 use cardano/address.{Script}
 use cardano/assets.{PolicyId, policies}
 use cardano/transaction.{InlineDatum, Output, OutputReference, Transaction}
-use ccfl/helpers
-use ccfl/types.{MConClose, MConUpdate, MerkelConfigAction, MerkelConfigDatum}
+use ccfl/helpersv3 as h
+use ccfl/typesv3.{MConClose, MConUpdate, MerkelConfigAction, MerkelConfigDatum}
 
 //                  //
 // Config Validator //
@@ -24,10 +24,11 @@ validator config(o: VerificationKeyHash) {
       MConUpdate {
         loanVal,
         colVal,
-        rewardsVal,
         oracleVal,
         interestVal,
+        supplyVal,
         collateralRedeemers,
+        supplyRedeemers,
       } -> {
         // checks the output with the token
         expect Some(ownOut) =
@@ -40,10 +41,12 @@ validator config(o: VerificationKeyHash) {
         and {
           outDatum.loanVal == loanVal,
           outDatum.colVal == colVal,
-          outDatum.rewardsVal == rewardsVal,
+          // outDatum.rewardsVal == rewardsVal,
           outDatum.oracleVal == oracleVal,
           outDatum.interestVal == interestVal,
+          outDatum.supplyVal == supplyVal,
           outDatum.collateralRedeemers == collateralRedeemers,
+          outDatum.supplyRedeemers == supplyRedeemers,
           has(extra_signatories, o),
           tAmt == 1,
         }
@@ -65,13 +68,14 @@ validator config(o: VerificationKeyHash) {
       MConUpdate {
         loanVal,
         colVal,
-        rewardsVal,
         oracleVal,
         interestVal,
+        supplyVal,
         collateralRedeemers,
+        supplyRedeemers,
       } -> {
         // checks single val IO & returns those as a pair
-        let (ownIn, ownOut) = helpers.oneIO_List(oref, tx.inputs, tx.outputs)
+        let (ownIn, ownOut) = h.oneIO_List(oref, tx.inputs, tx.outputs)
 
         expect Script(cp) = ownIn.output.address.payment_credential
 
@@ -85,10 +89,12 @@ validator config(o: VerificationKeyHash) {
           has(policies(ownOut.value), cp),
           outDatum.loanVal == loanVal,
           outDatum.colVal == colVal,
-          outDatum.rewardsVal == rewardsVal,
+          // outDatum.rewardsVal == rewardsVal,
           outDatum.oracleVal == oracleVal,
           outDatum.interestVal == interestVal,
+          outDatum.supplyVal == supplyVal,
           outDatum.collateralRedeemers == collateralRedeemers,
+          outDatum.supplyRedeemers == supplyRedeemers,
         }
       }
       // checks signed by owner

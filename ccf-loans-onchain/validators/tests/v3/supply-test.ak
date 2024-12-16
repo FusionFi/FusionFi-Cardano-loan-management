@@ -3,15 +3,16 @@ use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
 use ccfl/types.{Withdraw}
 use ccfl/typesv3.{MerkelConfigDatum, SupplyDatum}
+use tests/scripts as s
 use tests/tools as t
 use tests/transactions as tx
 use v3/supply
 
 test supply() {
-  let loanHash = #"eeee"
+  let loanHash = s.loan
   // let oPolicy = #"0000"
-  let lpPolicy = t.supplyHash
-  let configPolicy = t.configMintHash
+  let lpPolicy = s.supply
+  let configPolicy = s.config
   // let wHash = #"bbbb"
   let oref = tx.oref(#"dddd", 2)
 
@@ -21,16 +22,16 @@ test supply() {
   let outDatum = SupplyDatum { policy: #"deaf", asset: "" }
 
   let lpMintValue = assets.from_asset(lpPolicy, #"deaf", 10)
-
+  let oracleValue = assets.from_asset(s.oracle, #"beef", 1)
   let configValue = assets.from_asset(configPolicy, "", 1)
 
   let configDatum =
     MerkelConfigDatum {
       loanVal: loanHash,
-      colVal: t.mCol,
-      oracleVal: t.oracleValHash,
-      interestVal: t.interestValHash,
-      supplyVal: t.supplyHash,
+      colVal: s.collateral,
+      oracleVal: s.oracle,
+      interestVal: s.interest,
+      supplyVal: s.supply,
       collateralRedeemers: [#"cccc", #"ffff", #"aaaa", #"bbbb"],
       supplyRedeemers: [#"cccc", #"ffff", #"aaaa", #"bbbb"],
     }
@@ -52,8 +53,8 @@ test supply() {
     t.test_input(
       tx.oref(#"1111", 1),
       t.test_output(
-        t.test_script_address(t.oracleValHash),
-        t.oracleValue(),
+        t.test_script_address(s.oracle),
+        oracleValue,
         InlineDatum(oracleInDatum),
       ),
     )
@@ -63,8 +64,8 @@ test supply() {
 
   let oracleOut =
     t.test_output(
-      t.test_script_address(t.oracleValHash),
-      t.oracleValue(),
+      t.test_script_address(s.oracle),
+      oracleValue,
       InlineDatum(oracleOutDatum),
     )
 
@@ -72,16 +73,16 @@ test supply() {
     t.test_input(
       oref,
       t.test_output(
-        t.test_script_address(t.supplyHash),
-        assets.merge(assets.from_asset(#"deaf", "", 1000000), t.oracleValue()),
+        t.test_script_address(s.supply),
+        assets.merge(assets.from_asset(#"deaf", "", 1000000), oracleValue),
         InlineDatum(inDatum),
       ),
     )
 
   let supplyOut =
     t.test_output(
-      t.test_script_address(t.supplyHash),
-      assets.merge(assets.from_asset(#"deaf", "", 1000010), t.oracleValue()),
+      t.test_script_address(s.supply),
+      assets.merge(assets.from_asset(#"deaf", "", 1000010), oracleValue),
       InlineDatum(outDatum),
     )
 
@@ -112,11 +113,5 @@ test supply() {
       withdrawals: withdraw0,
     }
 
-  supply.supply.withdraw(
-    configPolicy,
-    t.oracleMintHash,
-    redeemer,
-    Script(#"bebe"),
-    tx,
-  )?
+  supply.supply.withdraw(configPolicy, s.oracle, redeemer, Script(#"bebe"), tx)?
 }

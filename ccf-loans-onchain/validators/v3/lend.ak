@@ -19,7 +19,7 @@ pub type WithdrawAction {
   value: Int,
 }
 
-validator lend(cp: PolicyId, op: PolicyId, lp: PolicyId) {
+validator lend(cp: PolicyId, op: PolicyId) {
   withdraw(r: WithdrawAction, cred: Credential, tx: Transaction) {
     expect Script(_own_validator) = cred
 
@@ -47,7 +47,7 @@ validator lend(cp: PolicyId, op: PolicyId, lp: PolicyId) {
         },
       )
 
-    let (_oracleIn, oIn, oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
+    let (oracleIn, oIn, oracleOut, oOut) = h.getOracleIO(oracleIns, oracleOuts)
 
     expect [Pair(oracleName, oracleQty)] =
       oracleOut
@@ -77,10 +77,10 @@ validator lend(cp: PolicyId, op: PolicyId, lp: PolicyId) {
       )
 
     // (Value, SupplyDatum, Value, SupplyDatum)
-    let (supplyIn, sIn, supplyOut, _sOut) =
+    let (supplyIn, sIn, supplyOut, sOut) =
       h.getSupplyIO(supplyIns, supplyOuts, op, oracleName, oracleQty)
 
-    expect newValue =
+    let newValue =
       assets.merge(
         supplyIn,
         assets.from_asset(sIn.policy, sIn.asset, 0 - r.value),

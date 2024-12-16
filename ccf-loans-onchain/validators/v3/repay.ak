@@ -1,7 +1,8 @@
 use aiken/builtin.{if_then_else}
+use aiken/collection/dict
 use aiken/collection/list
 use cardano/address.{Credential, VerificationKey}
-use cardano/assets.{PolicyId}
+use cardano/assets.{AssetName, PolicyId}
 use cardano/transaction.{InlineDatum, Output, Transaction}
 use ccfl/helpers
 use ccfl/interestcalcs.{
@@ -77,7 +78,7 @@ validator repay(pkh: ByteArray, op: PolicyId, cp: PolicyId) {
           interestPayment(interestTimeframe, lin.amount, interestCalc)
         let interestPaymentValue = interestRequirement / exchangeRate
 
-        expect Some(_payment) =
+        expect Some(payment) =
           list.find(
             outputs,
             fn(output) {
@@ -92,7 +93,8 @@ validator repay(pkh: ByteArray, op: PolicyId, cp: PolicyId) {
         expect InlineDatum(datum) = payment.datum
         expect pDatum: AssetName = datum
 
-        expect [Pair(loanName, 1)] = loanToken |> assets.tokens(lp)
+        expect [Pair(loanName, 1)] =
+          loanToken |> assets.tokens(cDatum.loanVal) |> dict.to_pairs()
 
         and {
           pDatum == loanName,

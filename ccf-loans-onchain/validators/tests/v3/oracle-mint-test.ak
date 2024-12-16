@@ -1,9 +1,10 @@
 use cardano/assets
 use cardano/transaction.{InlineDatum, NoDatum, Transaction, placeholder}
 use ccfl/typesv3.{MerkelConfigDatum, OMint, SupplyDatum}
+use tests/scripts as s
 use tests/tools as t
 use tests/transactions.{configInput, interestDatum, oracleDatum} as tk
-use v3/oracle_mint
+use v3/oracle
 
 //                   //
 // Oracle Mint Tests //
@@ -39,7 +40,9 @@ test oracle_mint() {
 
   let oref = t.test_oref(#"face", 1)
 
-  let oracleMintValue = assets.from_asset(t.oracleMintHash, #"beef", 3)
+  let oracleValue = assets.from_asset(s.oracle, #"beef", 1)
+
+  let oracleMintValue = assets.from_asset(s.oracle, #"beef", 3)
 
   let oracleDatum1 =
     oracleDatum(exchange, timestamp, supply, borrowed, currency)
@@ -50,8 +53,8 @@ test oracle_mint() {
     MerkelConfigDatum {
       loanVal: #"5555",
       colVal: #"4444",
-      oracleVal: t.oracleValHash,
-      interestVal: t.interestValHash,
+      oracleVal: s.oracle,
+      interestVal: s.interest,
       supplyVal: #"ffff",
       collateralRedeemers: [],
       supplyRedeemers: [],
@@ -74,23 +77,19 @@ test oracle_mint() {
     )
 
   let oracleOutput =
-    t.test_output(
-      t.test_script_address(t.oracleValHash),
-      t.oracleValue(),
-      outDatum,
-    )
+    t.test_output(t.test_script_address(s.oracle), oracleValue, outDatum)
 
   let interestOutput =
     t.test_output(
-      t.test_script_address(t.interestValHash),
-      t.oracleValue(),
+      t.test_script_address(s.interest),
+      oracleValue,
       InlineDatum(interestDatum),
     )
 
   let supplyOutput =
     t.test_output(
       t.test_script_address(#"ffff"),
-      t.oracleValue(),
+      oracleValue,
       InlineDatum(supplyDatum),
     )
 
@@ -104,11 +103,5 @@ test oracle_mint() {
       outputs: [oracleOutput, interestOutput, supplyOutput],
     }
 
-  oracle_mint.oracleMint.mint(
-    test_owner,
-    #"2222",
-    oracleMintAction,
-    t.oracleMintHash,
-    tx,
-  )?
+  oracle.oracle.mint(test_owner, #"2222", oracleMintAction, s.oracle, tx)?
 }

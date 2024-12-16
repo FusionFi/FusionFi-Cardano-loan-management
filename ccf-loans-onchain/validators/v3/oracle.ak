@@ -3,10 +3,11 @@ use aiken/collection/list
 use aiken/crypto.{VerificationKeyHash}
 use cardano/address.{Script}
 use cardano/assets.{PolicyId, tokens}
-use cardano/transaction.{InlineDatum, Transaction}
+use cardano/transaction.{InlineDatum, OutputReference, Transaction}
+use ccfl/helpersv3 as h
 use ccfl/typesv3.{
-  InterestDatum, MerkelConfigDatum, OBurn, OMint, OracleDatum, OracleMintAction,
-  SupplyDatum,
+  InterestDatum, MerkelConfigDatum, OBurn, OMint, OracleAction, OracleClose,
+  OracleDatum, OracleMintAction, OracleUpdate, SupplyDatum,
 }
 
 //             //
@@ -17,11 +18,11 @@ use ccfl/typesv3.{
 // an additional OralceToken to be used as a Beacon token for the supply pool
 // it will be sent to the supply pool to create a new supply feed that users
 // can add their own assets to.
-validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
-  mint(r: OracleMintAction, policyId: PolicyId, tx: Transaction) {
+validator oracle(o: VerificationKeyHash, cp: PolicyId) {
+  mint(r: OracleMintAction, p: PolicyId, tx: Transaction) {
     expect [Pair(oName, oAmt)] =
       tx.mint
-        |> tokens(policyId)
+        |> tokens(p)
         |> to_pairs()
 
     when r is {
@@ -54,7 +55,7 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
 
         expect [Pair(tName, 1)] =
           out.value
-            |> assets.tokens(policyId)
+            |> assets.tokens(p)
             |> dict.to_pairs()
 
         expect InlineDatum(datum) = out.datum
@@ -70,7 +71,7 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
 
         expect [Pair(iName, 1)] =
           interest.value
-            |> assets.tokens(policyId)
+            |> assets.tokens(p)
             |> dict.to_pairs()
 
         expect InlineDatum(datum) = interest.datum
@@ -117,25 +118,25 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
   ) {
     expect Some(d) = datum
     expect Some(ownIn) =
-      list.find(tx.inputs, fn(input) { input.output_reference == oref })
+      list.find(tx.inputs, fn(input) { input.output_reference == ownRef })
     expect Script(ownHash) = ownIn.output.address.payment_credential
 
-    expect has_singleton_input(tx, ownRef)
+    expect h.has_singleton_input(tx, ownRef)
 
     when r is {
       OracleUpdate { exchange, timestamp, supply, borrowed } -> {
-        let out = get_own_singleton_output(tx, ownRef)
+        let out = h.get_own_singleton_output(tx, ownRef)
 
         expect [Pair(_, 1)] =
-          without_lovelace(out.value)
-            |> tokens(p)
-            |> to_pairs()
+          assets.without_lovelace(out.value)
+            |> assets.tokens(ownHash)
+            |> dict.to_pairs()
 
         expect InlineDatum(datum) = out.datum
         expect datum: OracleDatum = datum
 
         and {
-          has(tx.extra_signatories, o),
+          list.has(tx.extra_signatories, o),
           timestamp > d.timestamp,
           datum.currency == d.currency,
           datum.timestamp == timestamp,
@@ -146,20 +147,20 @@ validator oracleMint(o: VerificationKeyHash, cp: PolicyId) {
         }
       }
       OracleClose -> {
-        expect Some(input) = find_input(tx.inputs, ownRef)
+        expect Some(input) = transaction.find_input(tx.inputs, ownRef)
 
         expect [Pair(inName, 1)] =
           // get singleton name
-          without_lovelace(input.output.value)
-            |> tokens(p)
-            |> to_pairs()
+          assets.without_lovelace(input.output.value)
+            |> assets.tokens(ownHash)
+            |> dict.to_pairs()
 
         expect [Pair(burnName, -3)] =
           tx.mint
-            |> assets.tokens(p)
+            |> assets.tokens(ownHash)
             |> dict.to_pairs()
 
-        has(tx.extra_signatories, o) && inName == burnName
+        list.has(tx.extra_signatories, o) && inName == burnName
       }
     }
   }

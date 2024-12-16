@@ -2,33 +2,34 @@ use cardano/address.{Script}
 use cardano/assets
 use cardano/transaction.{InlineDatum, Transaction, placeholder}
 use ccfl/typesv3.{MerkelConfigDatum, SupplyDatum}
+use tests/scripts as s
 use tests/tools as t
 use tests/transactions as tx
-use v3/close
+use v3/close_pool
 
 test close() {
-  let loanHash = #"eeee"
-  let lpPolicy = t.supplyHash
-  let configPolicy = t.configMintHash
+  let loanHash = s.loan
+  // let lpPolicy = s.supply
+  let configPolicy = s.config
   // let wHash = #"bbbb"
   let oref = tx.oref(#"dddd", 2)
   // let loanTokenValue = assets.from_asset(loanHash, #"bbbb", 1)
-  let oracleTokenMint = assets.from_asset(t.oracleMintHash, #"beef", -3)
+  let oracleTokenMint = assets.from_asset(s.oracle, #"beef", -3)
 
   // let supplyAction = SLend { value: 10 }
   let inDatum = SupplyDatum { policy: #"deaf", asset: "" }
 
   // let outDatum = SupplyDatum { policy: #"deaf", asset: "" }
   // let loanDatum = tx.loanDatum(10, 10, 0, 2222222222222, #"beef")
-  let configValue = assets.from_asset(configPolicy, "", 1)
+  let configValue = assets.from_asset(s.config, "", 1)
 
   let configDatum =
     MerkelConfigDatum {
       loanVal: loanHash,
-      colVal: t.mCol,
-      oracleVal: t.oracleValHash,
-      interestVal: t.interestValHash,
-      supplyVal: t.supplyHash,
+      colVal: s.collateral,
+      oracleVal: s.oracle,
+      interestVal: s.interest,
+      supplyVal: s.supply,
       collateralRedeemers: [#"cccc", #"ffff", #"aaaa", #"bbbb"],
       supplyRedeemers: [#"cccc", #"ffff", #"aaaa", #"bbbb"],
     }
@@ -37,7 +38,7 @@ test close() {
     t.test_input(
       tx.oref(#"1111", 8),
       t.test_output(
-        t.test_script_address(configPolicy),
+        t.test_script_address(s.config),
         configValue,
         InlineDatum(configDatum),
       ),
@@ -49,8 +50,8 @@ test close() {
     t.test_input(
       tx.oref(#"dddd", 3),
       t.test_output(
-        t.test_script_address(t.oracleValHash),
-        t.oracleValue(),
+        t.test_script_address(s.oracle),
+        assets.from_asset(s.oracle, #"beef", 1),
         InlineDatum(oracleInDatum),
       ),
     )
@@ -61,8 +62,8 @@ test close() {
     t.test_input(
       tx.oref(#"eeee", 4),
       t.test_output(
-        t.test_script_address(t.interestValHash),
-        t.oracleValue(),
+        t.test_script_address(s.interest),
+        assets.from_asset(s.oracle, #"beef", 1),
         InlineDatum(interestDatum),
       ),
     )
@@ -71,15 +72,15 @@ test close() {
     t.test_input(
       oref,
       t.test_output(
-        t.test_script_address(lpPolicy),
-        t.oracleValue(),
+        t.test_script_address(s.supply),
+        assets.from_asset(s.oracle, #"beef", 1),
         InlineDatum(inDatum),
       ),
     )
 
   let withdraw0 = tx.withdrawal(#"bebe")
 
-  let redeemer = close.CloseWithdraw { asset: #"beef" }
+  let redeemer = close_pool.CloseWithdraw { asset: #"beef" }
 
   let tx =
     Transaction {
@@ -90,9 +91,9 @@ test close() {
       withdrawals: withdraw0,
     }
 
-  close.close.withdraw(
+  close_pool.close.withdraw(
     configPolicy,
-    t.oracleMintHash,
+    s.oracle,
     redeemer,
     Script(#"bebe"),
     tx,

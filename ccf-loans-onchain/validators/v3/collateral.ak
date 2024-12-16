@@ -3,8 +3,8 @@ use aiken/collection/pairs
 use cardano/address.{Script}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{OutputReference, Transaction}
-use ccfl/helpers
-use ccfl/types.{CollateralDatum, MerkelCollateralAction, MerkelConfigDatum}
+use ccfl/helpersv3 as h
+use ccfl/typesv3.{CollateralDatum, MerkelCollateralAction, MerkelConfigDatum}
 
 validator collateral(cp: PolicyId) {
   spend(
@@ -13,8 +13,7 @@ validator collateral(cp: PolicyId) {
     _oref: OutputReference,
     tx: Transaction,
   ) {
-    let cDatum: MerkelConfigDatum =
-      helpers.get_config_datum(tx.reference_inputs, cp)
+    let cDatum: MerkelConfigDatum = h.get_config_datum(tx.reference_inputs, cp)
 
     expect Some(stakeVal) =
       cDatum.collateralRedeemers

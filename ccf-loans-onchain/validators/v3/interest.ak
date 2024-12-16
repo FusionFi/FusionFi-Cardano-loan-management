@@ -5,8 +5,8 @@ use cardano/assets.{PolicyId, tokens, without_lovelace}
 use cardano/transaction.{
   InlineDatum, Input, Output, OutputReference, Transaction, find_input,
 }
-use ccfl/helpers.{get_own_singleton_output, has_singleton_input}
-use ccfl/types.{InterestAction, InterestClose, InterestDatum, InterestUpdate}
+use ccfl/helpersv3.{get_own_singleton_output, has_singleton_input}
+use ccfl/typesv3.{InterestAction, InterestClose, InterestDatum, InterestUpdate}
 
 // validator for handling updating and enforcing rates
 

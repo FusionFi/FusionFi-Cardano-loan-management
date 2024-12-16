@@ -3,12 +3,9 @@ use aiken/collection/list
 use aiken/collection/pairs
 use cardano/address.{Script}
 use cardano/assets.{PolicyId}
-use cardano/transaction.{InlineDatum, OutputReference, Transaction}
+use cardano/transaction.{OutputReference, Transaction}
 use ccfl/helpersv3 as h
-use ccfl/typesv3.{
-  LPBurn, LPMint, MSupplyAction, MerkelConfigDatum, OracleDatum, SupplyDatum,
-  SupplyMintAction,
-}
+use ccfl/typesv3.{MSupplyAction, MerkelConfigDatum, SupplyDatum}
 
 // Supply Pool V2 //
 
@@ -27,7 +24,7 @@ use ccfl/typesv3.{
 
 // V2 contains its own oracle Token to make it easy to track and find the supply UTxO
 validator supplyPool(_owner: ByteArray, op: PolicyId, cp: PolicyId) {
-  mint(r: SupplyMintAction, p: PolicyId, tx: Transaction) {
+  mint(r: MSupplyAction, p: PolicyId, tx: Transaction) {
     // only mints single asset class with token name that matches the supply policy
     expect [Pair(lpName, lpAmt)] =
       tx.mint
@@ -42,7 +39,6 @@ validator supplyPool(_owner: ByteArray, op: PolicyId, cp: PolicyId) {
 
     pairs.has_key(tx.withdrawals, Script(stakeVal))
     // list.length(tx.withdrawals) == 1
-    }
   }
 
   spend(

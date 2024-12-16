@@ -1,9 +1,9 @@
 use cardano/address.{Credential}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, Output, Transaction}
-use ccfl/helpers
-use ccfl/types.{
-  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawRedeemer,
+use ccfl/helpersv3 as h
+use ccfl/typesv3.{
+  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawAction,
 }
 
 // staking validators that check the full transaction scope.
@@ -12,17 +12,16 @@ use ccfl/types.{
 // it combines both the merkel-loan && merkel-collateral cases together
 
 validator balance(op: PolicyId, cp: PolicyId, lp: PolicyId) {
-  withdraw(r: WithdrawRedeemer, _cred: Credential, tx: Transaction) {
-    let cDatum: MerkelConfigDatum =
-      helpers.get_config_datum(tx.reference_inputs, cp)
+  withdraw(r: WithdrawAction, _cred: Credential, tx: Transaction) {
+    let cDatum: MerkelConfigDatum = h.get_config_datum(tx.reference_inputs, cp)
 
     let (oracleValue, rDatum) =
-      helpers.get_oracle_datum_value(tx.outputs, op, cDatum.oracleVal)
+      h.get_oracle_datum_value(tx.outputs, op, cDatum.oracleVal)
 
     let exchangeRate = rDatum.exchange
 
     // For V3 we want to go by Policy not Hashes to save space on the configDatum.
-    helpers.ioTx(
+    h.ioTx(
       r.a,
       cDatum.colVal,
       lp,
@@ -39,8 +38,7 @@ validator balance(op: PolicyId, cp: PolicyId, lp: PolicyId) {
         expect InlineDatum(datum4) = inLoan.output.datum
         expect lin: LoanDatum = datum4
 
-        let adaOut =
-          ( assets.lovelace_of(outCol.value) + colDatum.yield ) / 1000000
+        let adaOut = assets.lovelace_of(outCol.value) / 1000000
         let exchangeAdjustment = loanDatum.amount * 1000
         let expectedCollateral = exchangeAdjustment / exchangeRate
         let minCollateralValue = expectedCollateral * 2
@@ -50,10 +48,10 @@ validator balance(op: PolicyId, cp: PolicyId, lp: PolicyId) {
           adaOut >= minCollateralValue,
           oracleValue == expectedOracle,
           loanDatum.amount == lin.amount,
-          cin.yield == colDatum.yield,
         }
       },
     )
+    // cin.yield == colDatum.yield,
   }
 
   else(_) {

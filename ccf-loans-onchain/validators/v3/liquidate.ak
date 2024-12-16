@@ -10,13 +10,13 @@ use ccfl/types.{
 // Merkel Liquidation Validator //
 //                              //
 
-validator liquidate(p: PolicyId, cp: PolicyId, lp: PolicyId) {
+validator liquidate(op: PolicyId, cp: PolicyId) {
   withdraw(r: WithdrawRedeemer, _cred: Credential, tx: Transaction) {
     let cDatum: MerkelConfigDatum =
       helpers.get_config_datum(tx.reference_inputs, cp)
 
     let (oracleValue, rDatum) =
-      helpers.get_oracle_datum_value(tx.outputs, p, cDatum.oracleVal)
+      helpers.get_oracle_datum_value(tx.outputs, op, cDatum.oracleVal)
 
     let exchangeRate = rDatum.exchange
 
@@ -36,7 +36,7 @@ validator liquidate(p: PolicyId, cp: PolicyId, lp: PolicyId) {
             cDatum.colVal,
           )
 
-        let expectedOracle = assets.from_asset(p, lin.oracle, 1)
+        let expectedOracle = assets.from_asset(op, lin.oracle, 1)
 
         let exchangeAdjustment = lin.amount * 1000
         let loanExpected = exchangeAdjustment / exchangeRate
