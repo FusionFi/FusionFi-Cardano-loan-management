@@ -2,10 +2,10 @@
 
 ---
 
-Currently working on potential exploits
+Currently working on V3 Testing - Supply Pools for Crypto && P2P Lending
 
-NOTE - When you mint an oracle or a loan, you will need to record the tokens (Units) in 
-`offchain/variables.ts` to be used for later transactions.
+> NOTE - When you mint an oracle or a loan, you will need to record the tokens (Units) in 
+> `offchain/variables.ts` to be used for later transactions.
 
 ## Running Your Own Tests
 
@@ -104,7 +104,7 @@ For scope of contracts and documentation please refer to `notes`
     │     └── ...
     ├── V1 # Currently in use in dapp
     ├── V2 # First layer of optimisation
-    └── V3 # Implementation Of Supply Pools
+    └── V3 # Implementation Of Supply Pools for P2P && Crypto lending
         ├── balance.ak # Balance Collateral to Loan value
         ├── close.ak # Close an Oracle and Supply Pool
         ├── collateral.ak # Collateral Vault
