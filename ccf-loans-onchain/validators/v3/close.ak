@@ -4,14 +4,14 @@ use cardano/address.{Credential, Script}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, Output, Transaction}
 use ccfl/helpers.{merkelBurn}
-use ccfl/types.{CollateralDatum, LoanDatum, WithdrawRedeemer}
+use ccfl/typesv3.{CollateralDatum, LoanDatum, WithdrawAction}
 
 //                        //
 // Merkel Close Validator //
 //                        //
 
 validator close(lp: PolicyId, op: PolicyId) {
-  withdraw(r: WithdrawRedeemer, cred: Credential, tx: Transaction) {
+  withdraw(r: WithdrawAction, cred: Credential, tx: Transaction) {
     expect Script(_own_validator) = cred
 
     expect Some(_oracleOut) =
@@ -47,7 +47,6 @@ validator close(lp: PolicyId, op: PolicyId) {
           ld.amount == 0,
           cd.amount == 0,
           loanTokenValue == colTokenValue,
-          cd.yield == 0,
         }
       },
       r.a,

@@ -2,8 +2,9 @@ use cardano/address.{Credential}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{InlineDatum, Output, Transaction}
 use ccfl/helpers
-use ccfl/types.{
-  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawRedeemer,
+use ccfl/helpersv3 as h
+use ccfl/typesv3.{
+  CollateralDatum, LoanDatum, MerkelConfigDatum, OracleDatum, WithdrawAction,
 }
 
 //                              //
@@ -11,12 +12,11 @@ use ccfl/types.{
 //                              //
 
 validator liquidate(op: PolicyId, cp: PolicyId) {
-  withdraw(r: WithdrawRedeemer, _cred: Credential, tx: Transaction) {
-    let cDatum: MerkelConfigDatum =
-      helpers.get_config_datum(tx.reference_inputs, cp)
+  withdraw(r: WithdrawAction, _cred: Credential, tx: Transaction) {
+    let cDatum: MerkelConfigDatum = h.get_config_datum(tx.reference_inputs, cp)
 
     let (oracleValue, rDatum) =
-      helpers.get_oracle_datum_value(tx.outputs, op, cDatum.oracleVal)
+      h.get_oracle_datum_value(tx.outputs, op, cDatum.oracleVal)
 
     let exchangeRate = rDatum.exchange
 
@@ -49,7 +49,6 @@ validator liquidate(op: PolicyId, cp: PolicyId) {
           assets.without_lovelace(oracleValue) == expectedOracle,
           assets.lovelace_of(collateral.value) >= assets.lovelace_of(cinValue) * ratio,
           colDatum.amount == loanDatum.amount * 2,
-          cin.yield == colDatum.yield,
         }
       },
       r.a,

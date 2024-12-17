@@ -69,6 +69,10 @@ pub fn loanDatumIn(amount: Int) -> LoanDatum {
   LoanDatum(amount, amount, 31556926, 1111111111111, #"beef", #"cafe")
 }
 
+pub fn loanTimestampDatum(amount: Int, timestamp: Int) -> LoanDatum {
+  LoanDatum(amount, amount, 31556926, timestamp, #"beef", #"cafe")
+}
+
 pub fn loanDatumOut(amount: Int) -> LoanDatum {
   LoanDatum(amount, amount, 31556926, 1111111111112, #"beef", #"cafe")
 }
@@ -93,6 +97,10 @@ pub fn oracleDatum(
 
 pub fn oracleDatumIn(ratio: Int) -> OracleDatum {
   OracleDatum(ratio, 1111111111111, "USD", 1000000, 200000)
+}
+
+pub fn oracleTimestampDatum(ratio: Int, timestamp: Int) -> OracleDatum {
+  OracleDatum(ratio, timestamp, "USD", 1000000, 200000)
 }
 
 pub fn oracleDatumOut(ratio: Int) -> OracleDatum {
@@ -153,6 +161,19 @@ pub fn oracleInput(ratio: Int) -> Input {
   oracleIn
 }
 
+pub fn oracleTimestampInput(ratio: Int, timestamp: Int) -> Input {
+  let oracleIn =
+    t.test_input(
+      oref(#"dead", 6),
+      t.test_output(
+        t.test_script_address(s.oracle),
+        assets.from_asset(s.oracle, #"beef", 1),
+        InlineDatum(oracleTimestampDatum(ratio, timestamp)),
+      ),
+    )
+  oracleIn
+}
+
 pub fn interestInput() -> Input {
   let base = 55
   let optimal = 70
@@ -181,6 +202,19 @@ pub fn loanInput(n: Int, amount: Int) -> Input {
         t.test_script_address(s.loan),
         assets.from_asset(s.loan, #"cafe", 1),
         InlineDatum(loanDatumIn(amount)),
+      ),
+    )
+  loanIn
+}
+
+pub fn loanTimestampInput(n: Int, amount: Int, timestamp: Int) -> Input {
+  let loanIn =
+    t.test_input(
+      oref(#"face", n),
+      t.test_output(
+        t.test_script_address(s.loan),
+        assets.from_asset(s.loan, #"cafe", 1),
+        InlineDatum(loanTimestampDatum(amount, timestamp)),
       ),
     )
   loanIn
@@ -237,11 +271,27 @@ pub fn oracleOutput(ratio: Int) -> Output {
   )
 }
 
+pub fn oracleTimestampOutput(ratio: Int, timestamp: Int) -> Output {
+  t.test_output(
+    t.test_script_address(s.oracle),
+    assets.from_asset(s.oracle, #"beef", 1),
+    InlineDatum(oracleTimestampDatum(ratio, timestamp)),
+  )
+}
+
 pub fn loanOutput(amount: Int) -> Output {
   t.test_output(
     t.test_script_address(s.loan),
     assets.from_asset(s.loan, #"cafe", 1),
     InlineDatum(loanDatumIn(amount)),
+  )
+}
+
+pub fn loanTimestampOutput(amount: Int, timestamp: Int) -> Output {
+  t.test_output(
+    t.test_script_address(s.loan),
+    assets.from_asset(s.loan, #"cafe", 1),
+    InlineDatum(loanTimestampDatum(amount, timestamp)),
   )
 }
 
