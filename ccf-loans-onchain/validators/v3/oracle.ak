@@ -137,13 +137,13 @@ validator oracle(o: VerificationKeyHash, cp: PolicyId) {
 
         and {
           list.has(tx.extra_signatories, o),
-          timestamp > d.timestamp,
-          datum.currency == d.currency,
-          datum.timestamp == timestamp,
-          datum.supply == supply,
-          datum.exchange == exchange,
+          (timestamp > d.timestamp)?,
+          (datum.currency == d.currency)?,
+          (datum.timestamp == timestamp)?,
+          (datum.supply == supply)?,
+          (datum.exchange == exchange)?,
           // outputDatum.borrowed needs to be updated according to any loan mints or repayments
-          datum.borrowed == d.borrowed + borrowed,
+          (datum.borrowed == d.borrowed + borrowed)?,
         }
       }
       OracleClose -> {

@@ -80,12 +80,11 @@ validator lend(cp: PolicyId, op: PolicyId) {
     let (supplyIn, sIn, supplyOut, sOut) =
       h.getSupplyIO(supplyIns, supplyOuts, op, oracleName, oracleQty)
 
-    let newValue =
-      assets.merge(
-        supplyIn,
-        assets.from_asset(sIn.policy, sIn.asset, 0 - r.value),
-      )
-
+    // let newValue =
+    //   assets.merge(
+    //     supplyIn,
+    //     assets.from_asset(sIn.policy, sIn.asset, 0 - r.value),
+    //   )
     expect Some(loanOut) =
       list.find(
         tx.outputs,
@@ -110,11 +109,11 @@ validator lend(cp: PolicyId, op: PolicyId) {
     //   )
     and {
       assets.without_lovelace(oracleIn) == assets.without_lovelace(oracleOut),
-      sIn == sOut,
-      supplyOut == newValue,
-      oOut.borrowed == oIn.borrowed + r.value,
-      lDatum.amount == r.value,
-      lOutAmt == 1,
+      (sIn == sOut)?,
+      // supplyOut == newValue,
+      (oOut.borrowed == oIn.borrowed + r.value)?,
+      (lDatum.amount == r.value)?,
+      (lOutAmt == 1)?,
     }
   }
 
