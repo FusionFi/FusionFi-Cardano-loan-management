@@ -123,14 +123,11 @@ pub type SupplyDatum1 {
   oracle: ByteArray,
 }
 
-// V2
+// V3
 pub type SupplyDatum {
   policy: ByteArray,
-  // USDM
   asset: ByteArray,
 }
-
-// SupplyPolicy.USDM
 
 pub type SupplyMintAction {
   LPMint { value: Int }
