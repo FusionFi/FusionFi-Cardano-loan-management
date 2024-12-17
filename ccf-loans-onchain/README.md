@@ -4,10 +4,25 @@
 
 Currently working on V3 Testing - Supply Pools for Crypto && P2P Lending
 
+See full description of V3 validator architecture here:
+
+[ValidatorArchitecture](./validatorArchitecture.md)
+
+## Running Validator Tests
+
+To run the validator tests, simply run `aiken check` in the repo.
+
+We are currently working on a full set of unit and property tests for all of the V3 validators.
+
+There are basic passing test cases for each of the new validators, but there is more
+work to be completed befor we have all potential cases and vulnerabilities covered.
+
+The V1 validators currently being used in the frontend are all complete.
+
+## Running Your Own Test Transactions
+
 > NOTE - When you mint an oracle or a loan, you will need to record the tokens (Units) in 
 > `offchain/variables.ts` to be used for later transactions.
-
-## Running Your Own Tests
 
 Once you have built the validators, you can run the command at the top of `config.ts` to
 execute these transactions on the preview testnet.
@@ -267,6 +282,8 @@ This is a description of the latest version of the validators (V3)
 This iteration was aimed at adding a P2P supply pool for assets to allow the community
 to lend out their own assets.
 
+For more information on these validators refer to (ValidatorArchitecture)[./validatorArchitecture.md]
+
 ### Supply Pool
 
 There are several different functions that we need to enable users to make for this
@@ -288,7 +305,7 @@ Oracles are now comprised of 3 matching tokens:
 - Interest Rates
 - Supply Pool
 
-If the price feed is for Fiat there will be an ompty supply pool, but it will still have
+If the price feed is for Fiat there will be an empty supply pool, but it will still have
 an oracle token in it as we will use it for validation.
 
 The `oracle` validator mints/burns and locks the oracle price feed, this is what will be
@@ -414,7 +431,7 @@ the loan datum, the other goes to the collateral vault with the collateral.
 We separate these values so they can be updated individually whilst maintaining the 
 onchain connection with their loan token.
 
-## Merkel Validator Design Pattern
+## Withdrawal Validator Design Pattern
 
 This design pattern separates the redeemer cases out of the `init` into separate 
 `staking` validators
