@@ -1,10 +1,5 @@
 # elabs-ccf-loans
 
-<<<<<<< HEAD
-Crypto Collateralised Fiat Loans
-
-TODO: Add Notes & Conceptual Contracts
-=======
 ### FusionFi: Crypto Collateralised Fiat Loans
 
 FusionFi is a lending platform that enables Cardano community members to borrow Fiat
@@ -20,6 +15,5 @@ this goal.
 Our front end development is currently using V1 on cardano, only Fiat lending, however 
 we are in the final stages of developing the crypto lending validators, ready to integrate
 into the frontend.
->>>>>>> documentation
 
 // Please refer to `README.md` in `ccf-loans-onchain` for validator details and tests
