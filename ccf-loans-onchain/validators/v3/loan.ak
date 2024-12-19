@@ -5,11 +5,7 @@ use cardano/address.{Script}
 use cardano/assets.{PolicyId}
 use cardano/transaction.{OutputReference, Transaction}
 use ccfl/helpersv3 as h
-use ccfl/typesv3.{MerkelConfigDatum, MerkelLoanAction}
-
-pub type LoanDatum {
-  LoanDatum
-}
+use ccfl/typesv3.{LoanDatum, MerkelConfigDatum, MerkelLoanAction}
 
 pub type FiatMintAction {
   FMint { i: Int }
