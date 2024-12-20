@@ -45,10 +45,10 @@ validator liquidate(op: PolicyId, cp: PolicyId) {
         let ratio = loanDatum.amount * 1000 / ( exchangeAdjustment / 100 )
 
         and {
-          assets.lovelace_of(cinValue) / 1000000 <= loanExpected * 85 / 100,
-          assets.without_lovelace(oracleValue) == expectedOracle,
-          assets.lovelace_of(collateral.value) >= assets.lovelace_of(cinValue) * ratio,
-          colDatum.amount == loanDatum.amount * 2,
+          (assets.lovelace_of(cinValue) / 1000000 <= loanExpected * 85 / 100)?,
+          (assets.without_lovelace(oracleValue) == expectedOracle)?,
+          (assets.lovelace_of(collateral.value) >= assets.lovelace_of(cinValue) * ratio)?,
+          (colDatum.amount == loanDatum.amount * 2)?,
         }
       },
       r.a,
