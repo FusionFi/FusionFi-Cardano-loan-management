@@ -1,67 +1,84 @@
- # ✨ **FusionFi Roadmap** ✨
- 
- ## 📅 **Q4 2024 - Initial Launch**
- **Objective:** Launch the foundational functionalities for FusionFi on EVM chains.
- 
- ### 🔑 Key Milestones:
- - ✅ Deploy lending and borrowing smart contracts on EVM-compatible chains.
- - ✅ Integrate with Encryptus to enable fiat loans backed by crypto collateral.
- 
- ### 📋 Details:
- - 💡 Develop smart contracts to support overcollateralized loans.
- - 📝 Ensure secure integration with Encryptus for fiat processing.
- 
- ### 🎯 Expected Outcomes:
- - ⚡ Launch stable lending and borrowing functionalities on EVM chains.
- - 🌐 Establish a seamless fiat on/off-ramp experience for users.
- 
- ---
- 
- ## 📅 **Q1 2025 - Expansion to Cardano**
- **Objective:** Bring FusionFi's functionalities to the Cardano ecosystem.
- 
- ### 🔑 Key Milestones:
- - ❤️ Partner with Anzens to deploy USDA pools, Cardano's first dollar-backed stablecoin.
- - 🚀 Expand lending and borrowing functionality to Cardano.
- 
- ### 📋 Details:
- - 💡 Enable USDA pools to accept ADA as collateral.
- - 📝 Develop smart contracts tailored for Cardano's unique architecture.
- 
- ### 🎯 Expected Outcomes:
- - ⚡ Seamless integration with Cardano's ecosystem.
- - 🚀 Onboard new users leveraging Cardano's growing community.
- 
- ---
- 
- ## 📅 **Q2 2025 - Integration with Nexchange**
- **Objective:** Introduce carbon credit-backed loans through Nexchange.
- 
- ### 🔑 Key Milestones:
- - 🌍 Integrate with Nexchange, Cardano's carbon credit marketplace.
- - 💰 Enable loans backed by tokenized carbon credits as collateral.
- 
- ### 📋 Details:
- - 💡 Develop integration to use carbon credits within FusionFi's lending pools.
- - 📝 Collaborate with Nexchange to standardize carbon credit tokenization.
- 
- ### 🎯 Expected Outcomes:
- - ⚡ Create innovative lending opportunities using tokenized carbon credits.
- - 🚀 Expand user base by targeting ESG-focused investors and borrowers.
- 
- ---
- 
- ## 📅 **Q3 2025 - Multi-Chain Expansion**
- **Objective:** Broaden FusionFi's reach to additional blockchain ecosystems.
- 
- ### 🔑 Key Milestones:
- - 🔗 Expand to other blockchain ecosystems, including SUI and Solana.
- - 💰 Support additional assets for lending and borrowing.
- 
- ### 📋 Details:
- - 💡 Build cross-chain compatibility for lending and borrowing pools.
- - 📝 Develop support for SUI and Solana-specific tokens.
- 
- ### 🎯 Expected Outcomes:
- - ⚡ Diversify the platform's asset and chain offerings.
- - 🚀 Attract a wider user base across multiple blockchain ecosystems.
+# 🚀 FusionFi Roadmap (2024–2025)
+
+---
+
+## 📅 Q4 2024 — Launch on EVM Chains
+
+**Objective:** Deploy the first version of FusionFi for fiat-backed lending on EVM chains.
+
+### 🔑 Key Milestones:
+- ✅ Deploy smart contracts for crypto-collateralized fiat loans  
+- ✅ Integrate with **Encryptus** to enable compliant fiat disbursements  
+- ✅ Launch front-end for fiat lending  
+
+### 📋 Technical Scope:
+- Overcollateralized lending logic on EVM  
+- Secure fiat handling via Encryptus  
+- Initial compliance-ready KYC/AML flows  
+
+### 🎯 Expected Outcomes:
+- ⚡ Live fiat-backed lending functionality  
+- 🌐 Working fiat on/off-ramp for crypto holders  
+
+---
+
+## 📅 Q1 2025 — Cardano Launch: FusionFi Core Begins
+
+**Objective:** Begin rollout of FusionFi Core as open-source infrastructure on Cardano.
+
+### 🔑 Key Milestones:
+- 🛠️ Release **FusionFi Core v1**:
+  - Lending contracts (Aiken/Plutus)  
+  - USDA Integration SDK (CLI + REST)  
+  - Multisig controller module  
+- ❤️ Partner with **Anzens** to integrate USDA  
+- 🧪 Begin testnet pilots for lending on Cardano  
+
+### 📋 Technical Scope:
+- Modular backend contracts built with Aiken  
+- Unified interface to support USDA as core stablecoin  
+- GitHub publication under MIT license  
+
+### 🎯 Expected Outcomes:
+- ⚡ First open-source, production-ready lending backend for Cardano  
+- 🔗 Aligned with Cardano Commercial Roadmap (stablecoin + DeFi adoption)
+
+---
+
+## 📅 Q3 2025 — Real-World Pilots in Africa & MENA
+
+**Objective:** Test and deploy FusionFi Core in Cardano-priority regions.
+
+### 🔑 Key Milestones:
+- 🌍 Field-test lending flows in **Africa and MENA**  
+- 🤝 Launch integrations with cooperatives and fintechs  
+- 📦 Deliver stablecoin-backed tools for underbanked users  
+
+### 📋 Deployment Scope:
+- Localized interfaces  
+- USDA-backed microloans  
+- Multisig wallets for community savings  
+
+### 🎯 Expected Outcomes:
+- ⚡ Validate infrastructure in high-impact regions  
+- 🌐 Advance Cardano’s mission of digital economic identity
+
+---
+
+## 📅 Q4 2025 — Developer Ecosystem Expansion
+
+**Objective:** Turn FusionFi Core into a widely adopted toolkit.
+
+### 🔑 Key Milestones:
+- 📚 Publish documentation, dev tutorials, and integration examples  
+- 🛠️ Launch sample frontends and testing environments  
+- 🧑‍💻 Begin community contributions and issue tracking  
+
+### 📋 Toolkit Scope:
+- Standard API across lending/USDA/multisig  
+- Configurable modules with deployment scripts  
+- Simplified onboarding for new builders  
+
+### 🎯 Expected Outcomes:
+- ⚡ FusionFi Core becomes a default backend for DeFi builders on Cardano  
+- 🚀 Ecosystem-level adoption and integrations
