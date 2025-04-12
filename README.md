@@ -1,19 +1,77 @@
-# elabs-ccf-loans
+# FusionFi – Cardano Loan Management
 
-### FusionFi: Crypto Collateralised Fiat Loans
+### 💸 Crypto-Collateralized Fiat Loans & Modular Lending Infrastructure
 
-FusionFi is a lending platform that enables Cardano community members to borrow Fiat
-currency against their crypto assets.
+**FusionFi** is a decentralized lending protocol that allows users to borrow **fiat currency using crypto assets as collateral** — directly on the Cardano blockchain.
 
-Although we initially focused explicitly on crypto/fiat, we are now in hte process of
-expanding to enable crypto lending as well with our latest validators (V3).
+FusionFi is evolving into a broader **open-source toolkit (FusionFi Core)** that brings programmable, compliant lending and stablecoin infrastructure to the Cardano ecosystem.
 
-These validators make use of several novel design patterns that allow us to manage both
-of these key features, using modular and upgradeable validation mechanisms to achieve
-this goal.
+---
 
-Our front end development is currently using V1 on cardano, only Fiat lending, however 
-we are in the final stages of developing the crypto lending validators, ready to integrate
-into the frontend.
+## 🔄 Current Features
 
-// Please refer to `README.md` in `ccf-loans-onchain` for validator details and tests
+- **Crypto-backed fiat loans** with live V1 validator deployment  
+- Integration with fiat payout providers via off-chain backend  
+- Secure, non-custodial design using smart contracts on Cardano  
+- Frontend live for fiat lending flows
+
+---
+
+## 🛠️ In Progress: FusionFi Core (V3+)
+
+FusionFi Core is an open-source modular backend designed to support developers, institutions, and DAOs building lending and stablecoin flows on Cardano.
+
+Planned open modules:
+
+- ✅ **Lending Contracts (Aiken/Plutus)**  
+  Modular contracts for fiat and crypto-native lending
+
+- ✅ **USDA Integration Wrapper (REST + CLI)**  
+  Developer SDK for seamless stablecoin flows
+
+- ✅ **Multisig Controller Module**  
+  Aiken-based governance framework for shared custody and approvals
+
+- 🌍 **Africa & MENA Pilots**  
+  Field-tested infrastructure to support unbanked/underbanked communities
+
+---
+
+## 🚀 Roadmap Snapshot
+
+| Milestone                        | Status        |
+|----------------------------------|---------------|
+| V1 Fiat Lending Validators       | ✅ Live        |
+| V3 Crypto Lending Validators     | 🔄 Testing     |
+| USDA SDK Integration             | 🔜 Q2 2025     |
+| Multisig Governance Module       | 🔜 Q3 2025     |
+| Dev Docs & Deployment Scripts    | 🔜 In Progress |
+
+---
+
+📌 For validator details and tests, refer to:  
+👉 [`fusionfi-loans-onchain/README.md`]
+
+---
+
+## 🧑‍💻 Developer Goals
+
+FusionFi Core aims to provide:
+
+- Composable, audited primitives for Cardano-native DeFi  
+- Off-chain SDKs that abstract fiat/stablecoin providers  
+- Real-world tested lending infrastructure for global deployment  
+
+---
+
+## 📖 License
+
+> This repository will be licensed under the [MIT License](./LICENSE).  
+
+---
+
+## 🌐 Learn More
+
+- 🔗 [Encryptus Inc.](https://encryptus.io) – Global fiat/crypto infrastructure  
+- 🌍 [FusionFi](https://www.fusionfi.co) – Product & Pilot Info  
+
