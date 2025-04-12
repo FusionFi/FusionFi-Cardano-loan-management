@@ -1,28 +1,8 @@
-# 🚀 FusionFi Roadmap (2024–2025)
+# 🚀 FusionFi Roadmap (2025)
 
 ---
 
-## 📅 Q4 2024 — Launch on EVM Chains
-
-**Objective:** Deploy the first version of FusionFi for fiat-backed lending on EVM chains.
-
-### 🔑 Key Milestones:
-- ✅ Deploy smart contracts for crypto-collateralized fiat loans  
-- ✅ Integrate with **Encryptus** to enable compliant fiat disbursements  
-- ✅ Launch front-end for fiat lending  
-
-### 📋 Technical Scope:
-- Overcollateralized lending logic on EVM  
-- Secure fiat handling via Encryptus  
-- Initial compliance-ready KYC/AML flows  
-
-### 🎯 Expected Outcomes:
-- ⚡ Live fiat-backed lending functionality  
-- 🌐 Working fiat on/off-ramp for crypto holders  
-
----
-
-## 📅 Q1-Q2 2025 — Cardano Launch: FusionFi Core Begins
+## 📅 Q1-Q2 2025 — Cardano Launch: FusionFi Core on Cardano Begins
 
 **Objective:** Begin rollout of FusionFi Core as open-source infrastructure on Cardano.
 
