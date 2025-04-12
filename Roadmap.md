@@ -1,4 +1,4 @@
-# 🚀 FusionFi Roadmap (2025)
+# 🚀 FusionFi Cardano Core Roadmap (2025)
 
 ---
 
