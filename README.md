@@ -50,7 +50,7 @@ Planned open modules:
 ---
 
 📌 For validator details and tests, refer to:  
-👉 [`fusionfi-loans-onchain/README.md`]
+👉 [`ccfl-loans-onchain/README.md`]
 
 ---
 
