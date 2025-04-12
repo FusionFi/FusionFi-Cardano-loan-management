@@ -22,7 +22,7 @@
 
 ---
 
-## 📅 Q1 2025 — Cardano Launch: FusionFi Core Begins
+## 📅 Q1-Q2 2025 — Cardano Launch: FusionFi Core Begins
 
 **Objective:** Begin rollout of FusionFi Core as open-source infrastructure on Cardano.
 
