@@ -66,7 +66,7 @@ FusionFi Core aims to provide:
 
 ## 📖 License
 
-> This repository will be licensed under the [MIT License](./LICENSE).  
+> This repository is licensed under the [MIT License](./LICENSE).  
 
 ---
 
