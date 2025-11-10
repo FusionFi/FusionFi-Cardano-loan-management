@@ -73,5 +73,6 @@ FusionFi Core aims to provide:
 ## 🌐 Learn More
 
 - 🔗 [Encryptus Inc.](https://encryptus.io) – Global fiat/crypto infrastructure  
-- 🌍 [FusionFi](https://www.fusionfi.co) – Product & Pilot Info  
+- 🌍 [FusionFi](https://www.fusionfi.co) – Product & Pilot Info
+- 🔗 [Emurgo Labs].(https://emurgolabs.io/)- Technical Partner
 
